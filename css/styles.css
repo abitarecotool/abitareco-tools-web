@@ -3,7 +3,7 @@
    Foglio di stile principale (sidebar full-height + Action Bar)
    ========================================================= */
 
-/* ---------- Design tokens (brand + layout) ---------- */
+/* ---------- Design tokens ---------- */
 :root{
   --brand-red:       #c4162b;
   --brand-red-dark:  #b01527;
@@ -20,12 +20,11 @@
   --progress-bg: #e5e7eb;
   --radius-card: 10px;
 
-  /* Safe area (colonna contenuti) */
-  --safe-width: 960px;  /* porta a 1000/1040 se vuoi più respiro */
-  --gutter-x:  40px;    /* padding orizzontale pagina */
+  --safe-width: 960px;  /* 1000/1040 se vuoi più respiro */
+  --gutter-x:  40px;    /* padding laterale contenuto */
 }
 
-/* ---------- Base / Reset ---------- */
+/* Base */
 *,*::before,*::after{ box-sizing:border-box; }
 html,body{ height:100%; }
 body{
@@ -38,7 +37,7 @@ body{
 }
 button,input,select,textarea{ font-family: inherit; }
 
-/* ---------- Layout principale ---------- */
+/* Layout principale */
 .app{ min-height:100vh; }
 
 /* Sidebar fissa bianca full-height */
@@ -55,15 +54,15 @@ button,input,select,textarea{ font-family: inherit; }
   width:160px; height:40px; object-fit:contain; margin-bottom:32px;
 }
 
-/* Area contenuti a destra della colonna bianca */
+/* Area contenuti a destra della colonna */
 main{
-  margin-left:260px;                 /* sempre subito a destra della colonna */
+  margin-left:260px;
   padding:24px var(--gutter-x);
   padding-bottom:40px;
 }
 .content{
   max-width:var(--safe-width);
-  margin:0 auto;                     /* centra la colonna */
+  margin:0 auto;
   width:100%;
 }
 
@@ -154,9 +153,8 @@ label{ display:block; font-size:14px; font-weight:600; margin:10px 0 4px; }
 .drop-inner{ display:flex; align-items:center; gap:8px; }
 .drop:focus{ outline:2px solid var(--brand-red); outline-offset:2px; }
 
-/* ---------- ACTION BAR (sempre visibile) ---------- */
+/* ACTION BAR (sempre visibile) */
 .actionbar{
-  /* è parte della safe area: nessun bordo, layout su 2 colonne */
   display:grid;
   grid-template-columns: 1fr auto; /* sinistra = progress+disclaimer | destra = bottone */
   align-items:center;
@@ -165,47 +163,23 @@ label{ display:block; font-size:14px; font-weight:600; margin:10px 0 4px; }
 }
 .action-left{ display:grid; gap:8px; }
 .action-progress.hidden{ display:none; }
-.progress{
-  height:6px; width:100%;
-  background:var(--progress-bg);
-  accent-color:var(--brand-red);
-}
-.copyright{
-  color:var(--muted);
-  font-size:12px;
-  text-align:left;                 /* “a destra della colonna bianca” = bordo sinistro della safe area */
-}
+.progress{ height:6px; width:100%; background:var(--progress-bg); accent-color:var(--brand-red); }
+.copyright{ color:var(--muted); font-size:12px; text-align:left; }
 
 /* Radio/Formato (Immagini Sito) */
-.radios label{
-  display:flex; align-items:center; gap:10px;
-  font-weight:500; color:var(--text-900);
-}
+.radios label{ display:flex; align-items:center; gap:10px; font-weight:500; color:var(--text-900); }
 .radios input[type="radio"]{ appearance:auto; accent-color:var(--brand-red); }
 #CustomSizeRow .input{ max-width:280px; }
 
-/* ---------- Responsive ---------- */
-@media (max-width:1200px){
-  :root{ --safe-width:900px; }
-}
-@media (max-width:1024px){
-  :root{ --gutter-x:28px; }
-}
+/* Responsive */
+@media (max-width:1200px){ :root{ --safe-width:900px; } }
+@media (max-width:1024px){ :root{ --gutter-x:28px; } }
 @media (max-width:820px){
   :root{ --gutter-x:20px; }
-
-  /* Su mobile la sidebar torna nel flusso (non fissa) */
   .sidebar{
-    position: static;
-    width: 100%;
-    height: auto;
-    min-height: auto;
-    border-right:none;
-    border-bottom:1px solid var(--border-300);
+    position: static; width: 100%; height: auto; min-height: auto;
+    border-right:none; border-bottom:1px solid var(--border-300);
   }
   main{ margin-left:0; }
-  .actionbar{
-    grid-template-columns: 1fr;
-    row-gap: 12px;
-  }
+  .actionbar{ grid-template-columns: 1fr; row-gap: 12px; }
 }

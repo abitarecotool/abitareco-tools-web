@@ -64,10 +64,12 @@ button, input, select, textarea { font-family: var(--font); }
 .menu li:hover{ background:#f3f3f3; }
 .menu li.active{ background:var(--brand-pink); color:var(--brand-red); }
 
-/* Area contenuto */
+/* Area contenuto (SAFE AREA) */
 main{ padding:20px 40px; }
-.content{ max-width: 920px; } /* più ampio per allineamento visivo */
-
+.content{
+  max-width: 960px;   /* larghezza desiderata della safe area */
+  margin: 0 auto;     /* ⬅️ centratura orizzontale */
+}
 .card{
   background:#fff;
   border-radius:var(--radius-card);
@@ -175,7 +177,7 @@ label{ display:block; font-size:14px; font-weight:600; margin:10px 0 4px; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1200px){
-  .content{ max-width: 860px; }
+  .content{ max-width: 900px; }
 }
 @media (max-width: 1024px){
   .app{ grid-template-columns: 220px 1fr; }

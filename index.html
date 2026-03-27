@@ -6,31 +6,109 @@
   <title>Abitare Co. – Digital Content Tool (Web)</title>
 
   <!-- Font Manrope -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  https://fonts.googleapis.com
+  https://fonts.gstatic.com
+  https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap
 
   <!-- Stili -->
-  <link rel="stylesheet" href="./css/styles.css">
+  ./css/styles.css
 </head>
 <body>
-  <div class="app">
+
+  <!-- ===================== LOGIN VIEW ===================== -->
+  <section id="LoginView" class="login-wrap">
+    <div class="login-inner">
+      <div class="login-left">
+        ./assets/logo.png
+        <h1>Accedi al tuo account</h1>
+        <p class="muted">Inserisci i dati e accedi.</p>
+
+        <label>Email</label>
+        <input id="LoginEmail" class="input" type="email" placeholder="es. superadmin@abitare.co" />
+
+        <label>Password</label>
+        <input id="LoginPwd" class="input" type="password" placeholder="••••••••" />
+
+        <div class="checkline">
+          <input id="LoginRemember" type="checkbox" />
+          <label for="LoginRemember">Ricordami</label>
+        </div>
+
+        <button id="BtnLogin" class="btn-primary" type="button" style="margin-top:10px;">Accedi</button>
+        <div id="LoginError" class="login-error hidden">Email o password non valide.</div>
+      </div>
+
+      <div class="login-right">
+        <!-- immagine a destra -->
+        ./assets/login-hero.jpg
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== APP ===================== -->
+  <div id="AppRoot" class="app hidden">
 
     <!-- SIDEBAR fissa -->
     <aside class="sidebar">
-      <img src="./assets/logo.png" alt="Abitare Co." class="logo">
+      ./assets/logo.png
+
       <ul id="SideMenu" class="menu">
-        <li data-index="0" class="active">Immagini Sito</li>
-        <li data-index="1">Immagini Share</li>
-        <li data-index="2">DigitalTool</li>
-        <li data-index="3">PDF → JPG</li>
-        <li data-index="4">Rename</li>
-        <li data-index="5">Video Slideshow</li>
-        <li data-index="6">Watermark</li>
-        <li data-index="7">Biglietto da visita</li>
-        <li data-index="8">Genera QR Code</li>
-        <li data-index="9">Iubenda</li>
+        <!-- NB: data-mode = stringa robusta (niente indici fissi) -->
+        <li data-mode="images"
+            data-icon="assets/icons/icon-sito.png"
+            data-icon-active="assets/icons/icon-sito-selected.png"
+            class="active">
+          <span class="mi"><img alt="" /></span><span class="txt">Immagini</span>
+        </li>
+
+        <li data-mode="digitaltool"
+            data-icon="assets/icons/icon-digital.png">
+          <span class="mi"><img alt="" /></span><span class="txt">DigitalTool</span>
+        </li>
+
+        <li data-mode="pdf2jpg"
+            data-icon="assets/icons/icon-pdf.png"
+            data-icon-active="assets/icons/icon-pdf-selected.png">
+          <span class="mi"><img alt="" /></span><span class="txt">PDF → JPG</span>
+        </li>
+
+        <li data-mode="rename"
+            data-icon="assets/icons/icon-rename.png">
+          <span class="mi"><img alt="" /></span><span class="txt">Rename</span>
+        </li>
+
+        <li data-mode="video"
+            data-icon="assets/icons/icon-video.png">
+          <span class="mi"><img alt="" /></span><span class="txt">Video Slideshow</span>
+        </li>
+
+        <li data-mode="watermark"
+            data-icon="assets/icons/icon-watermark.png"
+            data-icon-active="assets/icons/icon-watermark-selected.png">
+          <span class="mi"><img alt="" /></span><span class="txt">Watermark</span>
+        </li>
+
+        <li data-mode="bv"
+            data-icon="assets/icons/icon-bv.png">
+          <span class="mi"><img alt="" /></span><span class="txt">Biglietto da visita</span>
+        </li>
+
+        <li data-mode="qr"
+            data-icon="assets/icons/icon-qr.png"
+            data-icon-active="assets/icons/icon-qr-selected.png">
+          <span class="mi"><img alt="" /></span><span class="txt">Genera QR Code</span>
+        </li>
+
+        <li data-mode="iubenda"
+            data-icon="assets/icons/icon-iubenda.png"
+            data-icon-active="assets/icons/icon-iubenda-selected.png">
+          <span class="mi"><img alt="" /></span><span class="txt">Iubenda</span>
+        </li>
       </ul>
+
+      <div class="sidebar-footer">
+        <button id="BtnLogout" class="btn-outline" type="button">Esci</button>
+      </div>
     </aside>
 
     <!-- MAIN -->
@@ -38,147 +116,26 @@
       <div class="content">
 
         <!-- Welcome -->
-        <section id="WelcomeCard" class="card hidden">
+        <section id="WelcomeCard" class="card">
           <h2 id="WelcomeTitle">Welcome!</h2>
           <p id="WelcomeSubtitle" class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
         </section>
 
-        <!-- BV -->
-        <section id="BusinessCardCard" class="card hidden">
-          <h3>Che biglietto da visita vuoi generare?</h3>
-          <p class="muted">Seleziona il brand. Il form comparirà sotto. Genera con “Esporta ora”.</p>
-
-          <div class="row">
-            <button id="BtnBV_AbitareCo" class="pill">Abitare Co.</button>
-            <button id="BtnBV_Commercial" class="pill">Abitare Commercial</button>
-            <button id="BtnBV_Riabitareco" class="pill">RiAbitare Co.</button>
-          </div>
-
-          <div id="BvForm" class="form hidden">
-            <label>Nome e Cognome*</label>
-            <input id="TxtBVName" class="input" type="text" />
-
-            <label>Job title*</label>
-            <input id="TxtBVJob" class="input" type="text" />
-
-            <label>Cellulare*</label>
-            <input id="TxtBVPhone" class="input" type="text" />
-
-            <label>Email*</label>
-            <input id="TxtBVEmail" class="input" type="email" />
-
-            <div class="checkline">
-              <input id="ChkBvRea" type="checkbox" />
-              <label for="ChkBvRea">Iscritto REA</label>
-            </div>
-
-            <div id="ReaField" class="form hidden">
-              <label>Codice REA</label>
-              <input id="TxtBVReaCode" class="input" type="text" />
-            </div>
-          </div>
-        </section>
-
-        <!-- QR -->
-        <section id="QrCard" class="card hidden">
-          <h3>Inserisci l’URL e i parametri campagna</h3>
-          <p class="muted">Compila i campi richiesti (*) per generare l’URL con UTM e il QR code.</p>
-
-          <label>Website URL *</label>
-          <input id="TxtQrUrl" class="input" type="url" />
-
-          <label>Campaign ID</label>
-          <input id="TxtQrCampaignId" class="input" type="text" />
-
-          <label>Campaign source *</label>
-          <input id="TxtQrSource" class="input" type="text" />
-
-          <label>Campaign medium *</label>
-          <input id="TxtQrMedium" class="input" type="text" />
-
-          <label>Campaign name *</label>
-          <input id="TxtQrCampaign" class="input" type="text" />
-
-          <label>Campaign term</label>
-          <input id="TxtQrTerm" class="input" type="text" />
-
-          <label>Campaign content</label>
-          <input id="TxtQrContent" class="input" type="text" />
-
-          <label class="muted-label">URL generata:</label>
-          <p id="TxtQrPreview" class="muted">—</p>
-        </section>
-
-        <!-- Video -->
-        <section id="VideoCard" class="card hidden">
-          <h3>Video Slideshow</h3>
-          <p class="muted">Imposta nome, durata e formato. Poi clicca “Esporta ora”.</p>
-
-          <label>Nome video *</label>
-          <input id="TxtVideoName" class="input" type="text" />
-
-          <label>Durata</label>
-          <select id="CmbVideoDuration" class="select">
-            <option selected>30 secondi</option>
-            <option>45 secondi</option>
-            <option>60 secondi</option>
-          </select>
-
-          <label>Formato</label>
-          <div class="radios" style="display:flex; flex-direction:column; gap:6px;">
-            <label><input id="RbVidH" type="radio" name="VidFmt" checked /> Orizzontale (1920×1080)</label>
-            <label><input id="RbVidV" type="radio" name="VidFmt" /> Verticale (1080×1920)</label>
-            <label><input id="RbVidS" type="radio" name="VidFmt" /> Quadrato (1080×1080)</label>
-          </div>
-        </section>
-
-        <!-- Iubenda -->
-        <section id="IubendaCard" class="card hidden">
-          <h3>Genera snippet iubenda</h3>
-          <p class="muted">Inserisci widget URL, siteId e cookiePolicyId. Preview pulita, export .txt con commenti.</p>
-
-          <label>Widget URL *</label>
-          <input id="TxtIubWidgetUrl" class="input" type="text" />
-
-          <label>siteId *</label>
-          <input id="TxtIubSiteId" class="input" type="text" />
-
-          <label>cookiePolicyId (IT) *</label>
-          <input id="TxtIubCookieIt" class="input" type="text" />
-
-          <div class="checkline">
-            <input id="ChkIubEnableEn" type="checkbox" />
-            <label for="ChkIubEnableEn">Sito anche in inglese</label>
-          </div>
-
-          <div id="IubEnPanel" class="form hidden">
-            <label>cookiePolicyId (EN) *</label>
-            <input id="TxtIubCookieEn" class="input" type="text" />
-          </div>
-
-          <label class="muted-label">Preview snippet (pulita):</label>
-          <textarea id="TxtIubPreview" class="codebox" readonly></textarea>
-
-          <button id="BtnIubCopy" class="btn-outline">Copia codice</button>
-        </section>
-
-        <!-- Slug -->
-        <section id="SlugCard" class="card">
+        <!-- ========= IMMAGINI (ex Immagini Sito) ========= -->
+        <section id="SlugCard" class="card hidden">
           <label>Slug ITA*</label>
           <input id="TxtSlugIta" class="input" type="text" />
           <label>Slug ENG*</label>
           <input id="TxtSlugEng" class="input" type="text" />
         </section>
 
-        <!-- FORMATO — SOLO “Immagini Sito” -->
-        <section id="FormatCard" class="card">
+        <section id="FormatCard" class="card hidden">
           <label>Formato</label>
           <div class="radios" style="display:flex; flex-direction:column; gap:6px;">
             <label><input type="radio" name="fmtSite" id="FmtSite1920" value="1920x1080" checked> 1920×1080 (Orizzontale)</label>
             <label><input type="radio" name="fmtSite" id="FmtSiteShare" value="1200x630"> Share (1200×630)</label>
             <label><input type="radio" name="fmtSite" id="FmtSiteCustom" value="custom"> Personalizzato</label>
           </div>
-
           <div id="CustomSizeRow" class="row hidden" style="margin-top:10px; gap:12px;">
             <div style="flex:1; min-width:160px;">
               <label>Larghezza (px)</label>
@@ -189,12 +146,10 @@
               <input id="CustomH" class="input" type="number" min="1" value="1080" />
             </div>
           </div>
-
           <p class="muted" style="margin-top:8px;">L’export userà crop centrato e spazio colore sRGB.</p>
         </section>
 
-        <!-- Upload -->
-        <section id="UploadCard" class="card">
+        <section id="UploadCard" class="card hidden">
           <h3>Carica cartella*</h3>
           <div id="DropArea" class="drop" tabindex="0">
             <div class="drop-inner">
@@ -204,7 +159,13 @@
           </div>
         </section>
 
-        <!-- ACTION BAR (sempre visibile) -->
+        <!-- (Altre sezioni rimangono pronte ma nascoste finché non servono) -->
+        <section id="BusinessCardCard" class="card hidden"></section>
+        <section id="QrCard" class="card hidden"></section>
+        <section id="IubendaCard" class="card hidden"></section>
+        <section id="VideoCard" class="card hidden"></section>
+
+        <!-- ACTION BAR -->
         <section id="ActionBar" class="actionbar">
           <div class="action-left">
             <div id="ActionProgressWrap" class="action-progress hidden">
@@ -222,11 +183,10 @@
 
       </div>
     </main>
-
   </div>
 
   <!-- Libreria ZIP + App -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="./js/app.js"></script>
+  https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.jsscript>
+  ./js/app.jsscript>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /* =========================================================
    Abitare Co. – Digital Content Tool (Web)
-   Foglio di stile principale
+   Foglio di stile principale (sidebar full-height + footer allineato)
    ========================================================= */
 
 /* ---------- Design tokens (brand + layout) ---------- */
@@ -22,7 +22,7 @@
 
   /* Safe area (colonna contenuti) */
   --safe-width: 960px;  /* puoi portare a 1000/1040 se vuoi più respiro */
-  --gutter-x:  40px;    /* padding orizzontale di pagina */
+  --gutter-x:  40px;    /* padding orizzontale della pagina */
 }
 
 /* ---------- Base / Reset leggero ---------- */
@@ -36,49 +36,46 @@ body{
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
 }
-
-/* Eredita il font su tutti i controlli (uniformità sidebar/bottoni/input) */
+/* Uniforma il font su tutti i controlli */
 button, input, select, textarea { font-family: inherit; }
 
 /* ---------- Layout principale ---------- */
+/* Contenitore “app”: lasciamo il min-height ma non usiamo più la grid
+   perché rendiamo la sidebar fissa a sinistra */
 .app{
-  display:grid;
-  grid-template-columns:260px 1fr;
-  min-height: 100vh;               /* piena altezza viewport */
+  min-height: 100vh;
 }
 
-/* Sidebar: sfondo bianco fino in fondo */
+/* Sidebar BIANCA fissa a tutta altezza (anche quando la pagina è corta) */
 .sidebar{
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: 260px;
   background:#fff;
   border-right:1px solid var(--border-300);
   padding:24px;
-  min-height: 100vh;               /* colonna bianca a tutta altezza */
-  display:flex;
-  flex-direction:column;
+  overflow-y:auto;            /* se il menu è alto, scrolla solo la colonna */
+  z-index: 5;
 }
 .sidebar .logo{
   width:160px; height:40px; object-fit:contain; margin-bottom:32px;
 }
 
-/* Menu */
-.menu{ list-style:none; margin:0; padding:0; }
-.menu li{
-  padding:10px 8px; margin:6px 0; border-radius:8px; cursor:pointer;
-  display:flex; align-items:center; gap:12px; line-height:1.25;
-}
-.menu li:hover{ background:#f3f3f3; }
-.menu li.active{ background:var(--brand-pink); color:var(--brand-red); }
-
-/* ---------- Safe area (contenuto centrale) ---------- */
+/* Spostiamo l’area MAIN a destra della colonna fissa */
 main{
+  margin-left: 260px;               /* ⬅️ sempre subito a destra della colonna bianca */
   padding: 24px var(--gutter-x);
   padding-bottom: 40px;
 }
+
+/* “Safe area” centrata dentro la colonna contenuti */
 .content{
   max-width: var(--safe-width);
-  margin: 0 auto;                  /* centra la colonna */
+  margin: 0 auto;                   /* centra la colonna */
   width: 100%;
 }
+
+/* Cards */
 .card{
   width: 100%;
   background:#fff;
@@ -89,6 +86,15 @@ main{
 }
 .hidden{ display:none !important; }
 .row{ display:flex; gap:12px; flex-wrap:wrap; margin:0 0 12px; }
+
+/* Menu laterale */
+.menu{ list-style:none; margin:0; padding:0; }
+.menu li{
+  padding:10px 8px; margin:6px 0; border-radius:8px; cursor:pointer;
+  display:flex; align-items:center; gap:12px; line-height:1.25;
+}
+.menu li:hover{ background:#f3f3f3; }
+.menu li.active{ background:var(--brand-pink); color:var(--brand-red); }
 
 /* ---------- Tipografia ---------- */
 h2{ font-size:20px; margin:0 0 10px; font-weight:700; }
@@ -165,24 +171,28 @@ label{ display:block; font-size:14px; font-weight:600; margin:10px 0 4px; }
 .drop-inner{ display:flex; align-items:center; gap:8px; }
 .drop:focus{ outline:2px solid var(--brand-red); outline-offset:2px; }
 
-/* ---------- Footer / Disclaimer (allineati alla safe area) ---------- */
+/* ---------- Footer / Disclaimer (allineati alla safe area) ----------
+   NOTA: il footer viene spostato a destra della colonna bianca
+         usando lo stesso offset del main (margin-left:260px)
+--------------------------------------------------------------------- */
 .footer{
-  max-width: var(--safe-width);
-  margin: 0 auto 30px;          /* centrato + spazio inferiore */
-  padding: 0 var(--gutter-x);   /* stesso gutter del main */
+  width: calc(100% - 260px);       /* lascia libera la colonna fissa a sinistra */
+  margin: 0 0 30px 260px;          /* ⬅️ posiziona il footer subito a destra della colonna bianca */
+  padding: 0 var(--gutter-x);
   display: grid;
-  grid-template-columns: 1fr auto;   /* disclaimer | bottone */
+  grid-template-columns: 1fr auto; /* disclaimer | bottone */
   align-items: center;
   column-gap: 24px;
 }
-/* Avvisi di progress su una riga a parte, sopra disclaimer/bottone */
+/* Barra di progresso su una riga separata (se visibile) */
 #ProgressLabel, #MainProgress{ grid-column: 1 / -1; }
 
 .progress{ height:6px; width:100%; background:var(--progress-bg); accent-color:var(--brand-red); }
 
+/* 👉 Il disclaimer sta “a destra della colonna bianca”, cioè all’inizio del contenuto */
 .copyright{
-  justify-self: end;               /* testo allineato al bordo destro della colonna */
-  text-align: right;
+  justify-self: start;
+  text-align: left;
   color: var(--muted);
   font-size: 12px;
 }
@@ -205,15 +215,25 @@ label{ display:block; font-size:14px; font-weight:600; margin:10px 0 4px; }
 }
 @media (max-width: 1024px){
   :root{ --gutter-x: 28px; }
-  .app{ grid-template-columns: 220px 1fr; }
-  .content{ max-width: 760px; }
 }
 @media (max-width: 820px){
   :root{ --gutter-x: 20px; }
-  .app{ grid-template-columns: 1fr; }
-  .sidebar{ position: sticky; top: 0; z-index: 10; }
-  .content{ max-width: 100%; }
+
+  /* Su mobile togliamo la sidebar fissa e torniamo al flusso normale */
+  .sidebar{
+    position: static;
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-300);
+  }
+  main{
+    margin-left: 0;
+  }
   .footer{
+    width: 100%;
+    margin: 0 0 24px 0;
     grid-template-columns: 1fr;
     row-gap: 12px;
   }

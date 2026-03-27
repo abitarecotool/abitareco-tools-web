@@ -1,6 +1,6 @@
 /* =========================================================
    Abitare Co. – Digital Content Tool (Web)
-   Foglio di stile principale (Login + Sidebar + Action Bar)
+   Foglio di stile principale (Welcome + Sidebar + Action Bar)
    ========================================================= */
 
 :root{
@@ -37,37 +37,16 @@ body{
 button,input,select,textarea{ font-family:inherit; }
 .hidden{ display:none !important; }
 
-/* ===================== LOGIN ===================== */
-.login-wrap{
-  min-height:100vh; display:grid; place-items:center; padding:32px 20px;
-}
-.login-inner{
-  width:min(1100px, 96vw);
-  background:#fff; border-radius:16px; box-shadow:0 8px 24px rgba(17,24,39,.08);
-  display:grid; grid-template-columns: 1fr 1fr; overflow:hidden;
-}
-.login-left{ padding:36px 32px; }
-.login-left .logo{ width:160px; height:40px; object-fit:contain; margin-bottom:22px; }
-.login-left h1{ font-size:22px; margin:4px 0 4px; }
-.login-left .muted{ margin:0 0 14px; }
-.login-error{ color:#b01527; font-size:13px; margin-top:10px; }
-
-.login-right{
-  position:relative; background:#f3f3f3;
-}
-.login-right img{ width:100%; height:100%; object-fit:cover; display:block; }
-
-/* ===================== APP LAYOUT ===================== */
+/* App layout */
 .app{ min-height:100vh; }
 
-/* Sidebar fissa */
+/* Sidebar fissa a tutta altezza */
 .sidebar{
   position:fixed; top:0; left:0; bottom:0; width:260px;
   background:#fff; border-right:1px solid var(--border-300);
   padding:24px; overflow-y:auto; z-index:5;
 }
 .sidebar .logo{ width:160px; height:40px; object-fit:contain; margin-bottom:32px; }
-.sidebar-footer{ margin-top:24px; }
 
 /* Menu + icone */
 .menu{ list-style:none; margin:0; padding:0; }
@@ -137,15 +116,6 @@ label{ display:block; font-size:14px; font-weight:600; margin:10px 0 4px; }
 .btn-outline:hover{ background:var(--brand-pink); }
 .btn-small{ background:#eee; border:0; border-radius:6px; height:22px; width:22px; cursor:pointer; }
 
-/* Pills BV */
-.pill{
-  background:#fff; color:var(--brand-red); border:1px solid var(--brand-red);
-  height:46px; min-width:200px; padding:8px 18px; border-radius:12px; font-weight:600; cursor:pointer;
-  display:inline-flex; align-items:center; justify-content:center;
-}
-.pill.is-selected{ background:var(--brand-red); color:#fff; }
-.pill:not(.is-selected):hover{ background:var(--brand-red); color:#fff; }
-
 /* Drag&Drop */
 .drop{
   background:#fafafa; border:1px solid var(--border-200); border-radius:10px; height:140px;
@@ -154,7 +124,7 @@ label{ display:block; font-size:14px; font-weight:600; margin:10px 0 4px; }
 .drop-inner{ display:flex; align-items:center; gap:8px; }
 .drop:focus{ outline:2px solid var(--brand-red); outline-offset:2px; }
 
-/* ACTION BAR */
+/* ACTION BAR (sempre visibile) */
 .actionbar{
   display:grid; grid-template-columns: 1fr auto; align-items:center;
   gap:16px; margin:8px 0 24px;
@@ -174,7 +144,6 @@ label{ display:block; font-size:14px; font-weight:600; margin:10px 0 4px; }
 @media (max-width:1024px){ :root{ --gutter-x:28px; } }
 @media (max-width:820px){
   :root{ --gutter-x:20px; }
-  .login-inner{ grid-template-columns: 1fr; }
   .sidebar{
     position:static; width:100%; height:auto; min-height:auto;
     border-right:none; border-bottom:1px solid var(--border-300);

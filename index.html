@@ -6,9 +6,9 @@
   <title>Abitare Co. – Digital Content Tool (Web)</title>
 
   <!-- Font Manrope -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!-- Stili -->
   <link rel="stylesheet" href="./css/styles.css" />
@@ -16,9 +16,9 @@
 <body>
   <div class="app">
 
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR fissa -->
     <aside class="sidebar">
-      <img src="./assets/logo.png" class="logo" alt="Abitare Co. – logo" />
+      <img src="./assets/logo.png" class="logo" alt="Abitare Co." />
       <ul id="SideMenu" class="menu">
         <li data-index="0">Immagini Sito</li>
         <li data-index="1">Immagini Share</li>
@@ -204,22 +204,26 @@
           </div>
         </section>
 
+        <!-- ACTION BAR (sempre visibile) -->
+        <section id="ActionBar" class="actionbar">
+          <div class="action-left">
+            <div id="ActionProgressWrap" class="action-progress hidden">
+              <div id="ActionProgressLabel" class="muted">Esportazione in corso...</div>
+              <progress id="ActionProgress" class="progress" max="100" value="0"></progress>
+            </div>
+
+            <div class="copyright">
+              © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
+            </div>
+          </div>
+
+          <button id="BtnProcedi" class="btn-primary">Esporta ora</button>
+        </section>
+
       </div>
     </main>
 
   </div>
-
-  <!-- FOOTER (allineato alla safe area) -->
-  <footer class="footer">
-    <div id="ProgressLabel" class="muted hidden">Esportazione in corso...</div>
-    <progress id="MainProgress" class="progress hidden" max="100" value="0"></progress>
-
-    <div class="copyright">
-      © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
-    </div>
-
-    <button id="BtnProcedi" class="btn-primary">Esporta ora</button>
-  </footer>
 
   <!-- Script applicazione -->
   <script src="./js/app.js"></script>

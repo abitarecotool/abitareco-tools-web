@@ -11,16 +11,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!-- Stili -->
-  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
   <div class="app">
 
     <!-- SIDEBAR fissa -->
     <aside class="sidebar">
-      <img src="./assets/logo.png" class="logo" alt="Abitare Co." />
+      <img src="./assets/logo.png" alt="Abitare Co." class="logo">
       <ul id="SideMenu" class="menu">
-        <li data-index="0">Immagini Sito</li>
+        <li data-index="0" class="active">Immagini Sito</li>
         <li data-index="1">Immagini Share</li>
         <li data-index="2">DigitalTool</li>
         <li data-index="3">PDF → JPG</li>
@@ -38,7 +38,7 @@
       <div class="content">
 
         <!-- Welcome -->
-        <section id="WelcomeCard" class="card">
+        <section id="WelcomeCard" class="card hidden">
           <h2 id="WelcomeTitle">Welcome!</h2>
           <p id="WelcomeSubtitle" class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
         </section>
@@ -163,7 +163,7 @@
         </section>
 
         <!-- Slug -->
-        <section id="SlugCard" class="card hidden">
+        <section id="SlugCard" class="card">
           <label>Slug ITA*</label>
           <input id="TxtSlugIta" class="input" type="text" />
           <label>Slug ENG*</label>
@@ -171,7 +171,7 @@
         </section>
 
         <!-- FORMATO — SOLO “Immagini Sito” -->
-        <section id="FormatCard" class="card hidden">
+        <section id="FormatCard" class="card">
           <label>Formato</label>
           <div class="radios" style="display:flex; flex-direction:column; gap:6px;">
             <label><input type="radio" name="fmtSite" id="FmtSite1920" value="1920x1080" checked> 1920×1080 (Orizzontale)</label>
@@ -194,7 +194,7 @@
         </section>
 
         <!-- Upload -->
-        <section id="UploadCard" class="card hidden">
+        <section id="UploadCard" class="card">
           <h3>Carica cartella*</h3>
           <div id="DropArea" class="drop" tabindex="0">
             <div class="drop-inner">
@@ -217,7 +217,7 @@
             </div>
           </div>
 
-          <button id="BtnProcedi" class="btn-primary">Esporta ora</button>
+          <button id="BtnProcedi" class="btn-primary" type="button">Esporta ora</button>
         </section>
 
       </div>
@@ -225,7 +225,8 @@
 
   </div>
 
-  <!-- Script applicazione -->
+  <!-- Libreria ZIP + App -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="./js/app.js"></script>
 </body>
 </html>

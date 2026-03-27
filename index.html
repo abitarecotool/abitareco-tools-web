@@ -6,122 +6,85 @@
   <title>Abitare Co. – Digital Content Tool (Web)</title>
 
   <!-- Font Manrope -->
-  https://fonts.googleapis.com
-  https://fonts.gstatic.com
-  https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!-- Stili -->
-  ./css/styles.css
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
-
-  <!-- ===================== LOGIN VIEW ===================== -->
-  <section id="LoginView" class="login-wrap">
-    <div class="login-inner">
-      <div class="login-left">
-        ./assets/logo.png
-        <h1>Accedi al tuo account</h1>
-        <p class="muted">Inserisci i dati e accedi.</p>
-
-        <label>Email</label>
-        <input id="LoginEmail" class="input" type="email" placeholder="es. superadmin@abitare.co" />
-
-        <label>Password</label>
-        <input id="LoginPwd" class="input" type="password" placeholder="••••••••" />
-
-        <div class="checkline">
-          <input id="LoginRemember" type="checkbox" />
-          <label for="LoginRemember">Ricordami</label>
-        </div>
-
-        <button id="BtnLogin" class="btn-primary" type="button" style="margin-top:10px;">Accedi</button>
-        <div id="LoginError" class="login-error hidden">Email o password non valide.</div>
-      </div>
-
-      <div class="login-right">
-        <!-- immagine a destra -->
-        ./assets/login-hero.jpg
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================== APP ===================== -->
-  <div id="AppRoot" class="app hidden">
+  <div id="AppRoot" class="app">
 
     <!-- SIDEBAR fissa -->
     <aside class="sidebar">
-      ./assets/logo.png
+      <img src="./assets/logo.png" class="logo" alt="Abitare Co.">
 
       <ul id="SideMenu" class="menu">
-        <!-- NB: data-mode = stringa robusta (niente indici fissi) -->
+        <!-- NB: data-mode = robusto; nessun indice fragile -->
         <li data-mode="images"
             data-icon="assets/icons/icon-sito.png"
-            data-icon-active="assets/icons/icon-sito-selected.png"
-            class="active">
-          <span class="mi"><img alt="" /></span><span class="txt">Immagini</span>
+            data-icon-active="assets/icons/icon-sito-selected.png">
+          <span class="mi"><img alt=""></span><span class="txt">Immagini</span>
         </li>
 
         <li data-mode="digitaltool"
             data-icon="assets/icons/icon-digital.png">
-          <span class="mi"><img alt="" /></span><span class="txt">DigitalTool</span>
+          <span class="mi"><img alt=""></span><span class="txt">DigitalTool</span>
         </li>
 
         <li data-mode="pdf2jpg"
             data-icon="assets/icons/icon-pdf.png"
             data-icon-active="assets/icons/icon-pdf-selected.png">
-          <span class="mi"><img alt="" /></span><span class="txt">PDF → JPG</span>
+          <span class="mi"><img alt=""></span><span class="txt">PDF → JPG</span>
         </li>
 
         <li data-mode="rename"
             data-icon="assets/icons/icon-rename.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Rename</span>
+          <span class="mi"><img alt=""></span><span class="txt">Rename</span>
         </li>
 
         <li data-mode="video"
             data-icon="assets/icons/icon-video.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Video Slideshow</span>
+          <span class="mi"><img alt=""></span><span class="txt">Video Slideshow</span>
         </li>
 
         <li data-mode="watermark"
             data-icon="assets/icons/icon-watermark.png"
             data-icon-active="assets/icons/icon-watermark-selected.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Watermark</span>
+          <span class="mi"><img alt=""></span><span class="txt">Watermark</span>
         </li>
 
         <li data-mode="bv"
             data-icon="assets/icons/icon-bv.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Biglietto da visita</span>
+          <span class="mi"><img alt=""></span><span class="txt">Biglietto da visita</span>
         </li>
 
         <li data-mode="qr"
             data-icon="assets/icons/icon-qr.png"
             data-icon-active="assets/icons/icon-qr-selected.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Genera QR Code</span>
+          <span class="mi"><img alt=""></span><span class="txt">Genera QR Code</span>
         </li>
 
         <li data-mode="iubenda"
             data-icon="assets/icons/icon-iubenda.png"
             data-icon-active="assets/icons/icon-iubenda-selected.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Iubenda</span>
+          <span class="mi"><img alt=""></span><span class="txt">Iubenda</span>
         </li>
       </ul>
-
-      <div class="sidebar-footer">
-        <button id="BtnLogout" class="btn-outline" type="button">Esci</button>
-      </div>
     </aside>
 
     <!-- MAIN -->
     <main>
       <div class="content">
 
-        <!-- Welcome -->
+        <!-- Welcome (default) -->
         <section id="WelcomeCard" class="card">
           <h2 id="WelcomeTitle">Welcome!</h2>
           <p id="WelcomeSubtitle" class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
         </section>
 
-        <!-- ========= IMMAGINI (ex Immagini Sito) ========= -->
+        <!-- ========= IMMAGINI ========= -->
         <section id="SlugCard" class="card hidden">
           <label>Slug ITA*</label>
           <input id="TxtSlugIta" class="input" type="text" />
@@ -136,6 +99,7 @@
             <label><input type="radio" name="fmtSite" id="FmtSiteShare" value="1200x630"> Share (1200×630)</label>
             <label><input type="radio" name="fmtSite" id="FmtSiteCustom" value="custom"> Personalizzato</label>
           </div>
+
           <div id="CustomSizeRow" class="row hidden" style="margin-top:10px; gap:12px;">
             <div style="flex:1; min-width:160px;">
               <label>Larghezza (px)</label>
@@ -146,6 +110,7 @@
               <input id="CustomH" class="input" type="number" min="1" value="1080" />
             </div>
           </div>
+
           <p class="muted" style="margin-top:8px;">L’export userà crop centrato e spazio colore sRGB.</p>
         </section>
 
@@ -159,11 +124,11 @@
           </div>
         </section>
 
-        <!-- (Altre sezioni rimangono pronte ma nascoste finché non servono) -->
+        <!-- (Altre sezioni pronte per gli step successivi) -->
+        <section id="VideoCard" class="card hidden"></section>
         <section id="BusinessCardCard" class="card hidden"></section>
         <section id="QrCard" class="card hidden"></section>
         <section id="IubendaCard" class="card hidden"></section>
-        <section id="VideoCard" class="card hidden"></section>
 
         <!-- ACTION BAR -->
         <section id="ActionBar" class="actionbar">
@@ -183,10 +148,11 @@
 
       </div>
     </main>
+
   </div>
 
   <!-- Libreria ZIP + App -->
-  https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.jsscript>
-  ./js/app.jsscript>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="./js/app.js"></script>
 </body>
 </html>

@@ -6,156 +6,216 @@
   <title>Abitare Co. – Digital Content Tool</title>
 
   <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="./assets/logo.ico" />
+  <link rel="icon" href="./assets/logo.ico">
 
   <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Styles -->
-  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/styles.css">
 
   <meta name="theme-color" content="#c4162b" />
 </head>
 <body>
 
-  <noscript>
-    <div style="padding:12px;background:#fff3cd;border:1px solid #ffe69c;color:#664d03">
-      Questo strumento richiede JavaScript attivo.
-    </div>
-  </noscript>
+<div id="AppRoot" class="app">
 
-  <div id="AppRoot" class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <!-- ✅ LOGO PNG ORIGINALE -->
+    <img src="./assets/logo.png" class="logo" alt="Abitare Co.">
 
-      <!-- LOGO INLINE (identico al nuovo tuo) -->
-      <div class="logo-wrap">
-        <svg viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg" fill="none">
-          <text x="4" y="28" font-family="Manrope,sans-serif" font-weight="700" font-size="18" fill="#c4162b">ABITARE</text>
-          <text x="4" y="38" font-family="Manrope,sans-serif" font-weight="400" font-size="10" fill="#374151" letter-spacing="4">CO.</text>
-        </svg>
-      </div>
+    <ul id="SideMenu" class="menu">
 
-      <ul id="SideMenu" class="menu">
+      <li data-mode="images"
+          data-icon="./assets/icons/icon-sito.png"
+          data-icon-active="./assets/icons/icon-sito-selected.png">
+        <span class="mi"><img alt=""></span><span class="txt">Immagini</span>
+      </li>
 
-        <li data-mode="images"
-            data-icon="./assets/icons/icon-sito.png"
-            data-icon-active="./assets/icons/icon-sito-selected.png">
-          <span class="mi"><img alt=""></span>
-          <span class="txt">Immagini</span>
-        </li>
+      <li data-mode="digitaltool"
+          data-icon="./assets/icons/icon-digital.png"
+          data-icon-active="./assets/icons/icon-digital-selected.png">
+        <span class="mi"><img alt=""></span><span class="txt">DigitalTool</span>
+      </li>
 
-        <li data-mode="digitaltool"
-            data-icon="./assets/icons/icon-digital.png"
-            data-icon-active="./assets/icons/icon-digital-selected.png">
-          <span class="mi"><img alt=""></span>
-          <span class="txt">DigitalTool</span>
-        </li>
+      <li data-mode="pdf2jpg"
+          data-icon="./assets/icons/icon-pdf.png"
+          data-icon-active="./assets/icons/icon-pdf-selected.png">
+        <span class="mi"><img alt=""></span><span class="txt">PDF → JPG</span>
+      </li>
 
-        <li data-mode="pdf2jpg"
-            data-icon="./assets/icons/icon-pdf.png"
-            data-icon-active="./assets/icons/icon-pdf-selected.png">
-          <span class="mi"><img alt=""></span>
-          <span class="txt">PDF → JPG</span>
-        </li>
+      <li data-mode="rename"
+          data-icon="./assets/icons/icon-rename.png">
+        <span class="mi"><img alt=""></span><span class="txt">Rename</span>
+      </li>
 
-        <li data-mode="rename"
-            data-icon="./assets/icons/icon-rename.png">
-          <span class="mi"><img alt=""></span>
-          <span class="txt">Rename</span>
-        </li>
+      <li data-mode="video"
+          data-icon="./assets/icons/icon-video.png">
+        <span class="mi"><img alt=""></span><span class="txt">Video Slideshow</span>
+      </li>
 
-        <li data-mode="video"
-            data-icon="./assets/icons/icon-video.png">
-          <span class="mi"><img alt=""></span>
-          <span class="txt">Video Slideshow</span>
-        </li>
+      <li data-mode="watermark"
+          data-icon="./assets/icons/icon-watermark.png"
+          data-icon-active="./assets/icons/icon-watermark-selected.png">
+        <span class="mi"><img alt=""></span><span class="txt">Watermark</span>
+      </li>
 
-        <li data-mode="watermark"
-            data-icon="./assets/icons/icon-watermark.png"
-            data-icon-active="./assets/icons/icon-watermark-selected.png">
-          <span class="mi"><img alt=""></span>
-          <span class="txt">Watermark</span>
-        </li>
+      <li data-mode="bv"
+          data-icon="./assets/icons/icon-bv.png">
+        <span class="mi"><img alt=""></span><span class="txt">Biglietto da visita</span>
+      </li>
 
-        <li data-mode="bv"
-            data-icon="./assets/icons/icon-bv.png"
-            data-icon-active="./assets/icons/icon-bv-selected.png">
-          <span class="mi"><img alt=""></span>
-          <span class="txt">Biglietto da visita</span>
-        </li>
+      <li data-mode="qr"
+          data-icon="./assets/icons/icon-qr.png"
+          data-icon-active="./assets/icons/icon-qr-selected.png">
+        <span class="mi"><img alt=""></span><span class="txt">Genera QR Code</span>
+      </li>
 
-        <li data-mode="qr"
-            data-icon="./assets/icons/icon-qr.png"
-            data-icon-active="./assets/icons/icon-qr-selected.png">
-          <span class="mi"><img alt=""></span>
-          <span class="txt">Genera QR Code</span>
-        </li>
+      <li data-mode="iubenda"
+          data-icon="./assets/icons/icon-iubenda.png"
+          data-icon-active="./assets/icons/icon-iubenda-selected.png">
+        <span class="mi"><img alt=""></span><span class="txt">Iubenda</span>
+      </li>
 
-        <li data-mode="iubenda"
-            data-icon="./assets/icons/icon-iubenda.png"
-            data-icon-active="./assets/icons/icon-iubenda-selected.png">
-          <span class="mi"><img alt=""></span>
-          <span class="txt">Iubenda</span>
-        </li>
+    </ul>
+  </aside>
 
-      </ul>
-    </aside>
 
-    <!-- MAIN -->
-    <main>
-      <div class="content">
 
-        <div class="cards-scroll">
+  <!-- MAIN -->
+  <main>
+    <div class="content">
+      <div class="cards-scroll">
 
-          <!-- WELCOME -->
-          <section id="WelcomeCard" class="card">
-            <h2 id="WelcomeTitle">Welcome!</h2>
-            <p id="WelcomeSubtitle" class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
-          </section>
+        <!-- ✅ WELCOME -->
+        <section id="WelcomeCard" class="card">
+          <h2>Welcome!</h2>
+          <p class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
+        </section>
 
-          <!-- All card containers (vuote, JS inserisce contenuti) -->
-          <section id="SlugCard" class="card hidden"></section>
-          <section id="FormatCard" class="card hidden"></section>
-          <section id="UploadCard" class="card hidden"></section>
-          <section id="DTCard" class="card hidden"></section>
-          <section id="VideoCard" class="card hidden"></section>
-          <section id="BusinessCardCard" class="card hidden"></section>
-          <section id="QrCard" class="card hidden"></section>
-          <section id="IubendaCard" class="card hidden"></section>
 
-        </div>
 
-        <!-- ACTION BAR -->
-        <section id="ActionBar" class="actionbar">
-          <div class="action-left">
+        <!-- ✅ IMMAGINI – SLUG -->
+        <section id="SlugCard" class="card hidden">
+          <h3>Slug per il sito</h3>
 
-            <div id="ActionProgressWrap" class="action-progress hidden">
-              <div id="ActionProgressLabel" class="muted">Esportazione in corso…</div>
-              <progress id="ActionProgress" class="progress" max="100" value="0"></progress>
+          <label for="TxtSlugIta">Nome file ITA*</label>
+          <input id="TxtSlugIta" class="input" type="text" placeholder="es. appartamento-roma-parioli">
+
+          <label for="TxtSlugEng">Nome file ENG*</label>
+          <input id="TxtSlugEng" class="input" type="text" placeholder="es. apartment-rome-parioli">
+        </section>
+
+
+
+        <!-- ✅ IMMAGINI – FORMATI -->
+        <section id="FormatCard" class="card hidden">
+          <label>Formato</label>
+
+          <div class="radios" style="display:flex;flex-direction:column;gap:6px;">
+            <label><input type="radio" name="fmtSite" id="FmtSite1920" checked> 1920×1080 (Orizzontale)</label>
+            <label><input type="radio" name="fmtSite" id="FmtSiteShare"> Share (1200×630)</label>
+            <label><input type="radio" name="fmtSite" id="FmtSiteCustom"> Personalizzato</label>
+          </div>
+
+          <div id="CustomSizeRow" class="row hidden" style="margin-top:10px;">
+            <div>
+              <label>Larghezza (px)</label>
+              <input id="CustomW" class="input" type="number" value="1920">
             </div>
-
-            <div class="copyright">
-              © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
+            <div>
+              <label>Altezza (px)</label>
+              <input id="CustomH" class="input" type="number" value="1080">
             </div>
           </div>
 
-          <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
+          <p class="muted" style="margin-top:8px;">
+            <b>Nota:</b> scegli il formato finale. Con <b>Esporta</b> verranno generati i file ITA + ENG.
+          </p>
+        </section>
+
+
+
+        <!-- ✅ UPLOAD -->
+        <section id="UploadCard" class="card hidden">
+          <h3>Carica cartella*</h3>
+
+          <div id="DropArea" class="drop">
+            <div class="drop-inner">
+              <span id="TxtFolderPath" class="muted">Trascina qui la cartella...</span>
+              <button id="BtnClearPath" class="btn-small hidden">✕</button>
+            </div>
+          </div>
+        </section>
+
+
+
+        <!-- ✅ DIGITAL TOOL -->
+        <section id="DTCard" class="card hidden">
+          <h3>DigitalTool</h3>
+          <p class="muted">
+            Le immagini vengono uniformate per il web con le regole del tool desktop.
+          </p>
+        </section>
+
+
+
+        <!-- ✅ ALTRI MODULI FUTURI -->
+        <section id="VideoCard" class="card hidden">
+          <h3>Video Slideshow</h3>
+          <p class="muted">Questa funzione sarà attivata nelle prossime build.</p>
+        </section>
+
+        <section id="BusinessCardCard" class="card hidden">
+          <h3>Biglietto da visita</h3>
+          <p class="muted">Questa funzione sarà attivata nelle prossime build.</p>
+        </section>
+
+        <section id="QrCard" class="card hidden">
+          <h3>Genera QR Code</h3>
+          <p class="muted">Questa funzione sarà attivata nelle prossime build.</p>
+        </section>
+
+        <section id="IubendaCard" class="card hidden">
+          <h3>Iubenda</h3>
+          <p class="muted">Questa funzione sarà attivata nelle prossime build.</p>
         </section>
 
       </div>
-    </main>
 
-  </div>
 
-  <!-- Librerie -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+      <!-- ✅ ACTION BAR -->
+      <section id="ActionBar" class="actionbar">
+        <div class="action-left">
 
-  <!-- App logic -->
-  <script src="./js/app.js"></script>
+          <div id="ActionProgressWrap" class="action-progress hidden">
+            <div id="ActionProgressLabel" class="muted">Esportazione in corso…</div>
+            <progress id="ActionProgress" max="100" value="0" class="progress"></progress>
+          </div>
+
+          <div class="copyright">
+            © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
+          </div>
+        </div>
+
+        <button id="BtnProcedi" class="btn-primary hidden">Esporta ora</button>
+      </section>
+
+
+    </div>
+  </main>
+
+</div>
+
+<!-- JS LIBRARIES -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<!-- APP LOGIC -->
+<script src="./js/app.js"></script>
 
 </body>
 </html>

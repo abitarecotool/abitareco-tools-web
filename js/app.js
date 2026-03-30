@@ -253,7 +253,7 @@ async function loadFolderMap(){
 async function exportImages(){
   const slugIta = slugify(TxtSlugIta?.value||'');
   const slugEng = slugify(TxtSlugEng?.value||'');
-  if (!slugIta || !slugEng){ alert('Inserisci gli slug ITA/ENG.'); return; }
+  if (!slugIta || !slugEng){ alert('Inserisci i nomi file ITA/ENG.'); return; }
   if (!picked.length){ alert('Seleziona o trascina una cartella con immagini.'); return; }
 
   const {w:W, h:H} = getSelectedFormat();
@@ -331,14 +331,15 @@ async function exportImages(){
   await sleep(250); hide(ActionProgressWrap);
 }
 
-/* =================== DIGITAL TOOL (numeric only, per-cartella) =================== */
+/* =================== DIGITAL TOOL (numeric-only; quadre 2000×2000 cover) =================== */
 function makeCanvasFromRules(bmp){
   const w=bmp.width, h=bmp.height;
   const ratio = w/h;
   const square = Math.abs(ratio - 1.0) <= 0.03;
 
   if (square){
-    const W=2500,H=2500;
+    // 🔁 quadre → 2000x2000 cover (come richiesto)
+    const W=2000, H=2000;
     const scale = Math.max(W/w, H/h);
     const dw=Math.round(w*scale), dh=Math.round(h*scale);
     const dx=Math.round((W-dw)/2), dy=Math.round((H-dh)/2);
@@ -349,6 +350,7 @@ function makeCanvasFromRules(bmp){
     return c;
   }
   if (w>=h){
+    // orizzontali → larghezza 2500 px
     const W=2500, scale=W/w, outW=W, outH=Math.round(h*scale);
     const c=document.createElement('canvas'); c.width=outW; c.height=outH;
     const ctx=c.getContext('2d',{alpha:false});
@@ -356,6 +358,7 @@ function makeCanvasFromRules(bmp){
     ctx.drawImage(bmp, 0, 0, outW, outH);
     return c;
   }
+  // verticali → altezza 2000 px
   const H=2000, scale=H/h, outH=H, outW=Math.round(w*scale);
   const c=document.createElement('canvas'); c.width=outW; c.height=outH;
   const ctx=c.getContext('2d',{alpha:false});
@@ -363,6 +366,7 @@ function makeCanvasFromRules(bmp){
   ctx.drawImage(bmp, 0, 0, outW, outH);
   return c;
 }
+
 // Ricompressione a scalini <= 450 KB (85 → 75 → 65 → 50 → 40)
 async function canvasToBlobCapped(canvas, mime){
   const ladder = [0.85, 0.75, 0.65, 0.50, 0.40];
@@ -373,9 +377,10 @@ async function canvasToBlobCapped(canvas, mime){
     if (q === ladder[ladder.length-1]) return blob;
   }
 }
+
 async function exportDigitalTool(){
   if (!picked.length){
-    alert('Seleziona o trascina una cartella con immagini.'); 
+    alert('Seleziona o trascina una cartella con immagini.');
     return;
   }
 
@@ -402,7 +407,7 @@ async function exportDigitalTool(){
     // Percorso in ZIP
     const basePath = `_DIGITALTOOL/${relFolder ? relFolder + '/' : ''}`;
 
-    // Resize secondo regole PS
+    // Resize secondo nuove regole
     const bmp = await loadImageBitmap(rec.file);
     const canvas = makeCanvasFromRules(bmp);
 

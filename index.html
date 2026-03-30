@@ -5,323 +5,178 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Abitare Co. – Digital Content Tool</title>
 
-  <link rel="icon" href="./assets/logo.ico" type="image/x-icon">
+  <!-- Favicon (opzionale) -->
+  <link rel="icon" href="./assets/logo.ico" type="image/x-icon" />
 
-  <!-- Manrope font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Manrope -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
+  <!-- Stili -->
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
-<div id="AppRoot" class="app">
+  <div id="AppRoot" class="app">
 
-  <!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
-  <aside class="sidebar">
-    <img src="./assets/logo.png" class="logo" alt="Abitare Co." onerror="this.style.display='none'">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <img class="logo" src="./assets/logo.png" alt="Abitare Co." onerror="this.style.display='none'"/>
 
-    <ul id="SideMenu" class="menu">
+      <ul id="SideMenu" class="menu">
+        <!-- Niente 'Home': apriamo su Welcome, ma non c’è nel menu -->
+        <li data-mode="images"
+            data-icon="assets/icons/icon-sito.png"
+            data-icon-active="assets/icons/icon-sito-selected.png">
+          <span class="mi"><img alt=""></span><span class="txt">Immagini</span>
+        </li>
 
-      <li data-mode="images-sito"
-          data-icon="assets/icons/icon-sito.png"
-          data-icon-active="assets/icons/icon-sito-selected.png">
-        <span class="mi"><img alt=""></span>
-        <span class="txt">Immagini Sito</span>
-      </li>
+        <li data-mode="digitaltool"
+            data-icon="assets/icons/icon-digital.png"
+            data-icon-active="assets/icons/icon-digital-selected.png">
+          <span class="mi"><img alt=""></span><span class="txt">DigitalTool</span>
+        </li>
 
-      <li data-mode="images-share"
-          data-icon="assets/icons/icon-share.png"
-          data-icon-active="assets/icons/icon-share-selected.png">
-        <span class="mi"><img alt=""></span>
-        <span class="txt">Immagini Share</span>
-      </li>
+        <li data-mode="pdf2jpg"
+            data-icon="assets/icons/icon-pdf.png"
+            data-icon-active="assets/icons/icon-pdf-selected.png">
+          <span class="mi"><img alt=""></span><span class="txt">PDF → JPG</span>
+        </li>
 
-      <li data-mode="digitaltool"
-          data-icon="assets/icons/icon-digital.png"
-          data-icon-active="assets/icons/icon-digital-selected.png">
-        <span class="mi"><img alt=""></span>
-        <span class="txt">DigitalTool</span>
-      </li>
+        <li data-mode="rename"
+            data-icon="assets/icons/icon-rename.png">
+          <span class="mi"><img alt=""></span><span class="txt">Rename</span>
+        </li>
 
-      <li data-mode="pdf2jpg"
-          data-icon="assets/icons/icon-pdf.png"
-          data-icon-active="assets/icons/icon-pdf-selected.png">
-        <span class="mi"><img alt=""></span>
-        <span class="txt">PDF → JPG</span>
-      </li>
+        <li data-mode="video"
+            data-icon="assets/icons/icon-video.png">
+          <span class="mi"><img alt=""></span><span class="txt">Video Slideshow</span>
+        </li>
 
-      <li data-mode="rename"
-          data-icon="assets/icons/icon-rename.png"
-          data-icon-active="assets/icons/icon-rename-selected.png">
-        <span class="mi"><img alt=""></span>
-        <span class="txt">Rename</span>
-      </li>
+        <li data-mode="watermark"
+            data-icon="assets/icons/icon-watermark.png"
+            data-icon-active="assets/icons/icon-watermark-selected.png">
+          <span class="mi"><img alt=""></span><span class="txt">Watermark</span>
+        </li>
 
-      <li data-mode="video"
-          data-icon="assets/icons/icon-video.png"
-          data-icon-active="assets/icons/icon-video-selected.png">
-        <span class="mi"><img alt=""></span>
-        <span class="txt">Video Slideshow</span>
-      </li>
+        <li data-mode="bv"
+            data-icon="assets/icons/icon-bv.png">
+          <span class="mi"><img alt=""></span><span class="txt">Biglietto da visita</span>
+        </li>
 
-      <li data-mode="watermark"
-          data-icon="assets/icons/icon-watermark.png"
-          data-icon-active="assets/icons/icon-watermark-selected.png">
-        <span class="mi"><img alt=""></span>
-        <span class="txt">Watermark</span>
-      </li>
+        <li data-mode="qr"
+            data-icon="assets/icons/icon-qr.png"
+            data-icon-active="assets/icons/icon-qr-selected.png">
+          <span class="mi"><img alt=""></span><span class="txt">Genera QR Code</span>
+        </li>
 
-      <li data-mode="bv"
-          data-icon="assets/icons/icon-bv.png"
-          data-icon-active="assets/icons/icon-bv-selected.png">
-        <span class="mi"><img alt=""></span>
-        <span class="txt">Biglietto da visita</span>
-      </li>
+        <li data-mode="iubenda"
+            data-icon="assets/icons/icon-iubenda.png"
+            data-icon-active="assets/icons/icon-iubenda-selected.png">
+          <span class="mi"><img alt=""></span><span class="txt">Iubenda</span>
+        </li>
+      </ul>
+    </aside>
 
-      <li data-mode="qr"
-          data-icon="assets/icons/icon-qr.png"
-          data-icon-active="assets/icons/icon-qr-selected.png">
-        <span class="mi"><img alt=""></span>
-        <span class="txt">Genera QR Code</span>
-      </li>
+    <!-- MAIN -->
+    <main>
+      <div class="content">
+        <div class="cards-scroll">
 
-      <li data-mode="iubenda"
-          data-icon="assets/icons/icon-iubenda.png"
-          data-icon-active="assets/icons/icon-iubenda-selected.png">
-        <span class="mi"><img alt=""></span>
-        <span class="txt">Iubenda</span>
-      </li>
+          <!-- Welcome (niente bottone Esporta) -->
+          <section id="WelcomeCard" class="card">
+            <h2 id="WelcomeTitle">Welcome!</h2>
+            <p id="WelcomeSubtitle" class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
+          </section>
 
-    </ul>
-  </aside>
-
-  <!-- ═══════════════════════ MAIN ═══════════════════════════ -->
-  <main>
-    <div class="content">
-
-      <!-- scrollable cards area -->
-      <div class="cards-scroll">
-
-        <!-- ─── WELCOME ────────────────────────────────────── -->
-        <section id="WelcomeCard" class="card">
-          <h2 id="WelcomeTitle">Welcome!</h2>
-          <p id="WelcomeSubtitle" class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
-        </section>
-
-        <!-- ─── SLUG ──────────────────────────────────────── -->
-        <section id="SlugCard" class="card hidden">
-          <div class="form-group">
-            <label for="TxtSlugIta">Slug ITA *</label>
-            <input id="TxtSlugIta" class="input" type="text" placeholder="es. appartamento-roma-parioli" />
-          </div>
-          <div class="form-group">
-            <label for="TxtSlugEng">Slug ENG *</label>
-            <input id="TxtSlugEng" class="input" type="text" placeholder="es. apartment-rome-parioli" />
-          </div>
-        </section>
-
-        <!-- ─── UPLOAD CARTELLA ───────────────────────────── -->
-        <section id="UploadCard" class="card hidden">
-          <h3>Carica cartella *</h3>
-          <div id="DropArea" class="drop" tabindex="0" role="button" aria-label="Carica cartella">
-            <div class="drop-inner">
-              <span id="TxtFolderPath" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
-              <button id="BtnClearPath" class="btn-small hidden" title="Rimuovi cartella" type="button">✕</button>
-            </div>
-          </div>
-        </section>
-
-        <!-- ─── VIDEO SLIDESHOW ───────────────────────────── -->
-        <section id="VideoCard" class="card hidden">
-          <p class="form-section-title">Video Slideshow</p>
-          <p class="form-section-sub">Questa funzione richiede FFmpeg e non è disponibile nella versione web. Usa la versione desktop.</p>
-
-          <div class="video-desktop-note" id="VideoDesktopNote">
-            <span class="icon">⚠️</span>
-            <div>
-              <strong>Funzione disponibile solo nella versione desktop</strong><br>
-              Il Video Slideshow utilizza FFmpeg per generare video MP4 da sequenze di immagini.
-              Scarica e usa la versione desktop per questa funzione.
-            </div>
-          </div>
-
-          <!-- Campi visibili ma disabilitati (solo per reference visiva) -->
-          <div style="margin-top:20px; opacity:.45; pointer-events:none;">
+          <!-- ========= IMMAGINI ========= -->
+          <section id="SlugCard" class="card hidden">
             <div class="form-group">
-              <label>Nome video *</label>
-              <input class="input" type="text" disabled placeholder="es. video-appartamento-roma" />
+              <label for="TxtSlugIta">Nome file ITA*</label>
+              <input id="TxtSlugIta" class="input" type="text" placeholder="es. appartamento-roma-parioli" />
             </div>
             <div class="form-group">
-              <label>Durata</label>
-              <select class="input" disabled style="height:41px; cursor:not-allowed;">
-                <option>30 secondi</option>
-                <option>45 secondi</option>
-                <option>60 secondi</option>
-              </select>
+              <label for="TxtSlugEng">Nome file ENG*</label>
+              <input id="TxtSlugEng" class="input" type="text" placeholder="es. apartment-rome-parioli" />
             </div>
-            <div>
-              <label>Formato</label>
-              <div class="radios" style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
-                <label><input type="radio" disabled checked> Orizzontale (1920×1080)</label>
-                <label><input type="radio" disabled> Verticale (1080×1920)</label>
-                <label><input type="radio" disabled> Quadrato (1080×1080)</label>
+          </section>
+
+          <section id="FormatCard" class="card hidden">
+            <label>Formato</label>
+            <div class="radios" style="display:flex; flex-direction:column; gap:6px;">
+              <label><input type="radio" name="fmtSite" id="FmtSite1920" value="1920x1080" checked> 1920×1080 (Orizzontale)</label>
+              <label><input type="radio" name="fmtSite" id="FmtSiteShare" value="1200x630"> Share (1200×630)</label>
+              <label><input type="radio" name="fmtSite" id="FmtSiteCustom" value="custom"> Personalizzato</label>
+            </div>
+
+            <div id="CustomSizeRow" class="row hidden" style="margin-top:10px; gap:12px;">
+              <div>
+                <label>Larghezza (px)</label>
+                <input id="CustomW" class="input" type="number" min="1" value="1920" />
+              </div>
+              <div>
+                <label>Altezza (px)</label>
+                <input id="CustomH" class="input" type="number" min="1" value="1080" />
               </div>
             </div>
-          </div>
-        </section>
 
-        <!-- ─── BIGLIETTO DA VISITA ───────────────────────── -->
-        <section id="BusinessCardCard" class="card hidden">
-          <p class="form-section-title">Che biglietto da visita vuoi generare?</p>
-          <p class="form-section-sub">Seleziona il brand, compila i campi e clicca "Esporta ora" per scaricare il PDF.</p>
+            <p class="muted" style="margin-top:8px;">
+              <b>Nota:</b> scegli il formato finale (orizzontale, share o su misura).
+              Con <b>Esporta</b> prepariamo i file in ITA e in ENG con i nomi che hai scritto sopra.
+            </p>
+          </section>
 
-          <div class="brand-pills">
-            <button class="brand-pill" data-brand="abitareco"   type="button">Abitare Co.</button>
-            <button class="brand-pill" data-brand="commercial"  type="button">Abitare Commercial</button>
-            <button class="brand-pill" data-brand="riabitareco" type="button">RiAbitare Co.</button>
-          </div>
-
-          <!-- Form BV (hidden until brand selected) -->
-          <div id="BvForm" class="hidden">
-            <div class="form-group">
-              <label for="TxtBVName">Nome e Cognome *</label>
-              <input id="TxtBVName" class="input" type="text" placeholder="es. Mario Rossi" />
-            </div>
-            <div class="form-group">
-              <label for="TxtBVJob">Job title *</label>
-              <input id="TxtBVJob" class="input" type="text" placeholder="es. Sales Manager" />
-            </div>
-            <div class="form-group">
-              <label for="TxtBVPhone">Cellulare *</label>
-              <input id="TxtBVPhone" class="input" type="text" placeholder="+39 333 0000000" />
-            </div>
-            <div class="form-group">
-              <label for="TxtBVEmail">Email *</label>
-              <input id="TxtBVEmail" class="input" type="text" placeholder="mario.rossi@abitareco.it" />
-            </div>
-
-            <!-- REA (solo AbitareCo) -->
-            <div id="ChkBvReaWrap" class="hidden" style="margin-top:4px;">
-              <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;margin-bottom:0;">
-                <input type="checkbox" id="ChkBvRea">
-                Iscritto REA
-              </label>
-              <div id="ReaField" class="hidden" style="margin-top:10px;">
-                <label for="TxtBVReaCode">Codice REA</label>
-                <input id="TxtBVReaCode" class="input" type="text" placeholder="es. MI-12345" />
+          <!-- Upload condiviso -->
+          <section id="UploadCard" class="card hidden">
+            <h3>Carica cartella*</h3>
+            <div id="DropArea" class="drop" tabindex="0" role="button" aria-label="Carica cartella" title="Clicca per selezionare una cartella o trascinala qui">
+              <div class="drop-inner">
+                <span id="TxtFolderPath" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
+                <button id="BtnClearPath" class="btn-small hidden" title="Rimuovi cartella" type="button">✕</button>
               </div>
             </div>
-          </div>
-        </section>
+            <!-- input directory creato via JS quando serve -->
+          </section>
 
-        <!-- ─── QR CODE ───────────────────────────────────── -->
-        <section id="QrCard" class="card hidden">
-          <p class="form-section-title">Genera QR Code con UTM</p>
-          <p class="form-section-sub">Compila i campi richiesti (*) per generare l'URL con parametri UTM e il QR Code.</p>
+          <!-- ========= DIGITAL TOOL ========= -->
+          <section id="DTCard" class="card hidden">
+            <h3>Nota:</h3>
+            <p class="muted">
+              Prendiamo le foto dalla cartella e le uniformiamo per il web: il lato corto è 2000&nbsp;px.
+              Le immagini quadrate vengono centrate e ritagliate a 2000×2000. Alla fine trovi i file numerati
+              <b>01, 02, 03…</b> sia in JPG che in WEBP (la numerazione riparte in ogni cartella).
+            </p>
+          </section>
 
-          <div class="form-group">
-            <label for="TxtQrUrl">Website URL *</label>
-            <input id="TxtQrUrl" class="input" type="text" placeholder="https://www.abitareco.it/..." />
-          </div>
-          <div class="form-group">
-            <label for="TxtQrCampaignId">Campaign ID</label>
-            <input id="TxtQrCampaignId" class="input" type="text" placeholder="es. promo-2026" />
-          </div>
-          <div class="form-group">
-            <label for="TxtQrSource">Campaign source *</label>
-            <input id="TxtQrSource" class="input" type="text" placeholder="es. qrcode, instagram, google" />
-          </div>
-          <div class="form-group">
-            <label for="TxtQrMedium">Campaign medium *</label>
-            <input id="TxtQrMedium" class="input" type="text" placeholder="es. print, social, cpc" />
-          </div>
-          <div class="form-group">
-            <label for="TxtQrCampaign">Campaign name *</label>
-            <input id="TxtQrCampaign" class="input" type="text" placeholder="es. open-day-2026" />
-          </div>
-          <div class="form-group">
-            <label for="TxtQrTerm">Campaign term</label>
-            <input id="TxtQrTerm" class="input" type="text" placeholder="es. appartamento-lusso" />
-          </div>
-          <div class="form-group">
-            <label for="TxtQrContent">Campaign content</label>
-            <input id="TxtQrContent" class="input" type="text" placeholder="es. banner-rosso" />
-          </div>
+          <!-- Placeholder (attiveremo dopo) -->
+          <section id="VideoCard" class="card hidden"></section>
+          <section id="BusinessCardCard" class="card hidden"></section>
+          <section id="QrCard" class="card hidden"></section>
+          <section id="IubendaCard" class="card hidden"></section>
 
-          <p class="qr-preview-label">URL generata:</p>
-          <div id="TxtQrPreview" style="
-            font-size:12px; color:#6b7280; word-break:break-all;
-            background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px;
-            padding:10px 12px; min-height:48px; line-height:1.6;">—</div>
-        </section>
+        </div> <!-- /cards-scroll -->
 
-        <!-- ─── IUBENDA ────────────────────────────────────── -->
-        <section id="IubendaCard" class="card hidden">
-          <p class="form-section-title">Genera snippet iubenda</p>
-          <p class="form-section-sub">Inserisci widget URL, siteId e cookiePolicyId. Preview pulita qui, export .txt con commenti.</p>
+        <!-- ACTION BAR -->
+        <section id="ActionBar" class="actionbar">
+          <div class="action-left">
+            <div id="ActionProgressWrap" class="action-progress hidden">
+              <div id="ActionProgressLabel" class="muted">Esportazione in corso…</div>
+              <progress id="ActionProgress" class="progress" max="100" value="0"></progress>
+            </div>
 
-          <div class="form-group">
-            <label for="TxtIubWidgetUrl">Widget URL *</label>
-            <input id="TxtIubWidgetUrl" class="input" type="text"
-              placeholder="es. &lt;script type=&quot;text/javascript&quot; src=&quot;...&quot;&gt;" />
-          </div>
-          <div class="form-group">
-            <label for="TxtIubSiteId">siteId *</label>
-            <input id="TxtIubSiteId" class="input" type="text" placeholder="es. 1234567" />
-          </div>
-          <div class="form-group">
-            <label for="TxtIubCookieIt">cookiePolicyId (IT) *</label>
-            <input id="TxtIubCookieIt" class="input" type="text" placeholder="es. 98765432" />
-          </div>
-
-          <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;margin-bottom:12px;">
-            <input type="checkbox" id="ChkIubEnableEn">
-            Sito anche in inglese
-          </label>
-
-          <div id="IubEnPanel" class="hidden">
-            <div class="form-group">
-              <label for="TxtIubCookieEn">cookiePolicyId (EN) *</label>
-              <input id="TxtIubCookieEn" class="input" type="text" placeholder="es. 12345678" />
+            <div class="copyright">
+              © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
             </div>
           </div>
 
-          <label style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;display:block;">
-            Preview snippet (senza commenti):
-          </label>
-          <textarea id="TxtIubPreview" class="input" readonly
-            style="font-family:'Consolas',monospace;font-size:11.5px;height:220px;resize:vertical;background:#f9fafb;color:#374151;margin-bottom:12px;"></textarea>
-
-          <button id="BtnIubCopy" class="btn-outline" type="button">Copia codice</button>
+          <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
         </section>
+      </div>
+    </main>
+  </div>
 
-      </div><!-- /cards-scroll -->
-
-      <!-- ─── ACTION BAR ─────────────────────────────────── -->
-      <section id="ActionBar" class="actionbar">
-        <div class="action-left">
-          <div id="ActionProgressWrap" class="action-progress hidden">
-            <div id="ActionProgressLabel" class="muted">Esportazione in corso…</div>
-            <progress id="ActionProgress" class="progress" max="100" value="0"></progress>
-          </div>
-          <div class="copyright">
-            © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
-          </div>
-        </div>
-
-        <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
-      </section>
-
-    </div><!-- /content -->
-  </main>
-
-</div><!-- /AppRoot -->
-
-<!-- ─── Librerie ────────────────────────────────────────── -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-<!-- ─── App ─────────────────────────────────────────────── -->
-<script src="./js/app.js"></script>
+  <!-- Librerie -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="./js/app.js"></script>
 </body>
 </html>

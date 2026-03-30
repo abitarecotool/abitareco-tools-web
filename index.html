@@ -32,7 +32,9 @@
     <aside class="sidebar">
 
       <!-- ✅ LOGO PNG ORIGINALE -->
-      <img src="./assets/logo.png" class="logo" altass="menu">
+      <img src="./assets/logo.png" class="logo" alt="Abitare Co." />
+
+      <ul id="SideMenu" class="menu">
 
         <li data-mode="images"
             data-icon="./assets/icons/icon-sito.png"
@@ -56,6 +58,11 @@
             data-icon="./assets/icons/icon-rename.png"
             data-icon-active="./assets/icons/icon-rename-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Rename</span>
+        </li>
+
+        <li data-mode="video"
+            data-icon="./assets/icons/icon-video.png">
+          <span class="mi"><img alt=""></span><span class="txt">Video Slideshow</span>
         </li>
 
         <li data-mode="watermark"
@@ -84,7 +91,6 @@
 
       </ul>
     </aside>
-
 
     <!-- MAIN -->
     <main>
@@ -145,17 +151,17 @@
             </div>
           </section>
 
-          <!-- ✅ DIGITAL TOOL -->
+          <!-- ✅ DIGITAL TOOL (Nota rimossa) -->
           <section id="DTCard" class="card hidden">
-            <h3>DigitalTool</h3>
+          <h3>DigitalTool</h3>
             <p class="muted" style="margin-top:6px; line-height:1.6;">
-              Questo strumento ottimizza automaticamente le immagini per l’utilizzo digitale:
-              le rende omogenee, leggere e pronte all’uso. Carica la cartella e premi
-              <b>Esporta ora</b>.
+              Questo strumento ottimizza automaticamente le immagini per l’utilizzo digitale: 
+              le rende omogenee, leggere e pronte all’uso. Carica la cartella e clicca su 
+              <b>Esporta ora</b> per ottenere il risultato finale.
             </p>
           </section>
 
-          <!-- ✅ RENAME -->
+          <!-- ✅ RENAME COMPLETO -->
           <section id="RenameCard" class="card hidden">
             <h3>Rinomina files</h3>
 
@@ -179,33 +185,15 @@
             </div>
           </section>
 
-          <!-- ✅ WATERMARK -->
-          <section id="WatermarkCard" class="card hidden">
-            <h3>Watermark Portali</h3>
-            <p class="muted" style="margin-bottom:16px">
-              Prepara automaticamente le immagini e i PDF per l’upload sui portali immobiliari,
-              applicando il watermark centrale.
-            </p>
-
-            <div class="form-group">
-              <label>Carica cartella principale*</label>
-              <div id="DropAreaWater" class="drop">
-                <div class="drop-inner">
-                  <span id="TxtFolderWater" class="muted">Trascina qui la cartella…</span>
-                  <button id="BtnClearWater" class="btn-small hidden">✕</button>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- PLACEHOLDERS -->
+          <!-- PLACEHOLDER FUTURI -->
+          <section id="VideoCard" class="card hidden"><h3>Video Slideshow</h3></section>
           <section id="BusinessCardCard" class="card hidden"><h3>Biglietto da visita</h3></section>
           <section id="QrCard" class="card hidden"><h3>Genera QR Code</h3></section>
           <section id="IubendaCard" class="card hidden"><h3>Iubenda</h3></section>
 
         </div>
 
-        <!-- ACTION BAR -->
+        <!-- ✅ ACTION BAR -->
         <section id="ActionBar" class="actionbar">
           <div class="action-left">
             <div id="ActionProgressWrap" class="action-progress hidden">
@@ -226,9 +214,10 @@
 
   </div>
 
-  <!-- ✅ JS LIBRARIES -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min APP LOGIC -->
-  <script src="./ript>
+  <!-- LIBRARIES -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
+  <!-- APP LOGIC -->
+  <script src="./js/app.js"></script>
 </body>
 </html>

@@ -6,71 +6,70 @@
   <title>Abitare Co. – Digital Content Tool (Web)</title>
 
   <!-- Font Manrope -->
-  https://fonts.googleapis.com
-  https://fonts.gstatic.com
-  https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!-- Stili -->
-  ./css/styles.css
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
   <div id="AppRoot" class="app">
 
     <!-- SIDEBAR fissa -->
     <aside class="sidebar">
-      ./assets/logo.png
+      <img src="./assets/logo.png" class="logo" alt="Abitare Co.">
 
       <ul id="SideMenu" class="menu">
-        <!-- NIENTE 'Home': apriamo su Welcome ma senza voce nel menu -->
+        <!-- NB: data-mode = robusto; nessun indice fragile -->
         <li data-mode="images"
             data-icon="assets/icons/icon-sito.png"
             data-icon-active="assets/icons/icon-sito-selected.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Immagini</span>
+          <span class="mi"><img alt=""></span><span class="txt">Immagini</span>
         </li>
 
         <li data-mode="digitaltool"
-            data-icon="assets/icons/icon-digital.png"
-            data-icon-active="assets/icons/icon-digital-selected.png">
-          <span class="mi"><img alt="" /></span><span class="txt">DigitalTool</span>
+            data-icon="assets/icons/icon-digital.png">
+          <span class="mi"><img alt=""></span><span class="txt">DigitalTool</span>
         </li>
 
         <li data-mode="pdf2jpg"
             data-icon="assets/icons/icon-pdf.png"
             data-icon-active="assets/icons/icon-pdf-selected.png">
-          <span class="mi"><img alt="" /></span><span class="txt">PDF → JPG</span>
+          <span class="mi"><img alt=""></span><span class="txt">PDF → JPG</span>
         </li>
 
         <li data-mode="rename"
             data-icon="assets/icons/icon-rename.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Rename</span>
+          <span class="mi"><img alt=""></span><span class="txt">Rename</span>
         </li>
 
         <li data-mode="video"
             data-icon="assets/icons/icon-video.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Video Slideshow</span>
+          <span class="mi"><img alt=""></span><span class="txt">Video Slideshow</span>
         </li>
 
         <li data-mode="watermark"
             data-icon="assets/icons/icon-watermark.png"
             data-icon-active="assets/icons/icon-watermark-selected.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Watermark</span>
+          <span class="mi"><img alt=""></span><span class="txt">Watermark</span>
         </li>
 
         <li data-mode="bv"
             data-icon="assets/icons/icon-bv.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Biglietto da visita</span>
+          <span class="mi"><img alt=""></span><span class="txt">Biglietto da visita</span>
         </li>
 
         <li data-mode="qr"
             data-icon="assets/icons/icon-qr.png"
             data-icon-active="assets/icons/icon-qr-selected.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Genera QR Code</span>
+          <span class="mi"><img alt=""></span><span class="txt">Genera QR Code</span>
         </li>
 
         <li data-mode="iubenda"
             data-icon="assets/icons/icon-iubenda.png"
             data-icon-active="assets/icons/icon-iubenda-selected.png">
-          <span class="mi"><img alt="" /></span><span class="txt">Iubenda</span>
+          <span class="mi"><img alt=""></span><span class="txt">Iubenda</span>
         </li>
       </ul>
     </aside>
@@ -79,7 +78,7 @@
     <main>
       <div class="content">
 
-        <!-- Welcome (default; niente bottone Esporta) -->
+        <!-- Welcome (default) -->
         <section id="WelcomeCard" class="card">
           <h2 id="WelcomeTitle">Welcome!</h2>
           <p id="WelcomeSubtitle" class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
@@ -112,35 +111,20 @@
             </div>
           </div>
 
-          <p class="muted" style="margin-top:8px;">L’export userà crop centrato e spazio colore sRGB (strip metadati).</p>
+          <p class="muted" style="margin-top:8px;">L’export userà crop centrato e spazio colore sRGB.</p>
         </section>
 
-        <!-- Upload condiviso -->
         <section id="UploadCard" class="card hidden">
           <h3>Carica cartella*</h3>
-          <div id="DropArea" class="drop" tabindex="0" title="Clicca per selezionare una cartella o trascinala qui">
+          <div id="DropArea" class="drop" tabindex="0">
             <div class="drop-inner">
               <span id="TxtFolderPath" class="muted">Trascina qui la cartella...</span>
               <button id="BtnClearPath" class="btn-small hidden" title="Pulisci">✕</button>
             </div>
           </div>
-
-          <!-- input nascosto per selezionare cartella al click -->
-          <input id="DirInput" type="file" webkitdirectory multiple class="hidden" />
         </section>
 
-        <!-- ========= DIGITAL TOOL ========= -->
-        <section id="DTCard" class="card hidden">
-          <h3>DigitalTool</h3>
-          <p class="muted">
-            Esporta le immagini rinominate per cartella (<code>slug-cartella-01</code>, <code>02</code>, …) in <b>JPG</b> e <b>WEBP</b>.
-            Regole: <b>quadre 2500×2500 (cover)</b>, <b>orizzontali 2500 px</b>, <b>verticali 2000 px</b>,
-            qualità 0.85 e ricompressione ≤ 450 KB.
-          </p>
-          <p class="muted">Clicca il box sopra per scegliere la cartella (oppure trascinala) e premi <b>Esporta ora</b>.</p>
-        </section>
-
-        <!-- Placeholder altre card -->
+        <!-- (Altre sezioni pronte per gli step successivi) -->
         <section id="VideoCard" class="card hidden"></section>
         <section id="BusinessCardCard" class="card hidden"></section>
         <section id="QrCard" class="card hidden"></section>
@@ -159,7 +143,6 @@
             </div>
           </div>
 
-          <!-- Nascosto in Welcome via JS -->
           <button id="BtnProcedi" class="btn-primary" type="button">Esporta ora</button>
         </section>
 
@@ -169,7 +152,7 @@
   </div>
 
   <!-- Libreria ZIP + App -->
-  <script/cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="./js/app.js"></script>
 </body>
 </html>

@@ -21,10 +21,10 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <img class="logo" src="./assets/logo.png" alt="Abitare Co." onerror="this.style.display='none'"/>
+      <img class="logo" src="./assets/logo.png" alt="Abitare Co." />
 
       <ul id="SideMenu" class="menu">
-        <!-- Niente 'Home': apriamo su Welcome, ma non c’è nel menu -->
+        <!-- Niente 'Home': apriamo su Welcome ma non è nel menu -->
         <li data-mode="images"
             data-icon="assets/icons/icon-sito.png"
             data-icon-active="assets/icons/icon-sito-selected.png">
@@ -135,7 +135,6 @@
                 <button id="BtnClearPath" class="btn-small hidden" title="Rimuovi cartella" type="button">✕</button>
               </div>
             </div>
-            <!-- input directory creato via JS quando serve -->
           </section>
 
           <!-- ========= DIGITAL TOOL ========= -->
@@ -144,7 +143,7 @@
             <p class="muted">
               Prendiamo le foto dalla cartella e le uniformiamo per il web: il lato corto è 2000&nbsp;px.
               Le immagini quadrate vengono centrate e ritagliate a 2000×2000. Alla fine trovi i file numerati
-              <b>01, 02, 03…</b> sia in JPG che in WEBP (la numerazione riparte in ogni cartella).
+              <b>01, 02, 03…</b> separati per formato in due cartelle: <b>WEBP/</b> e <b>JPG/</b> all’interno di ogni cartella d’origine.
             </p>
           </section>
 
@@ -154,7 +153,7 @@
           <section id="QrCard" class="card hidden"></section>
           <section id="IubendaCard" class="card hidden"></section>
 
-        </div> <!-- /cards-scroll -->
+        </div><!-- /cards-scroll -->
 
         <!-- ACTION BAR -->
         <section id="ActionBar" class="actionbar">

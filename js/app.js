@@ -1,6 +1,6 @@
 /* =========================================================
    Abitare Co. – Digital Content Tool (Web)
-   app.js — Immagini + DigitalTool (WEBP/JPG separati) + PDF→JPG
+   app.js — Immagini + DigitalTool + PDF→JPG + Rename
    ========================================================= */
 
 "use strict";
@@ -24,6 +24,7 @@ const SlugCard     = $('#SlugCard');
 const FormatCard   = $('#FormatCard');
 const UploadCard   = $('#UploadCard');
 const DTCard       = $('#DTCard');
+const RenameCard   = $('#RenameCard');
 const VideoCard    = $('#VideoCard');
 const BvCard       = $('#BusinessCardCard');
 const QrCard       = $('#QrCard');
@@ -35,6 +36,7 @@ const ALL_CARDS = [
   FormatCard,
   UploadCard,
   DTCard,
+  RenameCard,
   VideoCard,
   BvCard,
   QrCard,
@@ -42,33 +44,40 @@ const ALL_CARDS = [
 ];
 
 /* Stato */
-let picked = [];
+let picked = [];          // Per Immagini / DigitalTool / PDF2JPG
+let pickedRename = [];    // Per Rename
 let currentMode = null;
 
-/* Icone sidebar */
+/* ============= ICON SWITCHING ============= */
 function initSidebarIcons(){
   $$('#SideMenu li').forEach(li=>{
     const img = li.querySelector('.mi img');
-    if (img && li.dataset.icon) img.src = li.dataset.icon;
+    if (img && li.dataset.icon){
+      img.src = li.dataset.icon;
+    }
   });
 }
 
 function activateMenuVisual(mode){
   $$('#SideMenu li').forEach(li=>{
-    li.classList.toggle('active', li.dataset.mode === mode);
+    const active = li.dataset.mode === mode;
+    li.classList.toggle('active', active);
+
     const img = li.querySelector('.mi img');
     if (!img) return;
-    img.src = (li.dataset.mode === mode
+
+    img.src = active
       ? (li.dataset.iconActive || li.dataset.icon)
-      : (li.dataset.icon || img.src));
+      : (li.dataset.icon || img.src);
   });
 }
 
-/* Navigazione */
+/* ============= NAVIGAZIONE ============= */
 function selectMode(mode){
   currentMode = mode;
+
   ALL_CARDS.forEach(hideEl);
-  BtnProcedi.classList.remove('hidden');
+  BtnProcedi.classList.remove('hidden'); 
 
   switch(mode){
 
@@ -85,8 +94,8 @@ function selectMode(mode){
       break;
 
     case 'digitaltool':
-      showEl(UploadCard);
       showEl(DTCard);
+      showEl(UploadCard);
       break;
 
     case 'pdf2jpg':
@@ -94,11 +103,10 @@ function selectMode(mode){
       break;
 
     case 'rename':
-      showEl(UploadCard);
+      showEl(RenameCard);
       break;
 
     case 'video':
-      showEl(UploadCard);
       showEl(VideoCard);
       break;
 
@@ -139,67 +147,135 @@ SideMenu?.addEventListener('click', (e)=>{
 initSidebarIcons();
 selectMode('welcome');
 
-/* =================== Upload =================== */
+
+/* ===================================================
+   🔻  DRAG & DROP: Sezione Generale (Immagini / DT / PDF)
+   =================================================== */
+
 const DropArea = $('#DropArea');
 const TxtFolderPath = $('#TxtFolderPath');
 const BtnClearPath  = $('#BtnClearPath');
 
-function prevent(e){ e.preventDefault(); e.stopPropagation(); }
+if (DropArea) {
 
-['dragenter','dragover','dragleave','drop'].forEach(ev =>
-  DropArea?.addEventListener(ev, prevent)
-);
+  function prevent(e){ e.preventDefault(); e.stopPropagation(); }
 
-DropArea?.addEventListener('dragenter', () =>
-  DropArea.classList.add('drag-over')
-);
+  ['dragenter','dragover','dragleave','drop'].forEach(ev =>
+    DropArea.addEventListener(ev, prevent)
+  );
 
-DropArea?.addEventListener('dragleave', () =>
-  DropArea.classList.remove('drag-over')
-);
+  DropArea.addEventListener('dragenter', ()=> DropArea.classList.add('drag-over'));
+  DropArea.addEventListener('dragleave', ()=> DropArea.classList.remove('drag-over'));
 
-DropArea?.addEventListener('drop', async (e)=>{
-  DropArea.classList.remove('drag-over');
-  picked = await readDroppedDirectory(e.dataTransfer);
-  TxtFolderPath.textContent = picked.length
-    ? `Selezionati ${picked.length} file…`
-    : 'Nessun file supportato.';
-  BtnClearPath.classList.toggle('hidden', picked.length === 0);
-});
+  DropArea.addEventListener('drop', async (e)=>{
+    DropArea.classList.remove('drag-over');
 
-DropArea?.addEventListener('click', ()=>{
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.webkitdirectory = true;
-  input.multiple = true;
-
-  input.onchange = ()=>{
-    const fl = input.files ? Array.from(input.files) : [];
-    picked = fl
-      .filter(f => /\.(jpe?g|png|tif?f|pdf)$/i.test(f.name))
-      .map(f => ({
-        file: f,
-        relPath: f.webkitRelativePath || f.name
-      }));
+    picked = await readDroppedDirectory(e.dataTransfer);
 
     TxtFolderPath.textContent = picked.length
       ? `Selezionati ${picked.length} file…`
       : 'Nessun file supportato.';
 
     BtnClearPath.classList.toggle('hidden', picked.length === 0);
-  };
+  });
 
-  input.click();
-});
+  DropArea.addEventListener('click', ()=>{
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.webkitdirectory = true;
+    input.multiple = true;
 
-BtnClearPath?.addEventListener('click', (e)=>{
-  e.stopPropagation();
-  picked = [];
-  TxtFolderPath.textContent = 'Trascina qui la cartella o clicca per sfogliare…';
-  BtnClearPath.classList.add('hidden');
-});
+    input.onchange = ()=>{
+      const fl = input.files ? Array.from(input.files) : [];
+      picked = fl
+        .filter(f => /\.(jpe?g|png|tif?f|pdf)$/i.test(f.name))
+        .map(f => ({ file:f, relPath:f.webkitRelativePath || f.name }));
 
-/* Lettura ricorsiva */
+      TxtFolderPath.textContent = picked.length
+        ? `Selezionati ${picked.length} file…`
+        : 'Nessun file supportato.';
+
+      BtnClearPath.classList.toggle('hidden', picked.length === 0);
+    };
+
+    input.click();
+  });
+
+  BtnClearPath?.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    picked = [];
+    TxtFolderPath.textContent = 'Trascina qui la cartella…';
+    BtnClearPath.classList.add('hidden');
+  });
+}
+
+
+/* ===================================================
+   🔻  DRAG & DROP: Sezione RENAME (separata)
+   =================================================== */
+
+const DropAreaRename = $('#DropAreaRename');
+const TxtFolderRename = $('#TxtFolderRename');
+const BtnClearRename  = $('#BtnClearRename');
+
+if (DropAreaRename) {
+
+  function preventR(e){ e.preventDefault(); e.stopPropagation(); }
+
+  ['dragenter','dragover','dragleave','drop'].forEach(ev =>
+    DropAreaRename.addEventListener(ev, preventR)
+  );
+
+  DropAreaRename.addEventListener('dragenter', ()=> DropAreaRename.classList.add('drag-over'));
+  DropAreaRename.addEventListener('dragleave', ()=> DropAreaRename.classList.remove('drag-over'));
+
+  DropAreaRename.addEventListener('drop', async (e)=>{
+    DropAreaRename.classList.remove('drag-over');
+
+    pickedRename = await readDroppedDirectory(e.dataTransfer);
+
+    TxtFolderRename.textContent = pickedRename.length
+      ? `Selezionati ${pickedRename.length} file…`
+      : 'Nessun file supportato.';
+
+    BtnClearRename.classList.toggle('hidden', pickedRename.length === 0);
+  });
+
+  DropAreaRename.addEventListener('click', ()=>{
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.webkitdirectory = true;
+    input.multiple = true;
+
+    input.onchange = ()=>{
+      const fl = input.files ? Array.from(input.files) : [];
+      pickedRename = fl
+        .filter(f => /\.(jpe?g|png|tif?f|webp)$/i.test(f.name))
+        .map(f => ({ file:f, relPath:f.webkitRelativePath || f.name }));
+
+      TxtFolderRename.textContent = pickedRename.length
+        ? `Selezionati ${pickedRename.length} file…`
+        : 'Nessun file supportato.';
+
+      BtnClearRename.classList.toggle('hidden', pickedRename.length === 0);
+    };
+
+    input.click();
+  });
+
+  BtnClearRename?.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    pickedRename = [];
+    TxtFolderRename.textContent = 'Trascina qui la cartella…';
+    BtnClearRename.classList.add('hidden');
+  });
+}
+
+
+/* ===================================================
+   Lettura ricorsiva cartelle
+   =================================================== */
+
 async function readDroppedDirectory(dt){
   const items = dt?.items ? Array.from(dt.items) : [];
   const out = [];
@@ -207,7 +283,7 @@ async function readDroppedDirectory(dt){
   async function traverse(entry, base=''){
     if (entry.isFile){
       const f = await new Promise(res => entry.file(res));
-      if (/\.(jpg|jpeg|png|tiff?|pdf)$/i.test(f.name)){
+      if (/\.(jpe?g|png|tif?f|webp|pdf)$/i.test(f.name)){
         out.push({
           file: f,
           relPath: base ? `${base}/${f.name}` : f.name
@@ -226,8 +302,7 @@ async function readDroppedDirectory(dt){
     }
   }
 
-  const hasEntries = items.length &&
-    typeof items[0].webkitGetAsEntry === 'function';
+  const hasEntries = items.length && typeof items[0].webkitGetAsEntry === 'function';
 
   if (hasEntries){
     for (const it of items){
@@ -239,7 +314,11 @@ async function readDroppedDirectory(dt){
   return out;
 }
 
-/* =================== Helpers =================== */
+
+/* ===================================================
+   Helpers Immagini
+   =================================================== */
+
 function slugify(t){
   if (!t) return '';
   return t.toLowerCase()
@@ -252,7 +331,7 @@ function slugify(t){
 async function loadImageBitmap(file){
   const url = URL.createObjectURL(file);
   const blob = await (await fetch(url)).blob();
-  const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+  const bmp = await createImageBitmap(blob, { imageOrientation:'from-image' });
   URL.revokeObjectURL(url);
   return bmp;
 }
@@ -263,7 +342,7 @@ function drawCoverToCanvas(bmp, W, H){
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  const scale = Math.max(W / bmp.width, H / bmp.height);
+  const scale = Math.max(W/bmp.width, H/bmp.height);
   const dw = Math.round(bmp.width * scale);
   const dh = Math.round(bmp.height * scale);
   const dx = Math.round((W - dw) / 2);
@@ -276,11 +355,16 @@ function drawCoverToCanvas(bmp, W, H){
   return canvas;
 }
 
-function canvasToBlob(canvas, type, q=0.85){
-  return new Promise(res => canvas.toBlob(res, type, q));
+function canvasToBlob(canvas, mime, q=0.85){
+  return new Promise(res => canvas.toBlob(res, mime, q));
 }
 
-/* =================== IMMAGINI =================== */
+
+
+/* ===================================================
+   EXPORT: IMMAGINI
+   =================================================== */
+
 const TxtSlugIta = $('#TxtSlugIta');
 const TxtSlugEng = $('#TxtSlugEng');
 const Fmt1920 = $('#FmtSite1920');
@@ -291,7 +375,7 @@ const CustomW = $('#CustomW');
 const CustomH = $('#CustomH');
 
 function toggleCustomRow(){
-  FmtCustom?.checked ? showEl(CustomRow) : hideEl(CustomRow);
+  FmtCustom.checked ? showEl(CustomRow) : hideEl(CustomRow);
 }
 
 [Fmt1920, FmtShare, FmtCustom].forEach(r =>
@@ -301,60 +385,64 @@ function toggleCustomRow(){
 toggleCustomRow();
 
 function getSelectedFormat(){
-  if (FmtCustom?.checked){
+  if (FmtCustom.checked){
     return {
-      w: Math.max(1, Number(CustomW?.value) || 1920),
-      h: Math.max(1, Number(CustomH?.value) || 1080)
+      w: Math.max(1, Number(CustomW.value) || 1920),
+      h: Math.max(1, Number(CustomH.value) || 1080)
     };
   }
-  if (FmtShare?.checked) return { w:1200, h:630 };
+  if (FmtShare.checked) return { w:1200, h:630 };
   return { w:1920, h:1080 };
 }
 
-/* mappa ITA → ENG */
+
+/* Mappa cartelle IT → EN */
 async function loadFolderMap(){
-  try{
-    const res = await fetch('./assets/folder_map.csv', { cache:'no-store' });
+  try {
+    const res = await fetch('./assets/folder_map.csv', {cache:'no-store'});
     if (!res.ok) return {};
 
     const txt = await res.text();
-    const rows = txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const rows = txt.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
     if (!rows.length) return {};
 
-    const header = rows[0].split(',').map(h => h.trim().toLowerCase());
+    const header = rows[0].split(',').map(h=>h.trim().toLowerCase());
     const iITA = header.findIndex(h => ['ita','it'].includes(h));
     const iENG = header.findIndex(h => ['eng','en'].includes(h));
-    if (iITA < 0 || iENG < 0) return {};
+
+    if (iITA<0 || iENG<0) return {};
 
     const map = {};
+
     for (let i=1; i<rows.length; i++){
-      const parts = rows[i].split(',');
-      const ita = parts[iITA]?.trim().toLowerCase();
-      const eng = parts[iENG]?.trim();
+      const cols = rows[i].split(',');
+      const ita = (cols[iITA]||'').trim().toLowerCase();
+      const eng = (cols[iENG]||'').trim();
       if (ita && eng) map[ita] = eng;
     }
+
     return map;
 
-  } catch {
-    return {};
-  }
+  } catch { return {}; }
 }
 
+
+/* EXPORT Images */
 async function exportImages(){
-  const slugIta = slugify(TxtSlugIta?.value);
-  const slugEng = slugify(TxtSlugEng?.value);
+  const slugIta = slugify(TxtSlugIta.value);
+  const slugEng = slugify(TxtSlugEng.value);
 
   if (!slugIta || !slugEng){
-    alert('Inserisci i nomi file ITA/ENG.');
+    alert("Compila i campi ITA e ENG.");
     return;
   }
 
-  const images = picked.filter(
-    p => /\.(jpg|jpeg|png|tif?f)$/i.test(p.file.name)
+  const images = picked.filter(p =>
+    /\.(jpe?g|png|tif?f)$/i.test(p.file.name)
   );
 
   if (!images.length){
-    alert('Seleziona o trascina una cartella con immagini.');
+    alert("Carica una cartella con immagini.");
     return;
   }
 
@@ -371,19 +459,20 @@ async function exportImages(){
   }
 
   const zip = new JSZip();
+
   showEl(ActionProgressWrap);
   ActionProgress.value = 0;
-  ActionProgressLabel.textContent = 'Elaborazione…';
+  ActionProgressLabel.textContent = "Esporta immagini…";
 
   const total = images.length;
   let processed = 0;
 
   for (const [relFolder, recs] of groups){
 
-    let leaf = '';
+    let leaf = "";
     if (relFolder){
       const parts = relFolder.split('/').filter(Boolean);
-      leaf = parts.length ? parts[parts.length-1].toLowerCase() : '';
+      leaf = parts.length ? parts[parts.length-1] : '';
     }
 
     const leafIta = leaf || 'hero';
@@ -411,115 +500,92 @@ async function exportImages(){
       const bmp = await loadImageBitmap(rec.file);
       const canvas = drawCoverToCanvas(bmp, W, H);
 
-      const webp = await canvasToBlob(canvas,'image/webp',0.85);
-      const jpg  = await canvasToBlob(canvas,'image/jpeg',0.85);
+      const webp = await canvasToBlob(canvas, 'image/webp', 0.85);
+      const jpg  = await canvasToBlob(canvas, 'image/jpeg', 0.85);
 
       zip.file(`_EXPORT_SITO/ITA/WEBP/${outIta}.webp`, webp);
       zip.file(`_EXPORT_SITO/ITA/JPG/${outIta}.jpg`,  jpg);
       zip.file(`_EXPORT_SITO/ENG/WEBP/${outEng}.webp`, webp);
       zip.file(`_EXPORT_SITO/ENG/JPG/${outEng}.jpg`,   jpg);
 
-      ActionProgress.value = Math.round((++processed / total) * 100);
+      ActionProgress.value = Math.round((++processed/total)*100);
     }
   }
 
   const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
-  const blob = await zip.generateAsync({ type:'blob' });
+  const blob = await zip.generateAsync({type:'blob'});
 
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `EXPORT_SITO-${slugIta}-${stamp}.zip`;
   a.click();
-
   URL.revokeObjectURL(a.href);
+
   hideEl(ActionProgressWrap);
 }
 
-/* =================== DIGITAL TOOL =================== */
+
+/* ===================================================
+   DIGITAL TOOL
+   =================================================== */
 
 function makeCanvasFromRules(bmp){
-  const w = bmp.width;
-  const h = bmp.height;
+  const w=bmp.width;
+  const h=bmp.height;
   const ratio = w/h;
 
-  const square = Math.abs(ratio - 1) <= 0.03;
+  const square = Math.abs(ratio-1) <= 0.03;
 
   if (square){
-    const W = 2000;
-    const H = 2000;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = W;
-    canvas.height = H;
-
-    const ctx = canvas.getContext('2d');
-    const scale = Math.max(W/w, H/h);
-
-    const dw = Math.round(w*scale);
-    const dh = Math.round(h*scale);
-
-    const dx = Math.round((W - dw)/2);
-    const dy = Math.round((H - dh)/2);
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    const W=2000, H=2000;
+    const c=document.createElement('canvas');
+    c.width=W; c.height=H;
+    const ctx=c.getContext('2d');
+    const scale=Math.max(W/w, H/h);
+    const dw=Math.round(w*scale);
+    const dh=Math.round(h*scale);
+    const dx=Math.round((W-dw)/2);
+    const dy=Math.round((H-dh)/2);
     ctx.drawImage(bmp, dx, dy, dw, dh);
-
-    return canvas;
+    return c;
   }
 
-  if (w >= h){
-    const W = 2500;
-    const H = Math.round(h*(W/w));
-
-    const canvas = document.createElement('canvas');
-    canvas.width = W;
-    canvas.height = H;
-
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(bmp, 0, 0, W, H);
-
-    return canvas;
+  if (w>=h){
+    const W=2500;
+    const H=Math.round(h*(W/w));
+    const c=document.createElement('canvas');
+    c.width=W; c.height=H;
+    c.getContext('2d').drawImage(bmp,0,0,W,H);
+    return c;
   }
 
   {
-    const H = 2000;
-    const W = Math.round(w*(H/h));
-
-    const canvas = document.createElement('canvas');
-    canvas.width = W;
-    canvas.height = H;
-
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(bmp, 0, 0, W, H);
-
-    return canvas;
+    const H=2000;
+    const W=Math.round(w*(H/h));
+    const c=document.createElement('canvas');
+    c.width=W; c.height=H;
+    c.getContext('2d').drawImage(bmp,0,0,W,H);
+    return c;
   }
 }
 
 async function toBlobCapped(canvas, mime){
-  const ladder = [0.85, 0.75, 0.65, 0.50, 0.40];
-
+  const ladder=[0.85,0.75,0.65,0.50,0.40];
   for (const q of ladder){
-    const b = await new Promise(res => canvas.toBlob(res, mime, q));
+    const b = await new Promise(res=>canvas.toBlob(res,mime,q));
     if (!b) continue;
-
-    if (b.size <= 450 * 1024) return b;
-    if (q === ladder[ladder.length - 1]) return b;
+    if (b.size <= 450*1024) return b;
+    if (q===ladder[ladder.length-1]) return b;
   }
 }
 
 async function exportDigitalTool(){
   const images = picked.filter(p =>
-    /\.(jpg|jpeg|png|tif?f)$/i.test(p.file.name)
+    /\.(jpe?g|png|tif?f)$/i.test(p.file.name)
   );
 
   if (!images.length){
-    alert('Seleziona o trascina una cartella con immagini.');
+    alert("Carica immagini.");
     return;
   }
 
@@ -528,9 +594,10 @@ async function exportDigitalTool(){
   );
 
   const zip = new JSZip();
+
   showEl(ActionProgressWrap);
   ActionProgress.value = 0;
-  ActionProgressLabel.textContent = 'DigitalTool…';
+  ActionProgressLabel.textContent = "DigitalTool…";
 
   const countsByFolder = new Map();
   const total = files.length;
@@ -538,11 +605,13 @@ async function exportDigitalTool(){
 
   for (const rec of files){
     const p = rec.relPath || rec.file.name;
-    const relFolder = p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '';
+    const relFolder = p.includes('/')
+      ? p.slice(0, p.lastIndexOf('/'))
+      : '';
 
     const current = countsByFolder.get(relFolder) || 0;
-    const nn = String(current + 1).padStart(2, '0');
-    countsByFolder.set(relFolder, current + 1);
+    const nn = String(current+1).padStart(2,'0');
+    countsByFolder.set(relFolder, current+1);
 
     const basePathWEBP = `_DIGITALTOOL/${relFolder ? relFolder + '/' : ''}WEBP/`;
     const basePathJPG  = `_DIGITALTOOL/${relFolder ? relFolder + '/' : ''}JPG/`;
@@ -554,33 +623,36 @@ async function exportDigitalTool(){
     const jpg  = await toBlobCapped(canvas,'image/jpeg');
 
     if (webp) zip.file(`${basePathWEBP}${nn}.webp`, webp);
-    if (jpg)  zip.file(`${basePathJPG}${nn}.jpg`, jpg);
+    if (jpg)  zip.file(`${basePathJPG}${nn}.jpg`,  jpg);
 
-    ActionProgress.value = Math.round((++processed / total) * 100);
+    ActionProgress.value = Math.round((++processed/total)*100);
   }
 
   const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
-  const blob = await zip.generateAsync({ type:'blob' });
+  const blob = await zip.generateAsync({type:'blob'});
 
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `DIGITALTOOL-${stamp}.zip`;
   a.click();
-
   URL.revokeObjectURL(a.href);
+
   hideEl(ActionProgressWrap);
 }
 
-/* =================== PDF → JPG =================== */
+
+/* ===================================================
+   PDF → JPG
+   =================================================== */
 
 async function ensurePdfJs(){
   if (window.pdfjsLib) return;
 
-  await new Promise((resolve, reject)=>{
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    s.onload = resolve;
-    s.onerror = reject;
+  await new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=resolve;
+    s.onerror=reject;
     document.head.appendChild(s);
   });
 
@@ -592,16 +664,17 @@ async function exportPdfToJpg(){
   const pdfs = picked.filter(p => /\.pdf$/i.test(p.file.name));
 
   if (!pdfs.length){
-    alert('Seleziona o trascina una cartella con file PDF.');
+    alert("Carica PDF.");
     return;
   }
 
   await ensurePdfJs();
 
   const zip = new JSZip();
+
   showEl(ActionProgressWrap);
   ActionProgress.value = 0;
-  ActionProgressLabel.textContent = 'Conversione PDF → JPG…';
+  ActionProgressLabel.textContent = "Converti PDF → JPG…";
 
   const TARGET = 1.5 * 1024 * 1024;
   const total = pdfs.length;
@@ -615,71 +688,141 @@ async function exportPdfToJpg(){
       ? relPath.slice(0, relPath.lastIndexOf('/'))
       : '';
 
-    const baseName = file.name.replace(/\.pdf$/i, '');
+    const baseName = file.name.replace(/\.pdf$/i,'');
     const prefixDir = `_EXPORT_PDF2JPG/${relFolder ? relFolder + '/' : ''}`;
 
     const ab = await file.arrayBuffer();
-    const pdf = await window.pdfjsLib.getDocument({ data: ab }).promise;
+    const pdf = await window.pdfjsLib.getDocument({data:ab}).promise;
 
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++){
+    for (let pageNum=1; pageNum<=pdf.numPages; pageNum++){
       const page = await pdf.getPage(pageNum);
-      const viewport = page.getViewport({ scale: 300 / 72 });
+      const viewport = page.getViewport({ scale:300/72 });
 
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.ceil(viewport.width);
-      canvas.height = Math.ceil(viewport.height);
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.ceil(viewport.width);
+      canvas.height=Math.ceil(viewport.height);
 
-      const ctx = canvas.getContext('2d');
-      await page.render({ canvasContext: ctx, viewport }).promise;
+      const ctx=canvas.getContext('2d');
+      await page.render({ canvasContext:ctx, viewport }).promise;
 
-      let blob = await canvasToBlob(canvas, 'image/jpeg', 0.95);
+      let blob = await canvasToBlob(canvas,'image/jpeg',0.95);
 
       if (blob.size > TARGET){
-        const ladder = [0.90, 0.85, 0.80, 0.75];
+        const ladder=[0.90,0.85,0.80,0.75];
         for (const q of ladder){
-          const b = await canvasToBlob(canvas, 'image/jpeg', q);
-          blob = b;
+          const b = await canvasToBlob(canvas,'image/jpeg',q);
+          blob=b;
           if (b.size <= TARGET) break;
         }
       }
 
-      const suffix = pdf.numPages > 1
+      const suffix = pdf.numPages>1
         ? `-${String(pageNum).padStart(2,'0')}`
         : '';
 
       zip.file(`${prefixDir}${baseName}${suffix}.jpg`, blob);
     }
 
-    ActionProgress.value = Math.round((++processed / total) * 100);
+    ActionProgress.value = Math.round((++processed/total)*100);
   }
 
   const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
-  const blob = await zip.generateAsync({ type:'blob' });
+  const blob = await zip.generateAsync({type:'blob'});
 
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `EXPORT_PDF2JPG-${stamp}.zip`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`EXPORT_PDF2JPG-${stamp}.zip`;
   a.click();
-
   URL.revokeObjectURL(a.href);
+
   hideEl(ActionProgressWrap);
 }
 
-/* =================== Dispatcher =================== */
+
+/* ===================================================
+   ✅ RENAME FUNZIONANTE (01 / base-01)
+   =================================================== */
+
+const TxtRenameBase = $('#TxtRenameBase');
+
+async function exportRename(){
+
+  const base = slugify(TxtRenameBase?.value || "").trim();
+  const mode = base ? 2 : 1;
+
+  const files = pickedRename.filter(p =>
+    /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name)
+  );
+
+  if (!files.length){
+    alert("Carica una cartella per rinominare.");
+    return;
+  }
+
+  const sorted = files.sort((a,b)=>
+    (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name)
+  );
+
+  const zip = new JSZip();
+
+  showEl(ActionProgressWrap);
+  ActionProgress.value = 0;
+  ActionProgressLabel.textContent = "Rinomina…";
+
+  const total = sorted.length;
+  let processed = 0;
+
+  for (let i=0; i<sorted.length; i++){
+    const rec = sorted[i];
+    const file = rec.file;
+
+    const ext = "." + file.name.split(".").pop().toLowerCase();
+    const nn  = String(i+1).padStart(2,'0');
+
+    const newName = (mode === 1)
+      ? `${nn}${ext}`
+      : `${base}-${nn}${ext}`;
+
+    zip.file(newName, file);
+
+    ActionProgress.value = Math.round(((i+1)/total)*100);
+  }
+
+  const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
+  const blob = await zip.generateAsync({type:'blob'});
+
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`RENAME-${stamp}.zip`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  hideEl(ActionProgressWrap);
+}
+
+
+/* ===================================================
+   DISPATCHER BOTTONE "ESPORTA ORA"
+   =================================================== */
+
 BtnProcedi?.addEventListener('click', async ()=>{
-  try{
+  try {
     BtnProcedi.disabled = true;
 
-    if (currentMode === 'images'){ await exportImages(); return; }
-    if (currentMode === 'digitaltool'){ await exportDigitalTool(); return; }
-    if (currentMode === 'pdf2jpg'){ await exportPdfToJpg(); return; }
-
-    if (!currentMode){
-      alert('Seleziona una funzione dal menu.');
-      return;
+    if (currentMode === 'images'){
+      await exportImages(); return;
+    }
+    if (currentMode === 'digitaltool'){
+      await exportDigitalTool(); return;
+    }
+    if (currentMode === 'pdf2jpg'){
+      await exportPdfToJpg(); return;
+    }
+    if (currentMode === 'rename'){
+      await exportRename(); return;
     }
 
-    alert('Questa funzione sarà attivata nelle prossime build.');
+    alert("Funzione non attiva.");
 
   } finally {
     BtnProcedi.disabled = false;

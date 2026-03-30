@@ -6,144 +6,156 @@
   <title>Abitare Co. – Digital Content Tool</title>
 
   <!-- Favicon -->
-  <link rel="icon" href="./assets/logo.ico" />
+  <link rel="icon" type="image/x-icon" href="./assets/logo.ico" />
 
-  <!-- Google Fonts: Manrope -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Foglio di stile -->
+  <!-- Styles -->
   <link rel="stylesheet" href="./css/styles.css" />
 
   <meta name="theme-color" content="#c4162b" />
 </head>
 <body>
 
-<noscript>
-  <div style="padding:12px;background:#fff3cd;border:1px solid #ffe69c;color:#664d03">
-    Questo strumento richiede JavaScript attivo.
-  </div>
-</noscript>
-
-<div id="AppRoot" class="app">
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-
-    <!-- SVG logo inline -->
-    <div class="logo-wrap">
-      <svg viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg" fill="none">
-        <text x="4" y="28" font-family="Manrope,sans-serif" font-weight="700" font-size="18" fill="#c4162b">ABITARE</text>
-        <text x="4" y="38" font-family="Manrope,sans-serif" font-weight="400" font-size="10" fill="#374151" letter-spacing="4">CO.</text>
-      </svg>
+  <noscript>
+    <div style="padding:12px;background:#fff3cd;border:1px solid #ffe69c;color:#664d03">
+      Questo strumento richiede JavaScript attivo.
     </div>
+  </noscript>
 
-    <ul id="SideMenu" class="menu">
+  <div id="AppRoot" class="app">
 
-      <li data-mode="images">
-        <span class="mi">
-          <!-- icon: images -->
-          <img src="./assets/icons/icon-sito.png" alt="">
-        </span>
-        <span class="txt">Immagini</span>
-      </li>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
 
-      <li data-mode="digitaltool">
-        <span class="mi">
-          <img src="./assets/icons/icon-digital.png" alt="">
-        </span>
-        <span class="txt">DigitalTool</span>
-      </li>
-
-      <li data-mode="pdf2jpg">
-        <span class="mi">
-          <img src="./assets/icons/icon-pdf.png" alt="">
-        </span>
-        <span class="txt">PDF → JPG</span>
-      </li>
-
-      <li data-mode="rename">
-        <span class="mi"><img src="./assets/icons/icon-rename.png" alt=""></span>
-        <span class="txt">Rename</span>
-      </li>
-
-      <li data-mode="video">
-        <span class="mi"><img src="./assets/icons/icon-video.png" alt=""></span>
-        <span class="txt">Video Slideshow</span>
-      </li>
-
-      <li data-mode="watermark">
-        <span class="mi"><img src="./assets/icons/icon-watermark.png" alt=""></span>
-        <span class="txt">Watermark</span>
-      </li>
-
-      <li data-mode="bv">
-        <span class="mi"><img src="./assets/icons/icon-bv.png" alt=""></span>
-        <span class="txt">Biglietto da visita</span>
-      </li>
-
-      <li data-mode="qr">
-        <span class="mi"><img src="./assets/icons/icon-qr.png" alt=""></span>
-        <span class="txt">Genera QR Code</span>
-      </li>
-
-      <li data-mode="iubenda">
-        <span class="mi"><img src="./assets/icons/icon-iubenda.png" alt=""></span>
-        <span class="txt">Iubenda</span>
-      </li>
-
-    </ul>
-  </aside>
-
-  <!-- MAIN -->
-  <main>
-    <div class="content">
-      <div class="cards-scroll">
-
-        <!-- Welcome -->
-        <section id="WelcomeCard" class="card">
-          <h2 id="WelcomeTitle">Welcome!</h2>
-          <p id="WelcomeSubtitle" class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
-        </section>
-
-        <!-- Tutte le altre card -->
-        <section id="SlugCard" class="card hidden"></section>
-        <section id="FormatCard" class="card hidden"></section>
-        <section id="UploadCard" class="card hidden"></section>
-        <section id="DTCard" class="card hidden"></section>
-        <section id="VideoCard" class="card hidden"></section>
-        <section id="BusinessCardCard" class="card hidden"></section>
-        <section id="QrCard" class="card hidden"></section>
-        <section id="IubendaCard" class="card hidden"></section>
-
+      <!-- LOGO INLINE (identico al nuovo tuo) -->
+      <div class="logo-wrap">
+        <svg viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg" fill="none">
+          <text x="4" y="28" font-family="Manrope,sans-serif" font-weight="700" font-size="18" fill="#c4162b">ABITARE</text>
+          <text x="4" y="38" font-family="Manrope,sans-serif" font-weight="400" font-size="10" fill="#374151" letter-spacing="4">CO.</text>
+        </svg>
       </div>
 
-      <!-- ACTION BAR -->
-      <section id="ActionBar" class="actionbar">
-        <div class="action-left">
-          <div id="ActionProgressWrap" class="action-progress hidden">
-            <div id="ActionProgressLabel" class="muted">Esportazione in corso…</div>
-            <progress id="ActionProgress" class="progress" max="100" value="0"></progress>
-          </div>
+      <ul id="SideMenu" class="menu">
 
-          <div class="copyright">
-            © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
-          </div>
+        <li data-mode="images"
+            data-icon="./assets/icons/icon-sito.png"
+            data-icon-active="./assets/icons/icon-sito-selected.png">
+          <span class="mi"><img alt=""></span>
+          <span class="txt">Immagini</span>
+        </li>
+
+        <li data-mode="digitaltool"
+            data-icon="./assets/icons/icon-digital.png"
+            data-icon-active="./assets/icons/icon-digital-selected.png">
+          <span class="mi"><img alt=""></span>
+          <span class="txt">DigitalTool</span>
+        </li>
+
+        <li data-mode="pdf2jpg"
+            data-icon="./assets/icons/icon-pdf.png"
+            data-icon-active="./assets/icons/icon-pdf-selected.png">
+          <span class="mi"><img alt=""></span>
+          <span class="txt">PDF → JPG</span>
+        </li>
+
+        <li data-mode="rename"
+            data-icon="./assets/icons/icon-rename.png">
+          <span class="mi"><img alt=""></span>
+          <span class="txt">Rename</span>
+        </li>
+
+        <li data-mode="video"
+            data-icon="./assets/icons/icon-video.png">
+          <span class="mi"><img alt=""></span>
+          <span class="txt">Video Slideshow</span>
+        </li>
+
+        <li data-mode="watermark"
+            data-icon="./assets/icons/icon-watermark.png"
+            data-icon-active="./assets/icons/icon-watermark-selected.png">
+          <span class="mi"><img alt=""></span>
+          <span class="txt">Watermark</span>
+        </li>
+
+        <li data-mode="bv"
+            data-icon="./assets/icons/icon-bv.png"
+            data-icon-active="./assets/icons/icon-bv-selected.png">
+          <span class="mi"><img alt=""></span>
+          <span class="txt">Biglietto da visita</span>
+        </li>
+
+        <li data-mode="qr"
+            data-icon="./assets/icons/icon-qr.png"
+            data-icon-active="./assets/icons/icon-qr-selected.png">
+          <span class="mi"><img alt=""></span>
+          <span class="txt">Genera QR Code</span>
+        </li>
+
+        <li data-mode="iubenda"
+            data-icon="./assets/icons/icon-iubenda.png"
+            data-icon-active="./assets/icons/icon-iubenda-selected.png">
+          <span class="mi"><img alt=""></span>
+          <span class="txt">Iubenda</span>
+        </li>
+
+      </ul>
+    </aside>
+
+    <!-- MAIN -->
+    <main>
+      <div class="content">
+
+        <div class="cards-scroll">
+
+          <!-- WELCOME -->
+          <section id="WelcomeCard" class="card">
+            <h2 id="WelcomeTitle">Welcome!</h2>
+            <p id="WelcomeSubtitle" class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
+          </section>
+
+          <!-- All card containers (vuote, JS inserisce contenuti) -->
+          <section id="SlugCard" class="card hidden"></section>
+          <section id="FormatCard" class="card hidden"></section>
+          <section id="UploadCard" class="card hidden"></section>
+          <section id="DTCard" class="card hidden"></section>
+          <section id="VideoCard" class="card hidden"></section>
+          <section id="BusinessCardCard" class="card hidden"></section>
+          <section id="QrCard" class="card hidden"></section>
+          <section id="IubendaCard" class="card hidden"></section>
+
         </div>
 
-        <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
-      </section>
-    </div>
-  </main>
+        <!-- ACTION BAR -->
+        <section id="ActionBar" class="actionbar">
+          <div class="action-left">
 
-</div>
+            <div id="ActionProgressWrap" class="action-progress hidden">
+              <div id="ActionProgressLabel" class="muted">Esportazione in corso…</div>
+              <progress id="ActionProgress" class="progress" max="100" value="0"></progress>
+            </div>
 
-<!-- Librerie -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+            <div class="copyright">
+              © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
+            </div>
+          </div>
 
-<!-- App JS -->
-<script src="./js/app.js"></script>
+          <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
+        </section>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Librerie -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- App logic -->
+  <script src="./js/app.js"></script>
 
 </body>
 </html>

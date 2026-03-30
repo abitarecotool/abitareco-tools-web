@@ -1,6 +1,6 @@
 /* =========================================================
    Abitare Co. – Digital Content Tool (Web)
-   app.js — Immagini + DigitalTool (aggiornati), Welcome, Sidebar
+   app.js — Immagini + DigitalTool (WEBP/JPG separati) + PDF→JPG
    ========================================================= */
 
 "use strict";
@@ -10,7 +10,6 @@ const $  = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const showEl = (el) => el && el.classList.remove('hidden');
 const hideEl = (el) => el && el.classList.add('hidden');
-const sleep  = (ms) => new Promise(r=>setTimeout(r,ms));
 
 /* Sidebar & ActionBar */
 const SideMenu = $('#SideMenu');
@@ -29,12 +28,11 @@ const VideoCard    = $('#VideoCard');
 const BvCard       = $('#BusinessCardCard');
 const QrCard       = $('#QrCard');
 const IubCard      = $('#IubendaCard');
-
-const ALL_CARDS = [WelcomeCard, SlugCard, FormatCard, UploadCard, DTCard, VideoCard, BvCard, QrCard, IubCard];
+const ALL_CARDS    = [WelcomeCard, SlugCard, FormatCard, UploadCard, DTCard, VideoCard, BvCard, QrCard, IubCard];
 
 /* Stato */
 let picked = [];           // [{file, relPath}]
-let currentMode = null;    // 'images' | 'digitaltool' | ...
+let currentMode = null;    // 'images' | 'digitaltool' | 'pdf2jpg' | ...
 
 /* Icone sidebar */
 function initSidebarIcons(){
@@ -56,27 +54,24 @@ function activateMenuVisual(mode){
 function selectMode(mode){
   currentMode = mode;
   ALL_CARDS.forEach(hideEl);
-  BtnProcedi.classList.remove('hidden'); // di default visibile
+  BtnProcedi.classList.remove('hidden'); // visibile di default
 
   switch(mode){
     case 'welcome':
       showEl(WelcomeCard);
-      BtnProcedi.classList.add('hidden'); // niente bottone in Welcome
+      BtnProcedi.classList.add('hidden'); // nessun bottone in welcome
       activateMenuVisual('');
       return;
 
     case 'images':
-      showEl(SlugCard);
-      showEl(FormatCard);
-      showEl(UploadCard);
-      break;
+      showEl(SlugCard); showEl(FormatCard); showEl(UploadCard); break;
 
     case 'digitaltool':
-      showEl(UploadCard);
-      showEl(DTCard);
-      break;
+      showEl(UploadCard); showEl(DTCard); break;
 
-    case 'pdf2jpg':   showEl(UploadCard); break;
+    case 'pdf2jpg':
+      showEl(UploadCard); break;
+
     case 'rename':    showEl(UploadCard); break;
     case 'video':     showEl(UploadCard); showEl(VideoCard); break;
     case 'watermark': showEl(UploadCard); break;
@@ -166,21 +161,7 @@ async function readDroppedDirectory(dt){
   return out;
 }
 
-/* =================== IMMAGINI =================== */
-const TxtSlugIta = $('#TxtSlugIta');
-const TxtSlugEng = $('#TxtSlugEng');
-
-const Fmt1920   = $('#FmtSite1920');
-const FmtShare  = $('#FmtSiteShare');
-const FmtCustom = $('#FmtSiteCustom');
-const CustomRow = $('#CustomSizeRow');
-const CustomW   = $('#CustomW');
-const CustomH   = $('#CustomH');
-
-function toggleCustomRow(){ FmtCustom?.checked ? showEl(CustomRow) : hideEl(CustomRow); }
-[Fmt1920, FmtShare, FmtCustom].forEach(r=> r?.addEventListener('change', toggleCustomRow));
-toggleCustomRow();
-
+/* =================== Helpers immagini/canvas =================== */
 function slugify(t){
   if (!t) return '';
   return t.toLowerCase()
@@ -208,6 +189,20 @@ function drawCoverToCanvas(bmp, W, H){
   return canvas;
 }
 function canvasToBlob(canvas, mime, q=0.85){ return new Promise(res=> canvas.toBlob(res, mime, q)); }
+
+/* =================== IMMAGINI =================== */
+const TxtSlugIta = $('#TxtSlugIta');
+const TxtSlugEng = $('#TxtSlugEng');
+const Fmt1920   = $('#FmtSite1920');
+const FmtShare  = $('#FmtSiteShare');
+const FmtCustom = $('#FmtSiteCustom');
+const CustomRow = $('#CustomSizeRow');
+const CustomW   = $('#CustomW');
+const CustomH   = $('#CustomH');
+
+function toggleCustomRow(){ FmtCustom?.checked ? showEl(CustomRow) : hideEl(CustomRow); }
+[Fmt1920, FmtShare, FmtCustom].forEach(r=> r?.addEventListener('change', toggleCustomRow));
+toggleCustomRow();
 
 function getSelectedFormat(){
   if (FmtCustom?.checked){
@@ -246,16 +241,14 @@ async function exportImages(){
   const slugIta = slugify(TxtSlugIta?.value||'');
   const slugEng = slugify(TxtSlugEng?.value||'');
   if (!slugIta || !slugEng){ alert('Inserisci i nomi file ITA/ENG.'); return; }
-  if (!picked.length){ alert('Seleziona o trascina una cartella con immagini.'); return; }
+
+  const images = picked.filter(p => /\.(jpe?g|png|tif?f)$/i.test(p.file.name));
+  if (!images.length){ alert('Seleziona o trascina una cartella con immagini.'); return; }
 
   const {w:W, h:H} = getSelectedFormat();
   const folderMap = await loadFolderMap();
 
-  // Raggruppo per cartella relativa per contare 01.. per cartella
   const groups = new Map();
-  const images = picked.filter(p => /\.(jpe?g|png|tif?f)$/i.test(p.file.name));
-  if (!images.length){ alert('Nessuna immagine trovata.'); return; }
-
   for (const rec of images){
     const p = rec.relPath || rec.file.name;
     const folder = p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '';
@@ -264,11 +257,10 @@ async function exportImages(){
   }
 
   const zip = new JSZip();
-  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Elaborazione…';
+  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent='Elaborazione…';
   const total = images.length; let processed = 0;
 
   for (const [relFolder, recs] of groups){
-    // leaf per slug cartella (ITA/ENG)
     let leaf = '';
     if (relFolder){
       const parts = relFolder.split('/').filter(Boolean);
@@ -284,14 +276,13 @@ async function exportImages(){
 
     for (const rec of recs){
       counter++; const nn = String(counter).padStart(2,'0');
+
       const baseIta = slugIta + (slugFolderIta ? `-${slugFolderIta}` : '');
       const baseEng = slugEng + (slugFolderEng ? `-${slugFolderEng}` : '');
       const outIta  = `${baseIta}-${nn}`;
       const outEng  = `${baseEng}-${nn}`;
 
       const bmp = await loadImageBitmap(rec.file);
-
-      // Cover sul formato selezionato
       const canvas = drawCoverToCanvas(bmp, W, H);
 
       const webp = await canvasToBlob(canvas,'image/webp',0.85);
@@ -302,29 +293,24 @@ async function exportImages(){
       zip.file(`_EXPORT_SITO/ENG/WEBP/${outEng}.webp`, webp);
       zip.file(`_EXPORT_SITO/ENG/JPG/${outEng}.jpg`,   jpg);
 
-      processed++; ActionProgress.value = Math.round((processed/total)*100);
+      ActionProgress.value = Math.round((++processed/total)*100);
     }
   }
 
   const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
-  await zip.generateAsync({type:'blob'}).then(blob=>{
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `EXPORT_SITO-${slugIta}-${stamp}.zip`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
+  const blob = await zip.generateAsync({type:'blob'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `EXPORT_SITO-${slugIta}-${stamp}.zip`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 
   hideEl(ActionProgressWrap);
 }
 
-/* =================== DIGITAL TOOL =================== */
-/* Regole:
-   - QUADRE → 2000×2000 (cover)
-   - ORIZZONTALI → larghezza 2500 px (fit)
-   - VERTICALI   → altezza 2000 px (fit)
-   - Nomi SOLO numeri 01,02… per cartella (JPG + WEBP), cap 450KB
-*/
+/* =================== DIGITAL TOOL (WEBP/JPG in cartelle separate) =================== */
+/* Regole: quadre → 2000×2000 (cover) | orizzontali → larghezza 2500 px | verticali → altezza 2000 px
+   Nomi: SOLO numeri per cartella; soglia 450KB con ricompressione */
 function makeCanvasFromRules(bmp){
   const w=bmp.width, h=bmp.height;
   const ratio=w/h;
@@ -372,13 +358,11 @@ async function exportDigitalTool(){
   const images = picked.filter(p => /\.(jpe?g|png|tif?f)$/i.test(p.file.name));
   if (!images.length){ alert('Seleziona o trascina una cartella con immagini.'); return; }
 
-  // Ordine stabile per numerazione coerente
   const files = images.sort((a,b)=> (a.relPath||a.file.name).localeCompare(b.relPath||b.file.name));
-
   const zip = new JSZip();
   showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent='DigitalTool…';
 
-  const countsByFolder = new Map(); // per cartella relativa
+  const countsByFolder = new Map(); // per cartella
   const total = files.length; let processed = 0;
 
   for (const rec of files){
@@ -389,27 +373,103 @@ async function exportDigitalTool(){
     const nn = String(current + 1).padStart(2,'0');
     countsByFolder.set(relFolder, current + 1);
 
-    const basePath = `_DIGITALTOOL/${relFolder ? relFolder + '/' : ''}`;
+    // >>> separazione per formato
+    const basePathWEBP = `_DIGITALTOOL/${relFolder ? relFolder + '/' : ''}WEBP/`;
+    const basePathJPG  = `_DIGITALTOOL/${relFolder ? relFolder + '/' : ''}JPG/`;
+
     const bmp = await loadImageBitmap(rec.file);
     const canvas = makeCanvasFromRules(bmp);
 
     const webp = await toBlobCapped(canvas,'image/webp');
     const jpg  = await toBlobCapped(canvas,'image/jpeg');
 
-    if (webp) zip.file(`${basePath}${nn}.webp`, webp);
-    if (jpg)  zip.file(`${basePath}${nn}.jpg`,  jpg);
+    if (webp) zip.file(`${basePathWEBP}${nn}.webp`, webp);
+    if (jpg)  zip.file(`${basePathJPG}${nn}.jpg`,   jpg);
 
-    processed++; ActionProgress.value = Math.round((processed/total)*100);
+    ActionProgress.value = Math.round((++processed/total)*100);
   }
 
   const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
-  await zip.generateAsync({type:'blob'}).then(blob=>{
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `DIGITALTOOL-${stamp}.zip`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+  const blob = await zip.generateAsync({type:'blob'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `DIGITALTOOL-${stamp}.zip`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  hideEl(ActionProgressWrap);
+}
+
+/* =================== PDF → JPG =================== */
+/* Lazy‑load PDF.js (UMD) e worker allineato */
+async function ensurePdfJs(){
+  if (window.pdfjsLib) return;
+  await new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
   });
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+async function exportPdfToJpg(){
+  const pdfs = picked.filter(p => /\.pdf$/i.test(p.file.name));
+  if (!pdfs.length){ alert('Seleziona o trascina una cartella con file PDF.'); return; }
+
+  await ensurePdfJs();
+
+  const zip = new JSZip();
+  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent='Conversione PDF → JPG…';
+
+  const TARGET = 1.5 * 1024 * 1024; // 1.5MB
+  const total = pdfs.length; let processed = 0;
+
+  for (const rec of pdfs){
+    const file = rec.file;
+    const relPath = rec.relPath || rec.file.name;
+    const relFolder = relPath.includes('/') ? relPath.slice(0, relPath.lastIndexOf('/')) : '';
+    const baseName  = file.name.replace(/\.pdf$/i,'');
+    const prefixDir = `_EXPORT_PDF2JPG/${relFolder ? relFolder + '/' : ''}`;
+
+    const ab = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: ab }).promise;
+
+    for (let pageNum=1; pageNum<=pdf.numPages; pageNum++){
+      const page = await pdf.getPage(pageNum);
+      // ~300 dpi → scale 300/72
+      const viewport = page.getViewport({ scale: 300/72 });
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      const ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      // export con quality ladder → <= 1.5MB
+      let blob = await canvasToBlob(canvas,'image/jpeg',0.95);
+      if (blob.size > TARGET){
+        const ladder=[0.90,0.85,0.80,0.75];
+        for (const q of ladder){
+          const b = await canvasToBlob(canvas,'image/jpeg',q);
+          blob = b;
+          if (b.size <= TARGET) break;
+        }
+      }
+      const suffix = pdf.numPages>1 ? `-${String(pageNum).padStart(2,'0')}` : '';
+      zip.file(`${prefixDir}${baseName}${suffix}.jpg`, blob);
+    }
+
+    ActionProgress.value = Math.round((++processed/total)*100);
+  }
+
+  const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
+  const blob = await zip.generateAsync({type:'blob'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `EXPORT_PDF2JPG-${stamp}.zip`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 
   hideEl(ActionProgressWrap);
 }
@@ -418,9 +478,12 @@ async function exportDigitalTool(){
 BtnProcedi?.addEventListener('click', async ()=>{
   try{
     BtnProcedi.disabled = true;
-    if (currentMode === 'images')      { await exportImages();      return; }
-    if (currentMode === 'digitaltool') { await exportDigitalTool(); return; }
-    if (!currentMode) { alert('Seleziona una funzione dal menu.'); return; }
+
+    if (currentMode === 'images'){       await exportImages();      return; }
+    if (currentMode === 'digitaltool'){  await exportDigitalTool(); return; }
+    if (currentMode === 'pdf2jpg'){      await exportPdfToJpg();    return; }
+
+    if (!currentMode){ alert('Seleziona una funzione dal menu.'); return; }
     alert('Questa funzione sarà attivata nelle prossime build.');
   } finally {
     BtnProcedi.disabled = false;

@@ -29,7 +29,7 @@ const IubCard      = $('#IubendaCard');
 
 const ALL_CARDS = [WelcomeCard, SlugCard, FormatCard, UploadCard, DTCard, VideoCard, BvCard, QrCard, IubCard];
 
-/* Inizializza icone sidebar */
+/* Inizializza icone sidebar da data-attributes */
 function initSidebarIcons(){
   $$('#SideMenu li').forEach(li=>{
     const img = li.querySelector('.mi img');
@@ -57,14 +57,14 @@ function activateMenuVisual(mode){
 function selectMode(mode){
   ALL_CARDS.forEach(hide);
 
-  // Di default, il bottone Esporta è visibile tranne che in 'welcome'
+  // di default il bottone è visibile, TRANNNE che in welcome
   BtnProcedi?.classList.remove('hidden');
 
   switch(mode){
     case 'welcome':
       show(WelcomeCard);
-      BtnProcedi?.classList.add('hidden');            // ⬅️ niente bottone su Welcome
-      activateMenuVisual('');                         // nessuna voce attiva
+      BtnProcedi?.classList.add('hidden');        // niente bottone su Welcome
+      activateMenuVisual('');                     // nessuna voce attiva
       return;
 
     case 'images':
@@ -140,10 +140,10 @@ DropArea?.addEventListener('drop', async (e)=>{
   BtnClearPath?.classList.toggle('hidden', picked.length===0);
 });
 
-/* ⬇️ CLICK SUL BOX → APRE selezione cartella */
+/* CLICK SUL BOX → apri selezione cartella */
 DropArea?.addEventListener('click', ()=> DirInput?.click());
 
-/* On change input directory */
+/* on change input directory */
 DirInput?.addEventListener('change', ()=>{
   const fl = DirInput.files ? Array.from(DirInput.files) : [];
   picked = fl
@@ -158,7 +158,7 @@ BtnClearPath?.addEventListener('click', ()=>{
   BtnClearPath.classList.add('hidden');
 });
 
-/* ===== Helpers drag directory (webkitGetAsEntry) ===== */
+/* ===== Helpers: lettura directory ricorsiva da drag&drop ===== */
 async function readDroppedDirectory(dt){
   const items = dt?.items ? Array.from(dt.items) : [];
   const out = [];
@@ -229,8 +229,6 @@ function getSelectedFormat(){
   if (FmtShare?.checked) return {w:1200,h:630};
   return {w:1920,h:1080};
 }
-
-// (opzionale) mappa IT→EN (se esiste assets/folder_map.csv)
 async function loadFolderMap(){
   try{
     const res = await fetch('./assets/folder_map.csv', {cache:'no-store'});
@@ -252,7 +250,6 @@ async function loadFolderMap(){
     return map;
   }catch{ return {}; }
 }
-
 async function exportImages(){
   const slugIta = slugify(TxtSlugIta?.value||'');
   const slugEng = slugify(TxtSlugEng?.value||'');
@@ -327,7 +324,7 @@ async function exportImages(){
   const blob = await zip.generateAsync({type:'blob'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = zipName;                  // ⬅️ il browser salva in Download
+  a.download = zipName;   // salva in Download
   document.body.appendChild(a); a.click();
   URL.revokeObjectURL(a.href); a.remove();
 
@@ -366,7 +363,6 @@ function makeCanvasFromRules(bmp){
   ctx.drawImage(bmp, 0, 0, outW, outH);
   return c;
 }
-// Ricompressione a scalini <= 450 KB
 async function canvasToBlobCapped(canvas, mime){
   const ladder = [0.85, 0.75, 0.65, 0.50, 0.40];
   for (const q of ladder){
@@ -429,7 +425,7 @@ async function exportDigitalTool(){
   const blob = await zip.generateAsync({ type:'blob' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = zipName;                 // ⬅️ browser salva in Download
+  a.download = zipName;                  // salva in Download
   document.body.appendChild(a); a.click();
   URL.revokeObjectURL(a.href); a.remove();
 
@@ -443,7 +439,6 @@ BtnProcedi?.addEventListener('click', async ()=>{
   if (active === 'images'){ await exportImages(); return; }
   if (active === 'digitaltool'){ await exportDigitalTool(); return; }
 
-  // altre sezioni: da attivare
   if (!active){ alert('Seleziona una funzione dal menu.'); return; }
   alert('Questa funzione sarà attivata nelle prossime build.');
 });

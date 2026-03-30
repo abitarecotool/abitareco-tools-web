@@ -44,12 +44,14 @@
         </li>
 
         <li data-mode="rename"
-            data-icon="assets/icons/icon-rename.png">
+            data-icon="assets/icons/icon-rename.png"
+            data-icon-active="assets/icons/icon-rename-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Rename</span>
         </li>
 
         <li data-mode="video"
-            data-icon="assets/icons/icon-video.png">
+            data-icon="assets/icons/icon-video.png"
+            data-icon-active="assets/icons/icon-video-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Video Slideshow</span>
         </li>
 
@@ -91,6 +93,7 @@
 
           <!-- ========= IMMAGINI ========= -->
           <section id="SlugCard" class="card hidden">
+            <h3>Immagini</h3>
             <div class="form-group">
               <label for="TxtSlugIta">Nome file ITA*</label>
               <input id="TxtSlugIta" class="input" type="text" placeholder="es. appartamento-roma-parioli" />
@@ -147,7 +150,41 @@
             </p>
           </section>
 
-          <!-- Placeholder (attiveremo dopo) -->
+          <!-- ========= PDF → JPG ========= -->
+          <section id="PdfCard" class="card hidden">
+            <h3>Nota:</h3>
+            <p class="muted">
+              Convertiamo ogni PDF in immagini JPG pronte da inviare: render di circa <b>300&nbsp;dpi</b>,
+              una immagine per pagina numerata <b>-01, -02, …</b>, ottimizzate fino a <b>~1,5&nbsp;MB</b> ciascuna.
+              Manteniamo la tua struttura di cartelle e ti consegniamo tutto in un unico ZIP.
+            </p>
+          </section>
+
+          <!-- ========= RENAME ========= -->
+          <section id="RenameCard" class="card hidden">
+            <h3>Rename</h3>
+            <p class="muted" style="margin-bottom:10px;">
+              Scegli come rinominare i file. La numerazione è unica su tutta la selezione (01, 02, 03…).
+            </p>
+
+            <div class="radios" style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
+              <label><input type="radio" name="rnMode" id="RnModeNumbers" value="numbers" checked> Solo numeri (01, 02, 03…)</label>
+              <label><input type="radio" name="rnMode" id="RnModeBase" value="base"> Nome base + numeri</label>
+            </div>
+
+            <div id="RnBaseRow" class="row hidden" style="gap:12px;">
+              <div>
+                <label>Nome base</label>
+                <input id="TxtRenameBase" class="input" type="text" placeholder="es. immobile-roma" />
+              </div>
+            </div>
+
+            <p class="muted" style="margin-top:10px;">
+              I file rinominati mantengono le sottocartelle originali nello ZIP finale (<code>_RENAME/…</code>).
+            </p>
+          </section>
+
+          <!-- Placeholder (altre sezioni) -->
           <section id="VideoCard" class="card hidden"></section>
           <section id="BusinessCardCard" class="card hidden"></section>
           <section id="QrCard" class="card hidden"></section>

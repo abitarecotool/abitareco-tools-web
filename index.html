@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Abitare Co. – Digital Content Tool (Web)</title>
 
-  <!-- Font Manrope -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Font Manrope (preconnect + foglio stile) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
 
   <!-- Stili -->
   <link rel="stylesheet" href="./css/styles.css" />
@@ -18,10 +18,17 @@
 
     <!-- SIDEBAR fissa -->
     <aside class="sidebar">
-      <img src="./assets/logo.png" class="logo" alt="Abitare Co.">
+      <img class="logo" src="./assets/logo.png" alt="Abitare Co." />
 
       <ul id="SideMenu" class="menu">
         <!-- NB: data-mode = robusto; nessun indice fragile -->
+        <li data-mode="welcome"
+            data-icon="assets/icons/icon-sito.png"
+            data-icon-active="assets/icons/icon-sito-selected.png"
+            class="active">
+          <span class="mi"><img alt=""></span><span class="txt">Home</span>
+        </li>
+
         <li data-mode="images"
             data-icon="assets/icons/icon-sito.png"
             data-icon-active="assets/icons/icon-sito-selected.png">
@@ -29,7 +36,8 @@
         </li>
 
         <li data-mode="digitaltool"
-            data-icon="assets/icons/icon-digital.png">
+            data-icon="assets/icons/icon-digital.png"
+            data-icon-active="assets/icons/icon-digital-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">DigitalTool</span>
         </li>
 
@@ -111,9 +119,10 @@
             </div>
           </div>
 
-          <p class="muted" style="margin-top:8px;">L’export userà crop centrato e spazio colore sRGB.</p>
+          <p class="muted" style="margin-top:8px;">L’export userà crop centrato e spazio colore sRGB (strip metadati).</p>
         </section>
 
+        <!-- Upload condiviso -->
         <section id="UploadCard" class="card hidden">
           <h3>Carica cartella*</h3>
           <div id="DropArea" class="drop" tabindex="0">
@@ -124,7 +133,18 @@
           </div>
         </section>
 
-        <!-- (Altre sezioni pronte per gli step successivi) -->
+        <!-- ========= DIGITAL TOOL (come PS) ========= -->
+        <section id="DTCard" class="card hidden">
+          <h3>DigitalTool</h3>
+          <p class="muted">
+            Esporta le immagini rinominate per cartella (<code>slug-cartella-01</code>, <code>02</code>, …),
+            in <b>JPG</b> e <b>WEBP</b>. Regole: <b>quadre 2500×2500 (cover)</b>, <b>orizzontali 2500 px larghezza</b>,
+            <b>verticali 2000 px altezza</b>, qualità 0.85 e ricompressione ≤ 450KB.
+          </p>
+          <p class="muted">Trascina la cartella in <b>Carica cartella</b> e poi premi <b>Esporta ora</b>.</p>
+        </section>
+
+        <!-- Placeholder delle altre card (attiveremo dopo) -->
         <section id="VideoCard" class="card hidden"></section>
         <section id="BusinessCardCard" class="card hidden"></section>
         <section id="QrCard" class="card hidden"></section>
@@ -152,7 +172,7 @@
   </div>
 
   <!-- Libreria ZIP + App -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
   <script src="./js/app.js"></script>
 </body>
 </html>

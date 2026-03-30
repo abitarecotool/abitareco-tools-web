@@ -1,9 +1,9 @@
 /* =========================================================
    Abitare Co. – Digital Content Tool (Web)
-   app.js — Welcome + Sidebar (icone) + Immagini + DigitalTool
+   app.js — Welcome (senza bottone), Sidebar, Immagini, DigitalTool
    ========================================================= */
 
-/* Helpers base */
+/* Helpers */
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const show = (el) => el && el.classList.remove('hidden');
@@ -53,14 +53,19 @@ function activateMenuVisual(mode){
   });
 }
 
-/* Navigazione per modalità */
+/* Navigazione */
 function selectMode(mode){
   ALL_CARDS.forEach(hide);
+
+  // Di default, il bottone Esporta è visibile tranne che in 'welcome'
+  BtnProcedi?.classList.remove('hidden');
 
   switch(mode){
     case 'welcome':
       show(WelcomeCard);
-      break;
+      BtnProcedi?.classList.add('hidden');            // ⬅️ niente bottone su Welcome
+      activateMenuVisual('');                         // nessuna voce attiva
+      return;
 
     case 'images':
       show(SlugCard);
@@ -73,7 +78,6 @@ function selectMode(mode){
       show(DTCard);
       break;
 
-    // placeholder per le altre (le attiveremo più avanti)
     case 'pdf2jpg':    show(UploadCard); break;
     case 'rename':     show(UploadCard); break;
     case 'video':      show(UploadCard); show(VideoCard); break;
@@ -84,7 +88,11 @@ function selectMode(mode){
 
     default:
       show(WelcomeCard);
+      BtnProcedi?.classList.add('hidden');
+      activateMenuVisual('');
+      return;
   }
+
   activateMenuVisual(mode);
 }
 
@@ -94,7 +102,7 @@ SideMenu?.addEventListener('click', (e)=>{
   selectMode(li.dataset.mode || 'welcome');
 });
 
-/* Welcome di default */
+/* Avvio: Welcome senza bottone */
 initSidebarIcons();
 selectMode('welcome');
 
@@ -113,10 +121,11 @@ function toggleCustomRow(){ FmtCustom?.checked ? show(CustomRow) : hide(CustomRo
 [Fmt1920, FmtShare, FmtCustom].forEach(r=> r?.addEventListener('change', toggleCustomRow));
 toggleCustomRow();
 
-/* =================== Upload condiviso (drag&drop directory) =================== */
+/* =================== Upload (drag&drop + click per aprire cartella) =================== */
 const DropArea = $('#DropArea');
 const TxtFolderPath = $('#TxtFolderPath');
 const BtnClearPath  = $('#BtnClearPath');
+const DirInput      = $('#DirInput');
 
 let picked = []; // [{ file, relPath }]
 
@@ -130,6 +139,20 @@ DropArea?.addEventListener('drop', async (e)=>{
   TxtFolderPath.textContent = picked.length ? `Selezionati ${picked.length} file…` : 'Nessun file supportato.';
   BtnClearPath?.classList.toggle('hidden', picked.length===0);
 });
+
+/* ⬇️ CLICK SUL BOX → APRE selezione cartella */
+DropArea?.addEventListener('click', ()=> DirInput?.click());
+
+/* On change input directory */
+DirInput?.addEventListener('change', ()=>{
+  const fl = DirInput.files ? Array.from(DirInput.files) : [];
+  picked = fl
+    .filter(f => /\.(jpe?g|png|tif?f)$/i.test(f.name))
+    .map(f => ({ file:f, relPath: f.webkitRelativePath || f.name }));
+  TxtFolderPath.textContent = picked.length ? `Selezionati ${picked.length} file…` : 'Nessun file supportato.';
+  BtnClearPath?.classList.toggle('hidden', picked.length===0);
+});
+
 BtnClearPath?.addEventListener('click', ()=>{
   picked=[]; TxtFolderPath.textContent='Trascina qui la cartella...';
   BtnClearPath.classList.add('hidden');
@@ -197,7 +220,7 @@ function drawCoverToCanvas(bmp, W, H){
 }
 function canvasToBlob(canvas, mime, q=0.85){ return new Promise(res=> canvas.toBlob(res, mime, q)); }
 
-/* ====== IMMAGINI → export ZIP (come già impostato) ====== */
+/* ====== IMMAGINI → export ZIP ====== */
 function getSelectedFormat(){
   if (FmtCustom?.checked){
     const w = Number(CustomW?.value)||1920, h = Number(CustomH?.value)||1080;
@@ -207,7 +230,7 @@ function getSelectedFormat(){
   return {w:1920,h:1080};
 }
 
-// (Opzionale) mappa IT→EN per nomi cartelle (se esiste assets/folder_map.csv)
+// (opzionale) mappa IT→EN (se esiste assets/folder_map.csv)
 async function loadFolderMap(){
   try{
     const res = await fetch('./assets/folder_map.csv', {cache:'no-store'});
@@ -234,7 +257,7 @@ async function exportImages(){
   const slugIta = slugify(TxtSlugIta?.value||'');
   const slugEng = slugify(TxtSlugEng?.value||'');
   if (!slugIta || !slugEng){ alert('Inserisci gli slug ITA/ENG.'); return; }
-  if (!picked.length){ alert('Trascina una cartella con immagini.'); return; }
+  if (!picked.length){ alert('Seleziona o trascina una cartella con immagini.'); return; }
 
   const {w:W, h:H} = getSelectedFormat();
   const folderMap = await loadFolderMap();
@@ -304,7 +327,7 @@ async function exportImages(){
   const blob = await zip.generateAsync({type:'blob'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = zipName;
+  a.download = zipName;                  // ⬅️ il browser salva in Download
   document.body.appendChild(a); a.click();
   URL.revokeObjectURL(a.href); a.remove();
 
@@ -312,8 +335,6 @@ async function exportImages(){
 }
 
 /* =================== DIGITAL TOOL (1:1 col PS) =================== */
-/* Regole: quadre => 2500×2500 cover; orizzontali => 2500x; verticali => x2000
-   Export WEBP+JPG q=0.85 con ricompressione <= 450KB, numerazione per SLUG cartella */
 function makeCanvasFromRules(bmp){
   const w=bmp.width, h=bmp.height;
   const ratio = w/h;
@@ -338,7 +359,6 @@ function makeCanvasFromRules(bmp){
     ctx.drawImage(bmp, 0, 0, outW, outH);
     return c;
   }
-  // verticale
   const H=2000, scale=H/h, outH=H, outW=Math.round(w*scale);
   const c=document.createElement('canvas'); c.width=outW; c.height=outH;
   const ctx=c.getContext('2d',{alpha:false});
@@ -346,22 +366,19 @@ function makeCanvasFromRules(bmp){
   ctx.drawImage(bmp, 0, 0, outW, outH);
   return c;
 }
-
-// Ricompressione a scalini come PS (85 → 75 → 65 → 50 → 40), soglia 450 KB
-async function encodeWithCap(canvas, mime){
+// Ricompressione a scalini <= 450 KB
+async function canvasToBlobCapped(canvas, mime){
   const ladder = [0.85, 0.75, 0.65, 0.50, 0.40];
   for (const q of ladder){
-    const blob = await canvasToBlob(canvas, mime, q);
+    const blob = await new Promise(res=> canvas.toBlob(res, mime, q));
     if (!blob) continue;
     if (blob.size <= 450 * 1024) return blob;
-    if (q === ladder[ladder.length-1]) return blob; // ultima spiaggia
+    if (q === ladder[ladder.length-1]) return blob;
   }
 }
-
 async function exportDigitalTool(){
   if (!picked.length){
-    alert('Trascina una cartella con immagini nella card "Carica cartella".');
-    return;
+    alert('Seleziona o trascina una cartella con immagini.'); return;
   }
 
   const files = [...picked].sort((a,b)=> (a.relPath||a.file.name).localeCompare(b.relPath||b.file.name));
@@ -370,14 +387,12 @@ async function exportDigitalTool(){
   show(ActionProgressWrap); ActionProgress.value = 0;
   const total = files.length; let processed = 0;
 
-  // contatori per slug cartella
   const countsBySlug = new Map();
 
   for (const rec of files){
     const p = rec.relPath || rec.file.name;
     const relFolder = p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '';
 
-    // leaf per lo slug
     let leaf;
     if (relFolder){
       const parts = relFolder.split('/').filter(Boolean);
@@ -391,15 +406,14 @@ async function exportDigitalTool(){
     const nn = String(countsBySlug.get(slug) + 1).padStart(2,'0');
     countsBySlug.set(slug, countsBySlug.get(slug) + 1);
 
-    // base path nel ZIP
     const basePath = `_DIGITALTOOL/${relFolder ? relFolder + '/' : ''}`;
     const outBase  = `${basePath}${slug}-${nn}`;
 
     const bmp = await loadImageBitmap(rec.file);
     const canvas = makeCanvasFromRules(bmp);
 
-    const webp = await encodeWithCap(canvas, 'image/webp');   // sRGB + strip (di fatto) via canvas
-    const jpg  = await encodeWithCap(canvas, 'image/jpeg');
+    const webp = await canvasToBlobCapped(canvas, 'image/webp');
+    const jpg  = await canvasToBlobCapped(canvas, 'image/jpeg');
 
     if (webp) zip.file(`${outBase}.webp`, webp);
     if (jpg)  zip.file(`${outBase}.jpg`,  jpg);
@@ -415,24 +429,21 @@ async function exportDigitalTool(){
   const blob = await zip.generateAsync({ type:'blob' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = zipName;
+  a.download = zipName;                 // ⬅️ browser salva in Download
   document.body.appendChild(a); a.click();
   URL.revokeObjectURL(a.href); a.remove();
 
   await sleep(250); hide(ActionProgressWrap);
 }
 
-/* “Esporta ora” → smista in base alla sezione attiva */
+/* Smistamento bottone */
 BtnProcedi?.addEventListener('click', async ()=>{
   const active = $('#SideMenu li.active')?.dataset.mode;
 
-  if (active === 'images'){
-    await exportImages(); return;
-  }
-  if (active === 'digitaltool'){
-    await exportDigitalTool(); return;
-  }
+  if (active === 'images'){ await exportImages(); return; }
+  if (active === 'digitaltool'){ await exportDigitalTool(); return; }
 
-  if (active === 'welcome'){ alert('Seleziona una funzione dal menu.'); return; }
+  // altre sezioni: da attivare
+  if (!active){ alert('Seleziona una funzione dal menu.'); return; }
   alert('Questa funzione sarà attivata nelle prossime build.');
 });

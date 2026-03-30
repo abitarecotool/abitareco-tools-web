@@ -5,74 +5,83 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Abitare Co. – Digital Content Tool</title>
 
-  <!-- Favicon (opzionale) -->
+  <!-- Favicon -->
   ./assets/logo.ico
 
-  <!-- Font Manrope -->
+  <!-- Google Fonts: Manrope -->
   https://fonts.googleapis.com
   https://fonts.gstatic.com
   https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap
 
   <!-- Stili -->
   ./css/styles.css
+
+  <meta name="theme-color" content="#c4162b" />
 </head>
 <body>
+  <noscript>
+    <div style="padding:12px;background:#fff3cd;border:1px solid #ffe69c;color:#664d03">
+      Questo strumento richiede JavaScript attivo.
+    </div>
+  </noscript>
+
   <div id="AppRoot" class="app">
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
+      <!-- Logo -->
       ./assets/logo.png
 
       <ul id="SideMenu" class="menu">
         <!-- Niente 'Home': apriamo su Welcome ma non è nel menu -->
         <li data-mode="images"
-            data-icon="assets/icons/icon-sito.png"
-            data-icon-active="assets/icons/icon-sito-selected.png">
+            data-icon="./assets/icons/icon-sito.png"
+            data-icon-active="./assets/icons/icon-sito-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Immagini</span>
         </li>
 
         <li data-mode="digitaltool"
-            data-icon="assets/icons/icon-digital.png"
-            data-icon-active="assets/icons/icon-digital-selected.png">
+            data-icon="./assets/icons/icon-digital.png"
+            data-icon-active="./assets/icons/icon-digital-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">DigitalTool</span>
         </li>
 
         <li data-mode="pdf2jpg"
-            data-icon="assets/icons/icon-pdf.png"
-            data-icon-active="assets/icons/icon-pdf-selected.png">
+            data-icon="./assets/icons/icon-pdf.png"
+            data-icon-active="./assets/icons/icon-pdf-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">PDF → JPG</span>
         </li>
 
         <li data-mode="rename"
-            data-icon="assets/icons/icon-rename.png">
+            data-icon="./assets/icons/icon-rename.png">
           <span class="mi"><img alt=""></span><span class="txt">Rename</span>
         </li>
 
         <li data-mode="video"
-            data-icon="assets/icons/icon-video.png">
+            data-icon="./assets/icons/icon-video.png">
           <span class="mi"><img alt=""></span><span class="txt">Video Slideshow</span>
         </li>
 
         <li data-mode="watermark"
-            data-icon="assets/icons/icon-watermark.png"
-            data-icon-active="assets/icons/icon-watermark-selected.png">
+            data-icon="./assets/icons/icon-watermark.png"
+            data-icon-active="./assets/icons/icon-watermark-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Watermark</span>
         </li>
 
         <li data-mode="bv"
-            data-icon="assets/icons/icon-bv.png">
+            data-icon="./assets/icons/icon-bv.png">
           <span class="mi"><img alt=""></span><span class="txt">Biglietto da visita</span>
         </li>
 
         <li data-mode="qr"
-            data-icon="assets/icons/icon-qr.png"
-            data-icon-active="assets/icons/icon-qr-selected.png">
+            data-icon="./assets/icons/icon-qr.png"
+            data-icon-active="./assets/icons/icon-qr-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Genera QR Code</span>
         </li>
 
         <li data-mode="iubenda"
-            data-icon="assets/icons/icon-iubenda.png"
-            data-icon-active="assets/icons/icon-iubenda-selected.png">
+            data-icon="./assets/icons/icon-iubenda.png"
+            data-icon-active="./assets/icons/icon-iubenda-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Iubenda</span>
         </li>
       </ul>
@@ -175,7 +184,7 @@
   </div>
 
   <!-- Librerie -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="./js/app.js"></script>
+  https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.jsscript>
+  ./js/app.jsscript>
 </body>
 </html>

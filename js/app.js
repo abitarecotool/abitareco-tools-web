@@ -1,9 +1,9 @@
 /* =========================================================
    Abitare Co. – Digital Content Tool (Web)
-   app.js — Welcome + Sidebar (icone) + Immagini (ZIP)
+   app.js — Welcome + Sidebar (icone) + Immagini + DigitalTool
    ========================================================= */
 
-/* Helpers */
+/* Helpers base */
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const show = (el) => el && el.classList.remove('hidden');
@@ -18,17 +18,18 @@ const BtnProcedi         = $('#BtnProcedi');
 
 /* Sezioni */
 const WelcomeCard  = $('#WelcomeCard');
-const SlugCard     = $('#SlugCard');
-const FormatCard   = $('#FormatCard');
-const UploadCard   = $('#UploadCard');
+const SlugCard     = $('#SlugCard');      // Immagini
+const FormatCard   = $('#FormatCard');    // Immagini
+const UploadCard   = $('#UploadCard');    // comune
+const DTCard       = $('#DTCard');        // DigitalTool
 const VideoCard    = $('#VideoCard');
 const BvCard       = $('#BusinessCardCard');
 const QrCard       = $('#QrCard');
 const IubCard      = $('#IubendaCard');
 
-const ALL_CARDS = [WelcomeCard, SlugCard, FormatCard, UploadCard, VideoCard, BvCard, QrCard, IubCard];
+const ALL_CARDS = [WelcomeCard, SlugCard, FormatCard, UploadCard, DTCard, VideoCard, BvCard, QrCard, IubCard];
 
-/* Init icone sidebar */
+/* Inizializza icone sidebar */
 function initSidebarIcons(){
   $$('#SideMenu li').forEach(li=>{
     const img = li.querySelector('.mi img');
@@ -52,23 +53,35 @@ function activateMenuVisual(mode){
   });
 }
 
-/* Navigazione (per modalità) */
+/* Navigazione per modalità */
 function selectMode(mode){
   ALL_CARDS.forEach(hide);
+
   switch(mode){
-    case 'images':
-      show(SlugCard); show(FormatCard); show(UploadCard);
-      break;
-    case 'digitaltool':
-    case 'pdf2jpg':
-    case 'rename':
-    case 'video':
-      show(VideoCard);  // placeholder
-      break;
-    case 'bv':  show(BvCard);  break;
-    case 'qr':  show(QrCard);  break;
-    case 'iubenda': show(IubCard); break;
     case 'welcome':
+      show(WelcomeCard);
+      break;
+
+    case 'images':
+      show(SlugCard);
+      show(FormatCard);
+      show(UploadCard);
+      break;
+
+    case 'digitaltool':
+      show(UploadCard);
+      show(DTCard);
+      break;
+
+    // placeholder per le altre (le attiveremo più avanti)
+    case 'pdf2jpg':    show(UploadCard); break;
+    case 'rename':     show(UploadCard); break;
+    case 'video':      show(UploadCard); show(VideoCard); break;
+    case 'watermark':  show(UploadCard); break;
+    case 'bv':         show(BvCard); break;
+    case 'qr':         show(QrCard); break;
+    case 'iubenda':    show(IubCard); break;
+
     default:
       show(WelcomeCard);
   }
@@ -81,11 +94,11 @@ SideMenu?.addEventListener('click', (e)=>{
   selectMode(li.dataset.mode || 'welcome');
 });
 
-/* Welcome di default all’avvio */
+/* Welcome di default */
 initSidebarIcons();
 selectMode('welcome');
 
-/* =================== IMMAGINI: Export ZIP =================== */
+/* =================== IMMAGINI =================== */
 const TxtSlugIta = $('#TxtSlugIta');
 const TxtSlugEng = $('#TxtSlugEng');
 
@@ -100,12 +113,12 @@ function toggleCustomRow(){ FmtCustom?.checked ? show(CustomRow) : hide(CustomRo
 [Fmt1920, FmtShare, FmtCustom].forEach(r=> r?.addEventListener('change', toggleCustomRow));
 toggleCustomRow();
 
-/* Drag&drop directory (con percorso relativo) */
+/* =================== Upload condiviso (drag&drop directory) =================== */
 const DropArea = $('#DropArea');
 const TxtFolderPath = $('#TxtFolderPath');
 const BtnClearPath  = $('#BtnClearPath');
 
-let picked = []; // [{file, relPath}]
+let picked = []; // [{ file, relPath }]
 
 function dropPreventDefaults(e){ e.preventDefault(); e.stopPropagation(); }
 ['dragenter','dragover','dragleave','drop'].forEach(ev => DropArea?.addEventListener(ev, dropPreventDefaults));
@@ -122,7 +135,7 @@ BtnClearPath?.addEventListener('click', ()=>{
   BtnClearPath.classList.add('hidden');
 });
 
-/* Traversal ricorsivo (webkitGetAsEntry) */
+/* ===== Helpers drag directory (webkitGetAsEntry) ===== */
 async function readDroppedDirectory(dt){
   const items = dt?.items ? Array.from(dt.items) : [];
   const out = [];
@@ -155,21 +168,46 @@ async function readDroppedDirectory(dt){
   return out;
 }
 
-/* Slug & naming */
+/* ===== Helpers immagini / canvas ===== */
 function slugify(t){
   if (!t) return '';
-  t = t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  t = t.replace(/[’'`]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-  return t;
+  return t.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[’'`]/g,'')
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'');
 }
-function appendOnce(base,suffix){
-  const b=slugify(base), s=slugify(suffix);
-  if (!s) return b;
-  return b.endsWith('-'+s)? b : `${b}-${s}`;
+async function loadImageBitmap(file){
+  const url = URL.createObjectURL(file);
+  const blob = await (await fetch(url)).blob();
+  const bmp = await createImageBitmap(blob, { imageOrientation:'from-image' });
+  URL.revokeObjectURL(url);
+  return bmp;
 }
-function appendSlugFolderUnique(base, folder){ return appendOnce(base, folder); }
+function drawCoverToCanvas(bmp, W, H){
+  const canvas = document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  const ctx = canvas.getContext('2d');
+  const scale = Math.max(W/bmp.width, H/bmp.height);
+  const dw = Math.round(bmp.width*scale), dh = Math.round(bmp.height*scale);
+  const dx = Math.round((W-dw)/2), dy = Math.round((H-dh)/2);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality='high';
+  ctx.drawImage(bmp, dx, dy, dw, dh);
+  return canvas;
+}
+function canvasToBlob(canvas, mime, q=0.85){ return new Promise(res=> canvas.toBlob(res, mime, q)); }
 
-/* Mappa IT→EN opzionale (assets/folder_map.csv) */
+/* ====== IMMAGINI → export ZIP (come già impostato) ====== */
+function getSelectedFormat(){
+  if (FmtCustom?.checked){
+    const w = Number(CustomW?.value)||1920, h = Number(CustomH?.value)||1080;
+    return {w,h};
+  }
+  if (FmtShare?.checked) return {w:1200,h:630};
+  return {w:1920,h:1080};
+}
+
+// (Opzionale) mappa IT→EN per nomi cartelle (se esiste assets/folder_map.csv)
 async function loadFolderMap(){
   try{
     const res = await fetch('./assets/folder_map.csv', {cache:'no-store'});
@@ -192,37 +230,6 @@ async function loadFolderMap(){
   }catch{ return {}; }
 }
 
-/* Canvas helpers */
-async function loadImageBitmap(file){
-  const url = URL.createObjectURL(file);
-  const blob = await (await fetch(url)).blob();
-  const bmp = await createImageBitmap(blob, { imageOrientation:'from-image' });
-  URL.revokeObjectURL(url);
-  return bmp;
-}
-function drawCoverToCanvas(bmp, W, H){
-  const canvas = document.createElement('canvas');
-  canvas.width=W; canvas.height=H;
-  const ctx = canvas.getContext('2d');
-  const scale = Math.max(W/bmp.width, H/bmp.height);
-  const dw = bmp.width*scale, dh=bmp.height*scale;
-  const dx=(W-dw)/2, dy=(H-dh)/2;
-  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
-  ctx.drawImage(bmp, dx, dy, dw, dh);
-  return canvas;
-}
-function canvasToBlob(canvas, mime, q=0.85){ return new Promise(res=> canvas.toBlob(res, mime, q)); }
-
-function getSelectedFormat(){
-  if (FmtCustom?.checked){
-    const w = Number(CustomW?.value)||1920, h = Number(CustomH?.value)||1080;
-    return {w,h};
-  }
-  if (FmtShare?.checked) return {w:1200,h:630};
-  return {w:1920,h:1080};
-}
-
-/* Export Immagini → ZIP */
 async function exportImages(){
   const slugIta = slugify(TxtSlugIta?.value||'');
   const slugEng = slugify(TxtSlugEng?.value||'');
@@ -235,7 +242,7 @@ async function exportImages(){
   const groups = new Map(); // relFolder -> recs
   for (const rec of picked){
     const p = rec.relPath||rec.file.name;
-    const folder = p.includes('/') ? p.slice(0,p.lastIndexOf('/')) : '';
+    const folder = p.includes('/')? p.slice(0,p.lastIndexOf('/')) : '';
     if (!groups.has(folder)) groups.set(folder, []);
     groups.get(folder).push(rec);
   }
@@ -252,6 +259,7 @@ async function exportImages(){
   const total = picked.length; let processed = 0;
 
   for (const [relFolder, recs] of groups){
+    // leaf cartella (o 'hero')
     let leaf = '';
     if (relFolder){
       const parts = relFolder.split('/').filter(Boolean);
@@ -259,7 +267,6 @@ async function exportImages(){
     }
     const leafIta = leaf || 'hero';
     const leafEng = folderMap[leafIta] || leafIta;
-
     const slugFolderIta = slugify(leafIta);
     const slugFolderEng = slugify(leafEng);
 
@@ -269,8 +276,8 @@ async function exportImages(){
     for (const rec of recs){
       counter++; const nn = String(counter).padStart(2,'0');
 
-      const baseIta = appendSlugFolderUnique(slugIta, slugFolderIta);
-      const baseEng = appendSlugFolderUnique(slugEng, slugFolderEng);
+      const baseIta = (slugIta + (slugFolderIta ? `-${slugFolderIta}` : ''));
+      const baseEng = (slugEng + (slugFolderEng ? `-${slugFolderEng}` : ''));
       const outIta = `${baseIta}-${nn}`;
       const outEng = `${baseEng}-${nn}`;
 
@@ -280,13 +287,13 @@ async function exportImages(){
       const webp = await canvasToBlob(canvas,'image/webp',0.85);
       const jpg  = await canvasToBlob(canvas,'image/jpeg',0.85);
 
-      zip.file(`${paths.itaWebp}${outIta}.webp`, webp);
-      zip.file(`${paths.itaJpg}${outIta}.jpg`,  jpg);
-      zip.file(`${paths.engWebp}${outEng}.webp`, webp);
-      zip.file(`${paths.engJpg}${outEng}.jpg`,   jpg);
+      if (webp) zip.file(`${paths.itaWebp}${outIta}.webp`, webp);
+      if (jpg)  zip.file(`${paths.itaJpg}${outIta}.jpg`,  jpg);
+      if (webp) zip.file(`${paths.engWebp}${outEng}.webp`, webp);
+      if (jpg)  zip.file(`${paths.engJpg}${outEng}.jpg`,   jpg);
 
       processed++; ActionProgress.value = Math.floor((processed/total)*100);
-      await sleep(3);
+      await sleep(2);
     }
   }
 
@@ -301,13 +308,131 @@ async function exportImages(){
   document.body.appendChild(a); a.click();
   URL.revokeObjectURL(a.href); a.remove();
 
-  await sleep(300); hide(ActionProgressWrap);
+  await sleep(250); hide(ActionProgressWrap);
 }
 
-/* “Esporta ora” disponibile per Immagini */
+/* =================== DIGITAL TOOL (1:1 col PS) =================== */
+/* Regole: quadre => 2500×2500 cover; orizzontali => 2500x; verticali => x2000
+   Export WEBP+JPG q=0.85 con ricompressione <= 450KB, numerazione per SLUG cartella */
+function makeCanvasFromRules(bmp){
+  const w=bmp.width, h=bmp.height;
+  const ratio = w/h;
+  const square = Math.abs(ratio - 1.0) <= 0.03;
+
+  if (square){
+    const W=2500,H=2500;
+    const scale = Math.max(W/w, H/h);
+    const dw=Math.round(w*scale), dh=Math.round(h*scale);
+    const dx=Math.round((W-dw)/2), dy=Math.round((H-dh)/2);
+    const c=document.createElement('canvas'); c.width=W; c.height=H;
+    const ctx=c.getContext('2d',{alpha:false});
+    ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+    ctx.drawImage(bmp, dx, dy, dw, dh);
+    return c;
+  }
+  if (w>=h){
+    const W=2500, scale=W/w, outW=W, outH=Math.round(h*scale);
+    const c=document.createElement('canvas'); c.width=outW; c.height=outH;
+    const ctx=c.getContext('2d',{alpha:false});
+    ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+    ctx.drawImage(bmp, 0, 0, outW, outH);
+    return c;
+  }
+  // verticale
+  const H=2000, scale=H/h, outH=H, outW=Math.round(w*scale);
+  const c=document.createElement('canvas'); c.width=outW; c.height=outH;
+  const ctx=c.getContext('2d',{alpha:false});
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  ctx.drawImage(bmp, 0, 0, outW, outH);
+  return c;
+}
+
+// Ricompressione a scalini come PS (85 → 75 → 65 → 50 → 40), soglia 450 KB
+async function encodeWithCap(canvas, mime){
+  const ladder = [0.85, 0.75, 0.65, 0.50, 0.40];
+  for (const q of ladder){
+    const blob = await canvasToBlob(canvas, mime, q);
+    if (!blob) continue;
+    if (blob.size <= 450 * 1024) return blob;
+    if (q === ladder[ladder.length-1]) return blob; // ultima spiaggia
+  }
+}
+
+async function exportDigitalTool(){
+  if (!picked.length){
+    alert('Trascina una cartella con immagini nella card "Carica cartella".');
+    return;
+  }
+
+  const files = [...picked].sort((a,b)=> (a.relPath||a.file.name).localeCompare(b.relPath||b.file.name));
+  const zip = new JSZip();
+
+  show(ActionProgressWrap); ActionProgress.value = 0;
+  const total = files.length; let processed = 0;
+
+  // contatori per slug cartella
+  const countsBySlug = new Map();
+
+  for (const rec of files){
+    const p = rec.relPath || rec.file.name;
+    const relFolder = p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '';
+
+    // leaf per lo slug
+    let leaf;
+    if (relFolder){
+      const parts = relFolder.split('/').filter(Boolean);
+      leaf = parts.length ? parts[parts.length-1] : '';
+    } else {
+      const first = (p.includes('/') ? p.split('/')[0] : 'root');
+      leaf = first;
+    }
+    const slug = slugify(leaf);
+    if (!countsBySlug.has(slug)) countsBySlug.set(slug, 0);
+    const nn = String(countsBySlug.get(slug) + 1).padStart(2,'0');
+    countsBySlug.set(slug, countsBySlug.get(slug) + 1);
+
+    // base path nel ZIP
+    const basePath = `_DIGITALTOOL/${relFolder ? relFolder + '/' : ''}`;
+    const outBase  = `${basePath}${slug}-${nn}`;
+
+    const bmp = await loadImageBitmap(rec.file);
+    const canvas = makeCanvasFromRules(bmp);
+
+    const webp = await encodeWithCap(canvas, 'image/webp');   // sRGB + strip (di fatto) via canvas
+    const jpg  = await encodeWithCap(canvas, 'image/jpeg');
+
+    if (webp) zip.file(`${outBase}.webp`, webp);
+    if (jpg)  zip.file(`${outBase}.jpg`,  jpg);
+
+    processed++; ActionProgress.value = Math.floor((processed/total)*100);
+    await sleep(2);
+  }
+
+  const ts = new Date();
+  const stamp = ts.toISOString().slice(0,10).replace(/-/g,'') + ts.toTimeString().slice(0,5).replace(':','');
+  const zipName = `DIGITALTOOL-${stamp}.zip`;
+
+  const blob = await zip.generateAsync({ type:'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = zipName;
+  document.body.appendChild(a); a.click();
+  URL.revokeObjectURL(a.href); a.remove();
+
+  await sleep(250); hide(ActionProgressWrap);
+}
+
+/* “Esporta ora” → smista in base alla sezione attiva */
 BtnProcedi?.addEventListener('click', async ()=>{
   const active = $('#SideMenu li.active')?.dataset.mode;
-  if (active === 'images'){ await exportImages(); }
-  else if (active === 'welcome'){ alert('Seleziona una funzione dal menu.'); }
-  else { alert('Questa funzione sarà attivata nelle prossime build.'); }
+
+  if (active === 'images'){
+    await exportImages(); return;
+  }
+  if (active === 'digitaltool'){
+    await exportDigitalTool(); return;
+  }
+
+  if (active === 'welcome'){ alert('Seleziona una funzione dal menu.'); return; }
+  alert('Questa funzione sarà attivata nelle prossime build.');
 });

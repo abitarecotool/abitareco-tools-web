@@ -29,7 +29,7 @@ const IubCard      = $('#IubendaCard');
 
 const ALL_CARDS = [WelcomeCard, SlugCard, FormatCard, UploadCard, DTCard, VideoCard, BvCard, QrCard, IubCard];
 
-/* Inizializza icone sidebar da data-attributes */
+/* Inizializza icone sidebar */
 function initSidebarIcons(){
   $$('#SideMenu li').forEach(li=>{
     const img = li.querySelector('.mi img');
@@ -57,14 +57,14 @@ function activateMenuVisual(mode){
 function selectMode(mode){
   ALL_CARDS.forEach(hide);
 
-  // di default il bottone è visibile, TRANNNE che in welcome
+  // di default il bottone è visibile, tranne che in 'welcome'
   BtnProcedi?.classList.remove('hidden');
 
   switch(mode){
     case 'welcome':
       show(WelcomeCard);
-      BtnProcedi?.classList.add('hidden');        // niente bottone su Welcome
-      activateMenuVisual('');                     // nessuna voce attiva
+      BtnProcedi?.classList.add('hidden');  // no bottone su Welcome
+      activateMenuVisual('');               // nessuna voce attiva
       return;
 
     case 'images':
@@ -331,7 +331,7 @@ async function exportImages(){
   await sleep(250); hide(ActionProgressWrap);
 }
 
-/* =================== DIGITAL TOOL (1:1 col PS) =================== */
+/* =================== DIGITAL TOOL (numeric only, per-cartella) =================== */
 function makeCanvasFromRules(bmp){
   const w=bmp.width, h=bmp.height;
   const ratio = w/h;
@@ -363,6 +363,7 @@ function makeCanvasFromRules(bmp){
   ctx.drawImage(bmp, 0, 0, outW, outH);
   return c;
 }
+// Ricompressione a scalini <= 450 KB (85 → 75 → 65 → 50 → 40)
 async function canvasToBlobCapped(canvas, mime){
   const ladder = [0.85, 0.75, 0.65, 0.50, 0.40];
   for (const q of ladder){
@@ -374,45 +375,44 @@ async function canvasToBlobCapped(canvas, mime){
 }
 async function exportDigitalTool(){
   if (!picked.length){
-    alert('Seleziona o trascina una cartella con immagini.'); return;
+    alert('Seleziona o trascina una cartella con immagini.'); 
+    return;
   }
 
+  // Ordine stabile
   const files = [...picked].sort((a,b)=> (a.relPath||a.file.name).localeCompare(b.relPath||b.file.name));
   const zip = new JSZip();
 
   show(ActionProgressWrap); ActionProgress.value = 0;
   const total = files.length; let processed = 0;
 
-  const countsBySlug = new Map();
+  // Numerazione per cartella relativa
+  const countsByFolder = new Map();
 
   for (const rec of files){
+    // Cartella relativa ('': root)
     const p = rec.relPath || rec.file.name;
     const relFolder = p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '';
 
-    let leaf;
-    if (relFolder){
-      const parts = relFolder.split('/').filter(Boolean);
-      leaf = parts.length ? parts[parts.length-1] : '';
-    } else {
-      const first = (p.includes('/') ? p.split('/')[0] : 'root');
-      leaf = first;
-    }
-    const slug = slugify(leaf);
-    if (!countsBySlug.has(slug)) countsBySlug.set(slug, 0);
-    const nn = String(countsBySlug.get(slug) + 1).padStart(2,'0');
-    countsBySlug.set(slug, countsBySlug.get(slug) + 1);
+    // Contatore per cartella
+    const current = countsByFolder.get(relFolder) || 0;
+    const nn = String(current + 1).padStart(2,'0');
+    countsByFolder.set(relFolder, current + 1);
 
+    // Percorso in ZIP
     const basePath = `_DIGITALTOOL/${relFolder ? relFolder + '/' : ''}`;
-    const outBase  = `${basePath}${slug}-${nn}`;
 
+    // Resize secondo regole PS
     const bmp = await loadImageBitmap(rec.file);
     const canvas = makeCanvasFromRules(bmp);
 
+    // Esporta con cap 450 KB
     const webp = await canvasToBlobCapped(canvas, 'image/webp');
     const jpg  = await canvasToBlobCapped(canvas, 'image/jpeg');
 
-    if (webp) zip.file(`${outBase}.webp`, webp);
-    if (jpg)  zip.file(`${outBase}.jpg`,  jpg);
+    // SOLO numeri (nessun prefisso)
+    if (webp) zip.file(`${basePath}${nn}.webp`, webp);
+    if (jpg)  zip.file(`${basePath}${nn}.jpg`,  jpg);
 
     processed++; ActionProgress.value = Math.floor((processed/total)*100);
     await sleep(2);

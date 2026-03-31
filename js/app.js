@@ -209,6 +209,7 @@ async function loadImageBitmap(file){
   URL.revokeObjectURL(url);
   return bmp;
 }
+function canvasToBlob(canvas, mime, q=0.85){ return new Promise(res => canvas.toBlob(res, mime, q)); }
 function drawCoverToCanvas(bmp, W, H){
   const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
@@ -219,7 +220,6 @@ function drawCoverToCanvas(bmp, W, H){
   ctx.drawImage(bmp, dx, dy, dw, dh);
   return canvas;
 }
-function canvasToBlob(canvas, mime, q=0.85){ return new Promise(res => canvas.toBlob(res, mime, q)); }
 
 /* ===================================================
  EXPORT: IMMAGINI
@@ -465,7 +465,8 @@ async function exportRename(){
 /* ===================================================
  🎞️ VIDEO SLIDESHOW — Client-side
   - Formati: Orizzontale (1920×1080), Verticale (1080×1920), Quadrato (1080×1080)
-  - HD di default: 12 Mbps (1080p), 8 Mbps (quadrato)
+  - MP4 preferito (WebCodecs+MP4Box), fallback MediaRecorder (MP4 su Safari / WebM altrove)
+  - HD: 12 Mbps (1080p), 8 Mbps (1080×1080)
 =================================================== */
 
 // Stato + UI video
@@ -475,11 +476,9 @@ const VidDuration = $('#VidDuration');
 const VidFmtH = $('#VidFmtH');
 const VidFmtV = $('#VidFmtV');
 const VidFmtS = $('#VidFmtS');
-
 const DropAreaVideo  = $('#DropAreaVideo');
 const TxtFolderVideo = $('#TxtFolderVideo');
 const BtnClearVideo  = $('#BtnClearVideo');
-
 const VidCanvas  = $('#VidCanvas');
 
 // Drag&drop VIDEO
@@ -544,6 +543,8 @@ function drawCoverOn(ctx, bmp, W, H) {
   const iw = bmp.width, ih = bmp.height;
   const cr = W / H, ir = iw / ih;
   let dw, dh, dx, dy;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   if (ir > cr) { dh = H; dw = Math.round(dh * ir); dx = Math.round((W - dw)/2); dy = 0; }
   else { dw = W; dh = Math.round(dw / ir); dx = 0; dy = Math.round((H - dh)/2); }
   ctx.drawImage(bmp, dx, dy, dw, dh);
@@ -583,7 +584,7 @@ function pickVideoSize(){
   return { W:1920, H:1080 };                           // Orizzontale
 }
 function pickBitrate(W,H,fps){
-  // HD di default: 12 Mbps per 1080p (orizz./vert.), 8 Mbps per quadrato; scala con FPS
+  // HD default: 12 Mbps per 1080p (oriz./vert.), 8 Mbps per 1080×1080; scala con fps
   const isSquare = (W===1080 && H===1080);
   let bps = isSquare ? 8e6 : 12e6;
   if (fps > 30) bps = Math.round(bps * (fps/30));
@@ -614,8 +615,10 @@ async function supportsH264WebCodecs() {
 // WebCodecs (H.264) + MP4Box
 async function exportWithWebCodecsMP4(items, {T, F, fps, W, H, bitrate}) {
   if (!window.MP4Box) throw new Error('MP4Box.js non caricato');
+
   showEl(ActionProgressWrap); ActionProgress.value = 0;
   ActionProgressLabel.textContent = 'Encoding (WebCodecs → MP4)…';
+
   VidCanvas.width = W; VidCanvas.height = H;
   const tl = buildTimelineVideo(items.length, T, F, fps);
   const cfg = await supportsH264WebCodecs(); if (!cfg) throw new Error('H.264 WebCodecs non disponibile');
@@ -657,37 +660,53 @@ async function exportWithWebCodecsMP4(items, {T, F, fps, W, H, bitrate}) {
   }
   await encoder.flush(); encoder.close(); mp4.flush();
   hideEl(ActionProgressWrap);
+  console.log('[Slideshow] pipeline = WebCodecs→MP4, bitrate =', bitrate);
   return new Blob(chunks, { type: 'video/mp4' });
 }
 
-// MediaRecorder (MP4 su Safari, WebM fallback) con bitrate alto
+// MediaRecorder (time-based) con bitrate alto
 async function exportWithMediaRecorder(items, {T, F, fps, W, H, mime, bitrate}) {
   showEl(ActionProgressWrap); ActionProgress.value = 0;
   ActionProgressLabel.textContent = `Registrazione (${mime})…`;
+
   VidCanvas.width = W; VidCanvas.height = H;
   const tl = buildTimelineVideo(items.length, T, F, fps);
+
   const stream = VidCanvas.captureStream(fps);
   const rec = new MediaRecorder(stream, {
     mimeType: mime,
     videoBitsPerSecond: bitrate,
     audioBitsPerSecond: 128000
   });
+
   const parts = [];
   rec.ondataavailable = e => { if (e.data?.size) parts.push(e.data); };
   const done = new Promise(res => rec.onstop = res);
   rec.start(Math.min(1000, Math.round(1000/fps)));
 
-  const totalFrames = tl.frames;
-  for (let f=0; f<totalFrames; f++) {
-    renderAt(tl, items, W, H, f / fps);
+  // LOOP TIME-BASED: durata reale = T secondi
+  const t0 = performance.now();
+  let lastShown = 0;
+  while (true) {
     await new Promise(requestAnimationFrame);
-    if ((f % fps) === 0) ActionProgress.value = Math.round((f/totalFrames)*100);
+    const t = (performance.now() - t0) / 1000;           // secondi reali
+    renderAt(tl, items, W, H, Math.min(t, T));           // non superare T
+    if (t - lastShown >= 1/ fps) {
+      lastShown = t;
+      ActionProgress.value = Math.min(100, Math.round((t / T) * 100));
+    }
+    if (t >= T) break;
   }
+
   rec.stop(); await done; hideEl(ActionProgressWrap);
+  console.log('[Slideshow] pipeline = MediaRecorder→', mime, ', bitrate =', bitrate);
   return new Blob(parts, { type: mime });
 }
 
 // Export principale
+function pickPipelineBitrate(W,H,fps){
+  return pickBitrate(W,H,fps); // wrapper per estensioni future (es. qualità personalizzata)
+}
 async function exportVideoSlideshow(){
   const title = slugify(VidTitle?.value || '');
   if (!title){ alert('Inserisci “Nome video”.'); return; }
@@ -697,7 +716,7 @@ async function exportVideoSlideshow(){
   const F   = 1.0;                             // dissolvenza default
   const fps = 30;                              // fps default
   const { W, H } = pickVideoSize();
-  const bitrate = pickBitrate(W,H,fps);
+  const bitrate = pickPipelineBitrate(W,H,fps);
 
   const items = await filesToBitmapsVideo(pickedVideo);
   const h264Cfg = await supportsH264WebCodecs();
@@ -709,12 +728,12 @@ async function exportVideoSlideshow(){
     blob = await exportWithWebCodecsMP4(items, { T, F, fps, W, H, bitrate });
     filename = `${title}.mp4`;
   } else if (mp4Mime) {
-    blob = await exportWithMediaRecorder(items, { T, F, fps, W, H, mime: mp4Mime, bitrate }, );
+    blob = await exportWithMediaRecorder(items, { T, F, fps, W, H, mime: mp4Mime, bitrate });
     filename = `${title}.mp4`;
   } else {
     const webmMime = (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9'))
       ? 'video/webm;codecs=vp9' : 'video/webm;codecs=vp8';
-    blob = await exportWithMediaRecorder(items, { T, F, fps, W, H, mime: webmMime, bitrate }, );
+    blob = await exportWithMediaRecorder(items, { T, F, fps, W, H, mime: webmMime, bitrate });
     filename = `${title}.webm`;
   }
 

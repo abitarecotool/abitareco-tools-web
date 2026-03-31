@@ -4,109 +4,88 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Abitare Co. – Digital Content Tool</title>
-
   <!-- Favicon -->
   <link rel="icon" href="./assets/logo.ico" type="image/x-icon" />
-
   <!-- Theme color (mobile browser) -->
   <meta name="theme-color" content="#c4162b" />
-
   <!-- Google Fonts: Manrope -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" />
-
   <!-- App styles -->
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
-
   <noscript>
     <div style="padding:12px;background:#fff3cd;border:1px solid #ffe69c;color:#664d03;">
       Questo strumento richiede JavaScript attivo.
     </div>
   </noscript>
-
   <div id="AppRoot" class="app">
-
-    <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+    <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
     <aside class="sidebar">
-
       <img src="./assets/logo.png" class="logo" alt="Abitare Co." />
-
       <ul id="SideMenu" class="menu">
-
         <li data-mode="images"
             data-icon="./assets/icons/icon-sito.png"
             data-icon-active="./assets/icons/icon-sito-selected.png">
           <span class="mi"><img alt="" /></span>
           <span class="txt">Immagini</span>
         </li>
-
         <li data-mode="digitaltool"
             data-icon="./assets/icons/icon-digital.png"
             data-icon-active="./assets/icons/icon-digital-selected.png">
           <span class="mi"><img alt="" /></span>
           <span class="txt">DigitalTool</span>
         </li>
-
         <li data-mode="pdf2jpg"
             data-icon="./assets/icons/icon-pdf.png"
             data-icon-active="./assets/icons/icon-pdf-selected.png">
           <span class="mi"><img alt="" /></span>
           <span class="txt">PDF → JPG</span>
         </li>
-
         <li data-mode="rename"
             data-icon="./assets/icons/icon-rename.png"
             data-icon-active="./assets/icons/icon-rename-selected.png">
           <span class="mi"><img alt="" /></span>
           <span class="txt">Rename</span>
         </li>
-
         <li data-mode="video"
             data-icon="./assets/icons/icon-video.png"
             data-icon-active="./assets/icons/icon-video-selected.png">
           <span class="mi"><img alt="" /></span>
           <span class="txt">Video Slideshow</span>
         </li>
-
         <li data-mode="watermark"
             data-icon="./assets/icons/icon-watermark.png"
             data-icon-active="./assets/icons/icon-watermark-selected.png">
           <span class="mi"><img alt="" /></span>
           <span class="txt">Watermark</span>
         </li>
-
         <li data-mode="bv"
             data-icon="./assets/icons/icon-bv.png"
             data-icon-active="./assets/icons/icon-bv-selected.png">
           <span class="mi"><img alt="" /></span>
           <span class="txt">Biglietto da visita</span>
         </li>
-
         <li data-mode="qr"
             data-icon="./assets/icons/icon-qr.png"
             data-icon-active="./assets/icons/icon-qr-selected.png">
           <span class="mi"><img alt="" /></span>
           <span class="txt">Genera QR Code</span>
         </li>
-
         <li data-mode="iubenda"
             data-icon="./assets/icons/icon-iubenda.png"
             data-icon-active="./assets/icons/icon-iubenda-selected.png">
           <span class="mi"><img alt="" /></span>
           <span class="txt">Iubenda</span>
         </li>
-
       </ul>
     </aside>
-
-    <!-- ═══════════════════ MAIN ═══════════════════ -->
+    <!-- ═════════════════════ MAIN ═════════════════════ -->
     <main>
       <div class="content">
         <div class="cards-scroll">
-
           <!-- ─── WELCOME ─── -->
           <section id="WelcomeCard" class="card">
             <h2>Welcome!</h2>
@@ -146,7 +125,7 @@
             </div>
           </section>
 
-          <!-- ─── UPLOAD GENERALE (Immagini / DigitalTool / PDF / Watermark) ─── -->
+          <!-- ─── UPLOAD GENERALE ─── -->
           <section id="UploadCard" class="card hidden">
             <h3>Carica cartella*</h3>
             <div id="DropArea" class="drop" tabindex="0" role="button"
@@ -197,12 +176,10 @@
             <p class="muted" style="margin-bottom:16px;">
               Imposta nome, durata e formato. Poi clicca "Esporta ora".
             </p>
-
             <div class="form-group">
               <label for="VidTitle">Nome video*</label>
               <input id="VidTitle" class="input" type="text" placeholder="es. abitareco-presentazione" />
             </div>
-
             <div class="row" style="margin-bottom:16px;">
               <div>
                 <label for="VidDuration">Durata</label>
@@ -221,7 +198,6 @@
                 </div>
               </div>
             </div>
-
             <div class="form-group">
               <label>Carica cartella immagini*</label>
               <div id="DropAreaVideo" class="drop" tabindex="0" role="button"
@@ -232,27 +208,59 @@
                 </div>
               </div>
             </div>
-
             <!-- Canvas nascosto per il rendering video -->
             <canvas id="VidCanvas" width="1920" height="1080" hidden></canvas>
           </section>
 
-          <!-- ─── PLACEHOLDER FUTURI ─── -->
+          <!-- ─── WATERMARK (usa UploadCard) ─── -->
+          <!-- Nessuna card dedicata: si usa l’UploadCard come nel desktop -->
+
+          <!-- ─── BIGLIETTO DA VISITA (placeholder) ─── -->
           <section id="BusinessCardCard" class="card hidden">
             <h3>Biglietto da visita</h3>
             <p class="muted" style="margin-top:6px;">Questa funzione sarà attivata nelle prossime build.</p>
           </section>
 
+          <!-- ─── QR CODE ─── -->
           <section id="QrCard" class="card hidden">
             <h3>Genera QR Code</h3>
-            <p class="muted" style="margin-top:6px;">Questa funzione sarà attivata nelle prossime build.</p>
+            <p class="muted" style="margin-top:6px;">
+              Inserisci l’URL di destinazione e i parametri UTM. Verranno esportati PNG 1024×1024, SVG e TXT con l’URL finale.
+            </p>
+            <div class="form-group">
+              <label for="QrWebsite">Website URL*</label>
+              <input id="QrWebsite" class="input" type="url" placeholder="https://www.abitareco.it/pagina" />
+            </div>
+            <div class="row" style="gap:12px;margin-bottom:8px;">
+              <div><label for="QrSource">utm_source*</label><input id="QrSource" class="input" type="text" placeholder="es. brochure"/></div>
+              <div><label for="QrMedium">utm_medium*</label><input id="QrMedium" class="input" type="text" placeholder="es. print"/></div>
+              <div><label for="QrCampaign">utm_campaign*</label><input id="QrCampaign" class="input" type="text" placeholder="es. lancio-progetto"/></div>
+            </div>
+            <div class="row" style="gap:12px;">
+              <div><label for="QrCampaignId">utm_id (opzionale)</label><input id="QrCampaignId" class="input" type="text"/></div>
+              <div><label for="QrTerm">utm_term (opzionale)</label><input id="QrTerm" class="input" type="text"/></div>
+              <div><label for="QrContent">utm_content (opzionale)</label><input id="QrContent" class="input" type="text"/></div>
+            </div>
           </section>
 
+          <!-- ─── IUBENDA ─── -->
           <section id="IubendaCard" class="card hidden">
             <h3>Iubenda</h3>
-            <p class="muted" style="margin-top:6px;">Questa funzione sarà attivata nelle prossime build.</p>
-          </section>
+            <p class="muted" style="margin-top:6px;">Genera lo snippet pronto da incollare nel sito.</p>
 
+            <div class="form-group">
+              <label for="IubWidgetUrl">Script widget (URL &lt;script src=...&gt;)*</label>
+              <input id="IubWidgetUrl" class="input" type="text" placeholder='es. <script type="text/javascript" src="https://cs.iubenda.com/autoblocking/...text" placeholder="es. 99999999"/></div>
+            </div>
+
+            <div class="form-group">
+              <label><input id="IubEnableEn" type="checkbox" /> Abilita auto IT/EN</label>
+            </div>
+            <div id="IubEnRow" class="form-group hidden">
+              <label for="IubCookieEn">Cookie Policy ID (EN)</label>
+              <input id="IubCookieEn" class="input" type="text" placeholder="es. 88888888"/>
+            </div>
+          </section>
         </div><!-- /cards-scroll -->
 
         <!-- ─── ACTION BAR ─── -->
@@ -263,22 +271,22 @@
               <progress id="ActionProgress" max="100" value="0" class="progress"></progress>
             </div>
             <div class="copyright">
-              © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
+              © 2026 Abitare Co. – Design by Abitare Co. Creative Unit
+              All rights reserved.
             </div>
           </div>
           <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
         </section>
-
       </div>
     </main>
   </div><!-- /AppRoot -->
 
-  <!-- ═══════════════════ LIBRARIES ═══════════════════ -->
+  <!-- ═════════ LIBRARIES ═════════ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
-
+  <!-- QR code library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <!-- App logic -->
   <script src="./js/app.js"></script>
-
 </body>
 </html>

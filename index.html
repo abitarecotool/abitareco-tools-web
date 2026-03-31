@@ -5,18 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Abitare Co. – Digital Content Tool</title>
 
-  <!-- Favicon -->
   <link rel="icon" href="./assets/logo.ico" type="image/x-icon" />
 
-  <!-- Theme color (mobile browser) -->
   <meta name="theme-color" content="#c4162b" />
 
-  <!-- Google Fonts: Manrope -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" />
 
-  <!-- App styles -->
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
@@ -29,7 +25,6 @@
 
   <div id="AppRoot" class="app">
 
-    <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
     <aside class="sidebar">
 
       <img src="./assets/logo.png" class="logo" alt="Abitare Co." />
@@ -40,7 +35,14 @@
             data-icon="./assets/icons/icon-sito.png"
             data-icon-active="./assets/icons/icon-sito-selected.png">
           <span class="mi"><img alt="" /></span>
-          <span class="txt">Immagini</span>
+          <span class="txt">Immagini Sito</span>
+        </li>
+
+        <li data-mode="images-share"
+            data-icon="./assets/icons/icon-share.png"
+            data-icon-active="./assets/icons/icon-share-selected.png">
+          <span class="mi"><img alt="" /></span>
+          <span class="txt">Immagini Share</span>
         </li>
 
         <li data-mode="digitaltool"
@@ -102,18 +104,15 @@
       </ul>
     </aside>
 
-    <!-- ═══════════════════ MAIN ═══════════════════ -->
     <main>
       <div class="content">
         <div class="cards-scroll">
 
-          <!-- ─── WELCOME ─── -->
           <section id="WelcomeCard" class="card">
             <h2>Welcome!</h2>
             <p class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
           </section>
 
-          <!-- ─── IMMAGINI: Slug ─── -->
           <section id="SlugCard" class="card hidden">
             <h3>Slug per il sito</h3>
             <div class="form-group">
@@ -126,7 +125,6 @@
             </div>
           </section>
 
-          <!-- ─── IMMAGINI: Formato ─── -->
           <section id="FormatCard" class="card hidden">
             <label>Formato</label>
             <div class="radios" style="display:flex;flex-direction:column;gap:6px;">
@@ -146,7 +144,6 @@
             </div>
           </section>
 
-          <!-- ─── UPLOAD GENERALE (Immagini / DigitalTool / PDF / Watermark) ─── -->
           <section id="UploadCard" class="card hidden">
             <h3>Carica cartella*</h3>
             <div id="DropArea" class="drop" tabindex="0" role="button"
@@ -159,7 +156,6 @@
             </div>
           </section>
 
-          <!-- ─── DIGITAL TOOL ─── -->
           <section id="DTCard" class="card hidden">
             <h3>DigitalTool</h3>
             <p class="muted" style="margin-top:6px;line-height:1.6;">
@@ -169,7 +165,6 @@
             </p>
           </section>
 
-          <!-- ─── RENAME ─── -->
           <section id="RenameCard" class="card hidden">
             <h3>Rinomina files</h3>
             <p class="muted" style="margin-bottom:16px;">
@@ -191,7 +186,6 @@
             </div>
           </section>
 
-          <!-- ─── VIDEO SLIDESHOW ─── -->
           <section id="VideoCard" class="card hidden">
             <h3>Video Slideshow</h3>
             <p class="muted" style="margin-bottom:16px;">
@@ -233,11 +227,21 @@
               </div>
             </div>
 
-            <!-- Canvas nascosto per il rendering video -->
             <canvas id="VidCanvas" width="1920" height="1080" hidden></canvas>
           </section>
 
-          <!-- ─── PLACEHOLDER FUTURI ─── -->
+          <section id="WatermarkCard" class="card hidden">
+            <h3>Watermark Portali</h3>
+            <p class="muted" style="margin-top:6px;line-height:1.6;">
+              Ridimensiona le immagini a <strong>1024x768px</strong> e applica il logo aziendale al centro.
+              Carica la cartella e seleziona il logo.
+            </p>
+            <div class="form-group" style="margin-top:15px;">
+              <label>Seleziona Logo PNG Trasparente</label>
+              <input type="file" id="InpWatermarkLogo" accept="image/png" class="input" />
+            </div>
+          </section>
+
           <section id="BusinessCardCard" class="card hidden">
             <h3>Biglietto da visita</h3>
             <p class="muted" style="margin-top:6px;">Questa funzione sarà attivata nelle prossime build.</p>
@@ -253,10 +257,7 @@
             <p class="muted" style="margin-top:6px;">Questa funzione sarà attivata nelle prossime build.</p>
           </section>
 
-        </div><!-- /cards-scroll -->
-
-        <!-- ─── ACTION BAR ─── -->
-        <section id="ActionBar" class="actionbar">
+        </div><section id="ActionBar" class="actionbar">
           <div class="action-left">
             <div id="ActionProgressWrap" class="action-progress hidden">
               <div id="ActionProgressLabel" class="muted">Elaborazione…</div>
@@ -266,18 +267,17 @@
               © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
             </div>
           </div>
-          <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
+          <div class="action-right">
+            <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
+          </div>
         </section>
 
       </div>
     </main>
-  </div><!-- /AppRoot -->
-
-  <!-- ═══════════════════ LIBRARIES ═══════════════════ -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  </div><script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-  <!-- App logic -->
   <script src="./js/app.js"></script>
 
 </body>

@@ -6,179 +6,207 @@
   <title>Abitare Co. – Digital Content Tool</title>
 
   <!-- Favicon -->
-  <link rel="icon" href="./assetse Fonts -->
-  <link rel="preconnectpis.com
-  <link rel="preconnect.com
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swapesheet" href="./theme-color" content="#c4162b" />
+  <link rel="icon" href="./assets/logo.ico" type="image/x-icon" />
+
+  <!-- Theme color (mobile browser) -->
+  <meta name="theme-color" content="#c4162b" />
+
+  <!-- Google Fonts: Manrope -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" />
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
+
   <noscript>
-    <div style="padding:12px;background:#fff3cd;border:1px solid #ffe69c;color:#664d03">
+    <div style="padding:12px;background:#fff3cd;border:1px solid #ffe69c;color:#664d03;">
       Questo strumento richiede JavaScript attivo.
     </div>
   </noscript>
 
   <div id="AppRoot" class="app">
-    <!-- SIDEBAR -->
+
+    <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
     <aside class="sidebar">
-      <img src="./assets/logo.png" class="logo" alt="Abitare Co."     <li data-mode="images"
+
+      <img src="./assets/logo.png" class="logo" alt="Abitare Co." />
+
+      <ul id="SideMenu" class="menu">
+
+        <li data-mode="images"
             data-icon="./assets/icons/icon-sito.png"
             data-icon-active="./assets/icons/icon-sito-selected.png">
-          <span class="mi"><img alt=""></span><span class="txt">Immagini</span>
+          <span class="mi"><img alt="" /></span>
+          <span class="txt">Immagini</span>
         </li>
 
         <li data-mode="digitaltool"
             data-icon="./assets/icons/icon-digital.png"
             data-icon-active="./assets/icons/icon-digital-selected.png">
-          <span class="mi"><img alt=""></span><span class="txt">DigitalTool</span>
+          <span class="mi"><img alt="" /></span>
+          <span class="txt">DigitalTool</span>
         </li>
 
         <li data-mode="pdf2jpg"
             data-icon="./assets/icons/icon-pdf.png"
             data-icon-active="./assets/icons/icon-pdf-selected.png">
-          <span class="mi"><img alt=""></span><span class="txt">PDF → JPG</span>
+          <span class="mi"><img alt="" /></span>
+          <span class="txt">PDF → JPG</span>
         </li>
 
         <li data-mode="rename"
             data-icon="./assets/icons/icon-rename.png"
             data-icon-active="./assets/icons/icon-rename-selected.png">
-          <span class="mi"><img alt=""></span><span class="txt">Rename</span>
+          <span class="mi"><img alt="" /></span>
+          <span class="txt">Rename</span>
         </li>
 
-        <!-- Video Slideshow con icona attiva (rossa) -->
         <li data-mode="video"
             data-icon="./assets/icons/icon-video.png"
             data-icon-active="./assets/icons/icon-video-selected.png">
-          <span class="mi"><img alt=""></span><span class="txt">Video Slideshow</span>
+          <span class="mi"><img alt="" /></span>
+          <span class="txt">Video Slideshow</span>
         </li>
 
         <li data-mode="watermark"
             data-icon="./assets/icons/icon-watermark.png"
             data-icon-active="./assets/icons/icon-watermark-selected.png">
-          <span class="mi"><img alt=""></span><span class="txt">Watermark</span>
+          <span class="mi"><img alt="" /></span>
+          <span class="txt">Watermark</span>
         </li>
 
         <li data-mode="bv"
             data-icon="./assets/icons/icon-bv.png"
             data-icon-active="./assets/icons/icon-bv-selected.png">
-          <span class="mi"><img alt=""></span><span class="txt">Biglietto da visita</span>
+          <span class="mi"><img alt="" /></span>
+          <span class="txt">Biglietto da visita</span>
         </li>
 
         <li data-mode="qr"
             data-icon="./assets/icons/icon-qr.png"
             data-icon-active="./assets/icons/icon-qr-selected.png">
-          <span class="mi"><img alt=""></span><span class="txt">Genera QR Code</span>
+          <span class="mi"><img alt="" /></span>
+          <span class="txt">Genera QR Code</span>
         </li>
 
         <li data-mode="iubenda"
             data-icon="./assets/icons/icon-iubenda.png"
             data-icon-active="./assets/icons/icon-iubenda-selected.png">
-          <span class="mi"><img alt=""></span><span class="txt">Iubenda</span>
+          <span class="mi"><img alt="" /></span>
+          <span class="txt">Iubenda</span>
         </li>
+
       </ul>
     </aside>
 
-    <!-- MAIN -->
+    <!-- ═══════════════════ MAIN ═══════════════════ -->
     <main>
       <div class="content">
         <div class="cards-scroll">
-          <!-- WELCOME -->
+
+          <!-- ─── WELCOME ─── -->
           <section id="WelcomeCard" class="card">
             <h2>Welcome!</h2>
             <p class="muted">Per iniziare, seleziona una modalità dal menu laterale.</p>
           </section>
 
-          <!-- IMMAGINI – SLUG -->
+          <!-- ─── IMMAGINI: Slug ─── -->
           <section id="SlugCard" class="card hidden">
             <h3>Slug per il sito</h3>
             <div class="form-group">
               <label for="TxtSlugIta">Nome file ITA*</label>
-              <input id="TxtSlugIta" class="input" type="text" placeholder="es. appartamento-roma-parioli">
+              <input id="TxtSlugIta" class="input" type="text" placeholder="es. appartamento-roma-parioli" />
             </div>
             <div class="form-group">
               <label for="TxtSlugEng">Nome file ENG*</label>
-              <input id="TxtSlugEng" class="input" type="text" placeholder="es. apartment-rome-parioli">
+              <input id="TxtSlugEng" class="input" type="text" placeholder="es. apartment-rome-parioli" />
             </div>
           </section>
 
-          <!-- IMMAGINI – FORMATO -->
+          <!-- ─── IMMAGINI: Formato ─── -->
           <section id="FormatCard" class="card hidden">
             <label>Formato</label>
-            <div class="radios" style="display:flex;flex-direction:column;gap:6px">
-              <label><input type="radio" name="fmtSite" id="FmtSite1920" checked> 1920×1080</label>
-              <label><input type="radio" name="fmtSite" id="FmtSiteShare"> 1200×630</label>
-              <label><input type="radio" name="fmtSite" id="FmtSiteCustom"> Personalizzato</label>
+            <div class="radios" style="display:flex;flex-direction:column;gap:6px;">
+              <label><input type="radio" name="fmtSite" id="FmtSite1920" checked /> 1920×1080 (Orizzontale)</label>
+              <label><input type="radio" name="fmtSite" id="FmtSiteShare" /> Share (1200×630)</label>
+              <label><input type="radio" name="fmtSite" id="FmtSiteCustom" /> Personalizzato</label>
             </div>
             <div id="CustomSizeRow" class="row hidden" style="margin-top:10px;">
               <div>
                 <label>Larghezza (px)</label>
-                <input id="CustomW" class="input" type="number" value="1920">
+                <input id="CustomW" class="input" type="number" min="1" value="1920" />
               </div>
               <div>
                 <label>Altezza (px)</label>
-                <input id="CustomH" class="input" type="number" value="1080">
+                <input id="CustomH" class="input" type="number" min="1" value="1080" />
               </div>
             </div>
           </section>
 
-          <!-- UPLOAD GENERALE -->
+          <!-- ─── UPLOAD GENERALE (Immagini / DigitalTool / PDF / Watermark) ─── -->
           <section id="UploadCard" class="card hidden">
             <h3>Carica cartella*</h3>
-            <div id="DropArea" class="drop">
+            <div id="DropArea" class="drop" tabindex="0" role="button"
+                 aria-label="Carica cartella"
+                 title="Clicca per selezionare una cartella o trascinala qui">
               <div class="drop-inner">
-                <span id="TxtFolderPath" class="muted">Trascina qui la cartella…</span>
-                <button id="BtnClearPath" class="btn-small hidden">✕</button>
+                <span id="TxtFolderPath" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
+                <button id="BtnClearPath" class="btn-small hidden" title="Rimuovi cartella" type="button">✕</button>
               </div>
             </div>
           </section>
 
-          <!-- DIGITAL TOOL -->
+          <!-- ─── DIGITAL TOOL ─── -->
           <section id="DTCard" class="card hidden">
             <h3>DigitalTool</h3>
-            <p class="muted" style="margin-top:6px; line-height:1.6;">
-              Questo strumento ottimizza automaticamente le immagini per l’utilizzo digitale:
-              le rende omogenee, leggere e pronte all’uso. Carica la cartella e clicca su
+            <p class="muted" style="margin-top:6px;line-height:1.6;">
+              Questo strumento ottimizza automaticamente le immagini per l'utilizzo digitale:
+              le rende omogenee, leggere e pronte all'uso. Carica la cartella e clicca su
               <b>Esporta ora</b> per ottenere il risultato finale.
             </p>
           </section>
 
-          <!-- RENAME -->
+          <!-- ─── RENAME ─── -->
           <section id="RenameCard" class="card hidden">
             <h3>Rinomina files</h3>
-            <p class="muted" style="margin-bottom:16px">
+            <p class="muted" style="margin-bottom:16px;">
               Se non inserisci un nome base, verranno generati solo numeri (01, 02, 03…)
             </p>
             <div class="form-group">
               <label for="TxtRenameBase">Nome base (opzionale)</label>
-              <input id="TxtRenameBase" class="input" type="text" placeholder="es. cucina">
+              <input id="TxtRenameBase" class="input" type="text" placeholder="es. cucina" />
             </div>
             <div class="form-group">
               <label>Carica cartella*</label>
-              <div id="DropAreaRename" class="drop">
+              <div id="DropAreaRename" class="drop" tabindex="0" role="button"
+                   aria-label="Carica cartella da rinominare">
                 <div class="drop-inner">
-                  <span id="TxtFolderRename" class="muted">Trascina qui la cartella…</span>
-                  <button id="BtnClearRename" class="btn-small hidden">✕</button>
+                  <span id="TxtFolderRename" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
+                  <button id="BtnClearRename" class="btn-small hidden" type="button">✕</button>
                 </div>
               </div>
             </div>
           </section>
 
-          <!-- VIDEO SLIDESHOW (senza anteprima/box giallo) -->
+          <!-- ─── VIDEO SLIDESHOW ─── -->
           <section id="VideoCard" class="card hidden">
             <h3>Video Slideshow</h3>
-            <p class="muted">Imposta nome, durata e formato. Poi clicca “Esporta ora”.</p>
+            <p class="muted" style="margin-bottom:16px;">
+              Imposta nome, durata e formato. Poi clicca "Esporta ora".
+            </p>
 
             <div class="form-group">
-              <label for="VidTitle">Nome video *</label>
-              <input id="VidTitle" class="input" type="text" placeholder="es. abitareco-presentazione">
+              <label for="VidTitle">Nome video*</label>
+              <input id="VidTitle" class="input" type="text" placeholder="es. abitareco-presentazione" />
             </div>
 
-            <div class="row">
+            <div class="row" style="margin-bottom:16px;">
               <div>
-                <label>Durata</label>
-                <select id="VidDuration" class="input" style="height:auto">
+                <label for="VidDuration">Durata</label>
+                <select id="VidDuration" class="input" style="height:41px;">
                   <option value="15">15 secondi</option>
                   <option value="30" selected>30 secondi</option>
                   <option value="45">45 secondi</option>
@@ -186,25 +214,48 @@
               </div>
               <div>
                 <label>Formato</label>
-                <div class="radios" style="display:flex;flex-direction:column;gap:6px">
-                  <label><input type="radio" name="VidFmt" id="VidFmtH" checked> Orizzontale (1920×1080)</label>
-                  <label><input type="radio" name="VidFmt" id="VidFmtV"> Verticale (1080×1920)</label>
-                  <label><input type="radio" name="VidFmt" id="VidFmtS"> Quadrato (1080×1080)</label>
+                <div class="radios" style="display:flex;flex-direction:column;gap:6px;">
+                  <label><input type="radio" name="VidFmt" id="VidFmtH" checked /> Orizzontale (1920×1080)</label>
+                  <label><input type="radio" name="VidFmt" id="VidFmtV" /> Verticale (1080×1920)</label>
+                  <label><input type="radio" name="VidFmt" id="VidFmtS" /> Quadrato (1080×1080)</label>
                 </div>
               </div>
             </div>
 
-            <!-- Canvas nascosto per il rendering -->
-            <canvas id="VidCanvas" width="1080" height="1080" hidden></canvas>
+            <div class="form-group">
+              <label>Carica cartella immagini*</label>
+              <div id="DropAreaVideo" class="drop" tabindex="0" role="button"
+                   aria-label="Carica cartella per il video slideshow">
+                <div class="drop-inner">
+                  <span id="TxtFolderVideo" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
+                  <button id="BtnClearVideo" class="btn-small hidden" type="button">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Canvas nascosto per il rendering video -->
+            <canvas id="VidCanvas" width="1920" height="1080" hidden></canvas>
           </section>
 
-          <!-- PLACEHOLDER FUTURI -->
-          <section id="BusinessCardCard" class="card hidden"><h3>Biglietto da visita</h3></section>
-          <section id="QrCard" class="card hidden"><h3>Genera QR Code</h3></section>
-          <section id="IubendaCard" class="card hidden"><h3>Iubenda</h3></section>
-        </div>
+          <!-- ─── PLACEHOLDER FUTURI ─── -->
+          <section id="BusinessCardCard" class="card hidden">
+            <h3>Biglietto da visita</h3>
+            <p class="muted" style="margin-top:6px;">Questa funzione sarà attivata nelle prossime build.</p>
+          </section>
 
-        <!-- ACTION BAR -->
+          <section id="QrCard" class="card hidden">
+            <h3>Genera QR Code</h3>
+            <p class="muted" style="margin-top:6px;">Questa funzione sarà attivata nelle prossime build.</p>
+          </section>
+
+          <section id="IubendaCard" class="card hidden">
+            <h3>Iubenda</h3>
+            <p class="muted" style="margin-top:6px;">Questa funzione sarà attivata nelle prossime build.</p>
+          </section>
+
+        </div><!-- /cards-scroll -->
+
+        <!-- ─── ACTION BAR ─── -->
         <section id="ActionBar" class="actionbar">
           <div class="action-left">
             <div id="ActionProgressWrap" class="action-progress hidden">
@@ -212,21 +263,22 @@
               <progress id="ActionProgress" max="100" value="0" class="progress"></progress>
             </div>
             <div class="copyright">
-              © 2026 Abitare Co. – Design by Abitare Co. Creative Unit
-              All rights reserved.
+              © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
             </div>
           </div>
-          <button id="BtnProcedi" class="btn-primary hidden">Esporta ora</button>
+          <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
         </section>
+
       </div>
     </main>
-  </div>
+  </div><!-- /AppRoot -->
 
-  <!-- LIBRARIES -->
+  <!-- ═══════════════════ LIBRARIES ═══════════════════ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <!-- MP4 mux lato client per WebCodecs (necessario a Chrome/Edge) -->
   <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
-  <!-- APP LOGIC -->
+
+  <!-- App logic -->
   <script src="./js/app.js"></script>
+
 </body>
 </html>

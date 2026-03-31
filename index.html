@@ -4,21 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Abitare Co. – Digital Content Tool</title>
-
   <!-- Favicon -->
   <link rel="icon" href="./assets/logo.ico" />
-
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
   <!-- Styles -->
   <link rel="stylesheet" href="./css/styles.css" />
-
   <meta name="theme-color" content="#c4162b" />
 </head>
-
 <body>
   <noscript>
     <div style="padding:12px;background:#fff3cd;border:1px solid #ffe69c;color:#664d03">
@@ -27,68 +22,55 @@
   </noscript>
 
   <div id="AppRoot" class="app">
-
     <!-- SIDEBAR -->
     <aside class="sidebar">
-
       <!-- ✅ LOGO PNG ORIGINALE -->
       <img src="./assets/logo.png" class="logo" alt="Abitare Co." />
-
       <ul id="SideMenu" class="menu">
-
         <li data-mode="images"
             data-icon="./assets/icons/icon-sito.png"
             data-icon-active="./assets/icons/icon-sito-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Immagini</span>
         </li>
-
         <li data-mode="digitaltool"
             data-icon="./assets/icons/icon-digital.png"
             data-icon-active="./assets/icons/icon-digital-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">DigitalTool</span>
         </li>
-
         <li data-mode="pdf2jpg"
             data-icon="./assets/icons/icon-pdf.png"
             data-icon-active="./assets/icons/icon-pdf-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">PDF → JPG</span>
         </li>
-
         <li data-mode="rename"
             data-icon="./assets/icons/icon-rename.png"
             data-icon-active="./assets/icons/icon-rename-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Rename</span>
         </li>
-
         <li data-mode="video"
             data-icon="./assets/icons/icon-video.png">
           <span class="mi"><img alt=""></span><span class="txt">Video Slideshow</span>
         </li>
-
         <li data-mode="watermark"
             data-icon="./assets/icons/icon-watermark.png"
             data-icon-active="./assets/icons/icon-watermark-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Watermark</span>
         </li>
-
         <li data-mode="bv"
             data-icon="./assets/icons/icon-bv.png"
             data-icon-active="./assets/icons/icon-bv-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Biglietto da visita</span>
         </li>
-
         <li data-mode="qr"
             data-icon="./assets/icons/icon-qr.png"
             data-icon-active="./assets/icons/icon-qr-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Genera QR Code</span>
         </li>
-
         <li data-mode="iubenda"
             data-icon="./assets/icons/icon-iubenda.png"
             data-icon-active="./assets/icons/icon-iubenda-selected.png">
           <span class="mi"><img alt=""></span><span class="txt">Iubenda</span>
         </li>
-
       </ul>
     </aside>
 
@@ -96,7 +78,6 @@
     <main>
       <div class="content">
         <div class="cards-scroll">
-
           <!-- ✅ WELCOME -->
           <section id="WelcomeCard" class="card">
             <h2>Welcome!</h2>
@@ -106,12 +87,10 @@
           <!-- ✅ IMMAGINI – SLUG -->
           <section id="SlugCard" class="card hidden">
             <h3>Slug per il sito</h3>
-
             <div class="form-group">
               <label for="TxtSlugIta">Nome file ITA*</label>
               <input id="TxtSlugIta" class="input" type="text" placeholder="es. appartamento-roma-parioli">
             </div>
-
             <div class="form-group">
               <label for="TxtSlugEng">Nome file ENG*</label>
               <input id="TxtSlugEng" class="input" type="text" placeholder="es. apartment-rome-parioli">
@@ -126,7 +105,6 @@
               <label><input type="radio" name="fmtSite" id="FmtSiteShare"> 1200×630</label>
               <label><input type="radio" name="fmtSite" id="FmtSiteCustom"> Personalizzato</label>
             </div>
-
             <div id="CustomSizeRow" class="row hidden" style="margin-top:10px;">
               <div>
                 <label>Larghezza (px)</label>
@@ -139,10 +117,9 @@
             </div>
           </section>
 
-          <!-- ✅ UPLOAD -->
+          <!-- ✅ UPLOAD GENERALE -->
           <section id="UploadCard" class="card hidden">
             <h3>Carica cartella*</h3>
-
             <div id="DropArea" class="drop">
               <div class="drop-inner">
                 <span id="TxtFolderPath" class="muted">Trascina qui la cartella…</span>
@@ -151,29 +128,26 @@
             </div>
           </section>
 
-          <!-- ✅ DIGITAL TOOL (Nota rimossa) -->
+          <!-- ✅ DIGITAL TOOL -->
           <section id="DTCard" class="card hidden">
-          <h3>DigitalTool</h3>
+            <h3>DigitalTool</h3>
             <p class="muted" style="margin-top:6px; line-height:1.6;">
-              Questo strumento ottimizza automaticamente le immagini per l’utilizzo digitale: 
-              le rende omogenee, leggere e pronte all’uso. Carica la cartella e clicca su 
+              Questo strumento ottimizza automaticamente le immagini per l’utilizzo digitale:
+              le rende omogenee, leggere e pronte all’uso. Carica la cartella e clicca su
               <b>Esporta ora</b> per ottenere il risultato finale.
             </p>
           </section>
 
-          <!-- ✅ RENAME COMPLETO -->
+          <!-- ✅ RENAME -->
           <section id="RenameCard" class="card hidden">
             <h3>Rinomina files</h3>
-
             <p class="muted" style="margin-bottom:16px">
               Se non inserisci un nome base, verranno generati solo numeri (01, 02, 03…)
             </p>
-
             <div class="form-group">
               <label for="TxtRenameBase">Nome base (opzionale)</label>
               <input id="TxtRenameBase" class="input" type="text" placeholder="es. cucina">
             </div>
-
             <div class="form-group">
               <label>Carica cartella*</label>
               <div id="DropAreaRename" class="drop">
@@ -185,12 +159,61 @@
             </div>
           </section>
 
+          <!-- ✅ VIDEO SLIDESHOW (NUOVO) -->
+          <section id="VideoCard" class="card hidden">
+            <h3>Video Slideshow</h3>
+            <p class="muted">Imposta nome, durata e formato. Poi clicca “Esporta ora”.</p>
+
+            <div class="form-group">
+              <label for="VidTitle">Nome video *</label>
+              <input id="VidTitle" class="input" type="text" placeholder="es. abitareco-presentazione">
+            </div>
+
+            <div class="row">
+              <div>
+                <label>Durata</label>
+                <select id="VidDuration" class="input" style="height:auto">
+                  <option value="15">15 secondi</option>
+                  <option value="30" selected>30 secondi</option>
+                  <option value="45">45 secondi</option>
+                </select>
+              </div>
+              <div>
+                <label>Formato</label>
+                <div class="radios" style="display:flex;flex-direction:column;gap:6px">
+                  <label><input type="radio" name="VidFmt" id="VidFmtH" checked> Orizzontale (1920×1080)</label>
+                  <label><input type="radio" name="VidFmt" id="VidFmtV"> Verticale (1080×1920)</label>
+                  <label><input type="radio" name="VidFmt" id="VidFmtS"> Quadrato (1080×1080)</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:6px">
+              <label>Carica cartella*</label>
+              <div id="DropAreaVideo" class="drop">
+                <div class="drop-inner">
+                  <span id="TxtFolderVideo" class="muted">Trascina qui la cartella…</span>
+                  <button id="BtnClearVideo" class="btn-small hidden">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="video-desktop-note">
+              <span class="icon">💡</span>
+              <div>
+                <strong>Consiglio:</strong> per performance migliori usa il tool da desktop.
+                Se il browser non consente MP4 in esportazione, verrà salvato automaticamente un WebM.
+              </div>
+            </div>
+
+            <video id="VidPreview" controls style="margin-top:12px; max-width:560px; width:100%;"></video>
+            <canvas id="VidCanvas" width="1080" height="1080" hidden></canvas>
+          </section>
+
           <!-- PLACEHOLDER FUTURI -->
-          <section id="VideoCard" class="card hidden"><h3>Video Slideshow</h3></section>
           <section id="BusinessCardCard" class="card hidden"><h3>Biglietto da visita</h3></section>
           <section id="QrCard" class="card hidden"><h3>Genera QR Code</h3></section>
           <section id="IubendaCard" class="card hidden"><h3>Iubenda</h3></section>
-
         </div>
 
         <!-- ✅ ACTION BAR -->
@@ -200,23 +223,21 @@
               <div id="ActionProgressLabel" class="muted">Elaborazione…</div>
               <progress id="ActionProgress" max="100" value="0" class="progress"></progress>
             </div>
-
             <div class="copyright">
-              © 2026 Abitare Co. – Design by Abitare Co. Creative Unit | All rights reserved.
+              © 2026 Abitare Co. – Design by Abitare Co. Creative Unit
+              All rights reserved.
             </div>
           </div>
-
           <button id="BtnProcedi" class="btn-primary hidden">Esporta ora</button>
         </section>
-
       </div>
     </main>
-
   </div>
 
   <!-- LIBRARIES -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
+  <!-- MP4 mux lato client per WebCodecs (solo se usato) -->
+  <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
   <!-- APP LOGIC -->
   <script src="./js/app.js"></script>
 </body>

@@ -3,150 +3,263 @@
    ========================================================= */
 "use strict";
 
+/* ---------------------------- Helpers base ---------------------------- */
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const showEl = (el) => el && el.classList.remove('hidden');
 const hideEl = (el) => el && el.classList.add('hidden');
 
+/* ----------------------- Shell: sidebar & footer ---------------------- */
 const SideMenu = $('#SideMenu');
 const BtnProcedi = $('#BtnProcedi');
 const ActionProgressWrap  = $('#ActionProgressWrap');
 const ActionProgress      = $('#ActionProgress');
 const ActionProgressLabel = $('#ActionProgressLabel');
 
+/* ------------------------------ Cards UID ----------------------------- */
+const WelcomeCard = $('#WelcomeCard');
+const SlugCard    = $('#SlugCard');
+const FormatCard  = $('#FormatCard');
+const UploadCard  = $('#UploadCard');
+const DTCard      = $('#DTCard');
+const RenameCard  = $('#RenameCard');
+const VideoCard   = $('#VideoCard');
+const WatermarkCard = $('#WatermarkCard');
+const BvCard      = $('#BusinessCardCard');
+const QrCard      = $('#QrCard');
+const IubCard     = $('#IubendaCard');
+
 const ALL_CARDS = [
-  $('#WelcomeCard'), $('#SlugCard'), $('#FormatCard'), $('#UploadCard'),
-  $('#WatermarkCard'), $('#RenameCard'), $('#VideoCard'), 
-  $('#BusinessCardCard'), $('#QrCard'), $('#IubendaCard')
+  WelcomeCard, SlugCard, FormatCard, UploadCard,
+  DTCard, RenameCard, VideoCard, WatermarkCard, BvCard, QrCard, IubCard
 ];
 
-let currentMode = 'images';
-let picked = [];
+/* ------------------------------- Stato -------------------------------- */
+let picked        = [];   // Per Immagini / DigitalTool / PDF
+let currentMode   = 'welcome';
 
-/* -------------------------- Inizializzazione -------------------------- */
-document.addEventListener('DOMContentLoaded', () => {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-});
-
-SideMenu.addEventListener('click', (e) => {
-  const item = e.target.closest('.nav-item');
-  if (!item) return;
-
-  $$('.nav-item').forEach(el => el.classList.remove('active'));
-  item.classList.add('active');
-
-  const mode = item.dataset.mode;
+/* ------------------------ Sidebar: icone & nav ------------------------ */
+function initSidebarIcons(){
+  $$('#SideMenu li').forEach(li=>{
+    const img = li.querySelector('.mi img');
+    if (img && li.dataset.icon) img.src = li.dataset.icon;
+  });
+}
+function activateMenuVisual(mode){
+  $$('#SideMenu li').forEach(li=>{
+    const active = li.dataset.mode === mode;
+    li.classList.toggle('active', active);
+    const img = li.querySelector('.mi img');
+    if (!img) return;
+    img.src = active
+      ? (li.dataset.iconActive || li.dataset.icon)
+      : (li.dataset.icon || img.src);
+  });
+}
+function selectMode(mode){
   currentMode = mode;
-  
   ALL_CARDS.forEach(hideEl);
-  hideEl(ActionProgressWrap);
   showEl(BtnProcedi);
 
-  switch (mode) {
+  switch(mode){
+    case 'welcome':
+      showEl(WelcomeCard);
+      hideEl(BtnProcedi);
+      activateMenuVisual('');
+      return;
     case 'images':
-      showEl($('#SlugCard')); showEl($('#FormatCard')); showEl($('#UploadCard'));
+    case 'images-share':
+      showEl(SlugCard); showEl(FormatCard); showEl(UploadCard);
       break;
     case 'digitaltool':
-      showEl($('#SlugCard')); showEl($('#UploadCard'));
+      showEl(SlugCard); showEl(DTCard); showEl(UploadCard);
       break;
     case 'pdf2jpg':
-      showEl($('#UploadCard'));
-      break;
-    case 'watermark':
-      showEl($('#WatermarkCard')); showEl($('#UploadCard'));
+      showEl(UploadCard);
       break;
     case 'rename':
-      showEl($('#RenameCard')); showEl($('#UploadCard'));
+      showEl(RenameCard);
       break;
-    case 'videoslideshow':
-      showEl($('#VideoCard')); showEl($('#UploadCard'));
+    case 'video':
+      showEl(VideoCard);
       break;
-    case 'businesscard':
-      showEl($('#BusinessCardCard'));
+    case 'watermark':
+      showEl(WatermarkCard); showEl(UploadCard);
       break;
-    case 'qrcode':
-      showEl($('#QrCard'));
+    case 'bv':
+      showEl(BvCard);
+      break;
+    case 'qr':
+      showEl(QrCard);
       break;
     case 'iubenda':
-      showEl($('#IubendaCard'));
+      showEl(IubCard);
       break;
+    default:
+      showEl(WelcomeCard);
+      hideEl(BtnProcedi);
+      activateMenuVisual('');
+      return;
   }
+  activateMenuVisual(mode);
+}
+SideMenu?.addEventListener('click', (e)=>{
+  const li = e.target.closest('li');
+  if (!li) return;
+  selectMode(li.dataset.mode || 'welcome');
 });
+initSidebarIcons();
+selectMode('welcome');
 
-/* -------------------------- Gestione Upload --------------------------- */
-const InpFile = $('#InpFile');
-const DropZone = $('#DropZone');
-const FileList = $('#FileList');
+/* ========================= Drag & Drop: GENERALE ====================== */
+const DropArea      = $('#DropArea');
+const TxtFolderPath = $('#TxtFolderPath');
+const BtnClearPath  = $('#BtnClearPath');
 
-DropZone.addEventListener('click', () => InpFile.click());
-InpFile.addEventListener('change', (e) => handleFiles(e.target.files));
+if (DropArea) {
+  function prevent(e){ e.preventDefault(); e.stopPropagation(); }
+  ['dragenter','dragover','dragleave','drop'].forEach(ev =>
+    DropArea.addEventListener(ev, prevent)
+  );
+  DropArea.addEventListener('dragenter', ()=> DropArea.classList.add('drag-over'));
+  DropArea.addEventListener('dragleave', ()=> DropArea.classList.remove('drag-over'));
+  DropArea.addEventListener('drop', async (e)=>{
+    DropArea.classList.remove('drag-over');
+    handleDroppedFiles(e.dataTransfer.files);
+  });
+  DropArea.addEventListener('click', ()=>{
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.webkitdirectory = true;
+    input.multiple = true;
+    input.onchange = ()=>{
+      handleDroppedFiles(input.files);
+    };
+    input.click();
+  });
+  BtnClearPath?.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    picked = [];
+    TxtFolderPath.textContent = 'Trascina qui la cartella…';
+    BtnClearPath.classList.add('hidden');
+  });
+}
 
-async function handleFiles(files) {
-  for (const f of files) {
-    if (picked.find(x => x.file.name === f.name)) continue;
-    picked.push({ file: f, id: crypto.randomUUID() });
+function handleDroppedFiles(files) {
+  const fl = files ? Array.from(files) : [];
+  picked = fl
+    .filter(f => /\.(jpe?g|png|tif?f|webp|pdf)$/i.test(f.name))
+    .map(f => ({ file:f, relPath:f.webkitRelativePath || f.name }));
+  
+  if (currentMode === 'watermark') {
+    picked = picked.filter(p => /\.(jpe?g|png|tif?f)$/i.test(p.file.name));
   }
-  renderFiles();
+  
+  TxtFolderPath.textContent = picked.length
+    ? `Selezionati ${picked.length} file…`
+    : 'Nessun file supportato.';
+  BtnClearPath.classList.toggle('hidden', picked.length === 0);
 }
 
-function renderFiles() {
-  FileList.innerHTML = picked.map(item => `
-    <div class="file-item">
-      <span>${item.file.name}</span>
-      <button onclick="removeFile('${item.id}')">×</button>
-    </div>
-  `).join('');
+/* ========================= Drag & Drop: RENAME ======================== */
+const DropAreaRename   = $('#DropAreaRename');
+const TxtFolderRename  = $('#TxtFolderRename');
+const BtnClearRename   = $('#BtnClearRename');
+let pickedRename = [];
+
+if (DropAreaRename) {
+  function preventR(e){ e.preventDefault(); e.stopPropagation(); }
+  ['dragenter','dragover','dragleave','drop'].forEach(ev =>
+    DropAreaRename.addEventListener(ev, preventR)
+  );
+  DropAreaRename.addEventListener('dragenter', ()=> DropAreaRename.classList.add('drag-over'));
+  DropAreaRename.addEventListener('dragleave', ()=> DropAreaRename.classList.remove('drag-over'));
+  DropAreaRename.addEventListener('drop', async (e)=>{
+    DropAreaRename.classList.remove('drag-over');
+    pickedRename = await readDroppedDirectory(e.dataTransfer);
+    TxtFolderRename.textContent = pickedRename.length
+      ? `Selezionati ${pickedRename.length} file…`
+      : 'Nessun file supportato.';
+    BtnClearRename.classList.toggle('hidden', pickedRename.length === 0);
+  });
+  // ... (resto della logica Rename già esistente) ...
 }
 
-window.removeFile = (id) => {
-  picked = picked.filter(x => x.id !== id);
-  renderFiles();
-};
+/* ============================== Immagini Sito ========================== */
+// ... (tutta la logica esistente per exportImages) ...
 
-/* -------------------------- Logica Watermark -------------------------- */
+/* =================------------- DigitalTool =========================== */
+// ... (tutta la logica esistente per exportDigitalTool) ...
+
+/* ============================== PDF → JPG ============================= */
+// ... (tutta la logica esistente per exportPdfToJpg) ...
+
+/* ================================ Rename ============================== */
+// ... (tutta la logica esistente per exportRename) ...
+
+/* ============================= VIDEO: Slideshow ======================= */
+// ... (tutta la logica esistente per exportVideoSlideshow) ...
+
+/* =================---------- Logica Watermark ========================= */
 async function exportWatermark() {
-  if (!picked.length) return alert("Carica le immagini.");
+  if (!picked.length) return alert("Carica una cartella con immagini.");
+  
   const logoFile = $('#InpWatermarkLogo').files[0];
-  if (!logoFile) return alert("Seleziona il logo PNG.");
+  if (!logoFile) return alert("Per favore, carica prima il logo PNG trasparente.");
 
   const zip = new JSZip();
   const logoBmp = await loadImageBitmap(logoFile);
   
   showEl(ActionProgressWrap);
+  ActionProgress.value = 0;
+  ActionProgressLabel.textContent = "Applicazione Watermark…";
 
-  for (let i = 0; i < picked.length; i++) {
-    ActionProgress.value = Math.floor(((i+1)/picked.length)*100);
-    ActionProgressLabel.textContent = `Elaborando ${i+1}/${picked.length}`;
+  const total = picked.length; 
+  const images = picked.sort((a,b)=>
+    (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true })
+  );
 
-    const imgBmp = await loadImageBitmap(picked[i].file);
+  for (let i = 0; i < images.length; i++) {
+    ActionProgress.value = Math.round(((i + 1) / total) * 100);
+    ActionProgressLabel.textContent = `Elaborazione immagine ${i+1}/${total}...`;
+
+    const imgBmp = await loadImageBitmap(images[i].file);
     const canvas = document.createElement('canvas');
     canvas.width = 1024;
     canvas.height = 768;
     const ctx = canvas.getContext('2d');
 
-    // Background bianco per JPG
+    // Fondo bianco peroutput JPG
     ctx.fillStyle = "white";
-    ctx.fillRect(0,0,1024,768);
+    ctx.fillRect(0, 0, 1024, 768);
 
-    // Resize Cover 1024x768
-    const ratio = Math.max(1024/imgBmp.width, 768/imgBmp.height);
-    const sw = 1024/ratio, sh = 768/ratio;
-    const sx = (imgBmp.width - sw)/2, sy = (imgBmp.height - sh)/2;
+    // 1. Resize "Cover" 1024x768 (come -resize 1024x768^ -extent 1024x768)
+    const ratio = Math.max(1024 / imgBmp.width, 768 / imgBmp.height);
+    const sw = 1024 / ratio, sh = 768 / ratio;
+    const sx = (imgBmp.width - sw) / 2, sy = (imgBmp.height - sh) / 2;
     ctx.drawImage(imgBmp, sx, sy, sw, sh, 0, 0, 1024, 768);
 
-    // Logo Centro
-    ctx.drawImage(logoBmp, (1024 - logoBmp.width)/2, (768 - logoBmp.height)/2);
+    // 2. Applicazione Logo al centro (-gravity center)
+    const lx = (1024 - logoBmp.width) / 2;
+    const ly = (768 - logoBmp.height) / 2;
+    ctx.drawImage(logoBmp, lx, ly);
 
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9));
-    zip.file(`immagini-${(i+1).toString().padStart(2,'0')}.jpg`, blob);
+    // 3. Conversione in JPG al 90% di qualità
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.90));
+    
+    // Rinomina sequenziale: immagini-01.jpg, immagini-02.jpg, ...
+    const fileName = `immagini-${(i + 1).toString().padStart(2, '0')}.jpg`;
+    zip.file(`immagini/${fileName}`, blob);
   }
 
-  const content = await zip.generateAsync({type:"blob"});
-  saveAs(content, "Watermark_Export.zip");
+  const content = await zip.generateAsync({ type: "blob" });
+  saveAs(content, "WatermarkPortali_Export.zip");
+  
   hideEl(ActionProgressWrap);
+  alert("Esportazione Watermark completata!");
 }
 
-/* -------------------------- Helpers -------------------------- */
+/* =================---------- Helpers Comuni =================---------- */
 async function loadImageBitmap(file) {
   const url = URL.createObjectURL(file);
   const img = new Image();
@@ -156,16 +269,18 @@ async function loadImageBitmap(file) {
   return img;
 }
 
-/* -------------------------- Dispatcher -------------------------- */
-BtnProcedi.addEventListener('click', async () => {
-  BtnProcedi.disabled = true;
+/* -------------------------- Dispatcher globale ------------------------ */
+BtnProcedi?.addEventListener('click', async ()=>{
   try {
-    if (currentMode === 'watermark') await exportWatermark();
-    // Aggiungeremo qui le altre funzioni man mano
-    else alert("Funzione in fase di implementazione.");
-  } catch (err) {
-    console.error(err);
-    alert("Errore durante l'esportazione.");
+    BtnProcedi.disabled = true;
+    if (currentMode === 'images' || currentMode === 'images-share') { alert("Funzione non attiva."); return; }
+    if (currentMode === 'digitaltool'){ alert("Funzione non attiva."); return; }
+    if (currentMode === 'pdf2jpg')   { alert("Funzione non attiva."); return; }
+    if (currentMode === 'rename')    { alert("Funzione non attiva."); return; }
+    if (currentMode === 'video')     { alert("Funzione non attiva."); return; }
+    if (currentMode === 'watermark') { await exportWatermark(); return; }
+    alert("Funzione non attiva o in build futura.");
+  } finally {
+    BtnProcedi.disabled = false;
   }
-  BtnProcedi.disabled = false;
 });

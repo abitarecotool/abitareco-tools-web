@@ -159,7 +159,7 @@
             </div>
           </section>
 
-          <!-- ✅ VIDEO SLIDESHOW (NUOVO) -->
+          <!-- ✅ VIDEO SLIDESHOW (NUOVO, senza anteprima e senza box giallo) -->
           <section id="VideoCard" class="card hidden">
             <h3>Video Slideshow</h3>
             <p class="muted">Imposta nome, durata e formato. Poi clicca “Esporta ora”.</p>
@@ -198,15 +198,7 @@
               </div>
             </div>
 
-            <div class="video-desktop-note">
-              <span class="icon">💡</span>
-              <div>
-                <strong>Consiglio:</strong> per performance migliori usa il tool da desktop.
-                Se il browser non consente MP4 in esportazione, verrà salvato automaticamente un WebM.
-              </div>
-            </div>
-
-            <video id="VidPreview" controls style="margin-top:12px; max-width:560px; width:100%;"></video>
+            <!-- canvas nascosto per il rendering -->
             <canvas id="VidCanvas" width="1080" height="1080" hidden></canvas>
           </section>
 

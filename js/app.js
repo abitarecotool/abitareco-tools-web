@@ -1,7 +1,7 @@
 /* =========================================================
  Abitare Co. – Digital Content Tool (Web)
- app.js — Immagini + DigitalTool + PDF→JPG + Rename + Video + (NEW) Watermark + QR + Iubenda
- ========================================================= */
+ app.js — Immagini + DigitalTool + PDF→JPG + Rename + Video + Watermark + BV + QR + Iubenda + PPT
+========================================================= */
 "use strict";
 
 /* ---------------------------- Helpers base ---------------------------- */
@@ -13,29 +13,31 @@ const hideEl = (el) => el && el.classList.add('hidden');
 /* ----------------------- Shell: sidebar & footer ---------------------- */
 const SideMenu = $('#SideMenu');
 const BtnProcedi = $('#BtnProcedi');
-const ActionProgressWrap = $('#ActionProgressWrap');
-const ActionProgress = $('#ActionProgress');
+const ActionProgressWrap  = $('#ActionProgressWrap');
+const ActionProgress      = $('#ActionProgress');
 const ActionProgressLabel = $('#ActionProgressLabel');
 
 /* ------------------------------ Cards UID ----------------------------- */
 const WelcomeCard = $('#WelcomeCard');
-const SlugCard = $('#SlugCard');
-const FormatCard = $('#FormatCard');
-const UploadCard = $('#UploadCard');
-const DTCard = $('#DTCard');
-const RenameCard = $('#RenameCard');
-const VideoCard = $('#VideoCard');
-const BvCard = $('#BusinessCardCard');
-const QrCard = $('#QrCard');
-const IubCard = $('#IubendaCard');
+const SlugCard    = $('#SlugCard');
+const FormatCard  = $('#FormatCard');
+const UploadCard  = $('#UploadCard');
+const DTCard      = $('#DTCard');
+const RenameCard  = $('#RenameCard');
+const VideoCard   = $('#VideoCard');
+const BvCard      = $('#BusinessCardCard');
+const QrCard      = $('#QrCard');
+const IubCard     = $('#IubendaCard');
+const PptCard     = $('#PptCard');
 const ALL_CARDS = [
   WelcomeCard, SlugCard, FormatCard, UploadCard,
-  DTCard, RenameCard, VideoCard, BvCard, QrCard, IubCard
+  DTCard, RenameCard, VideoCard, BvCard, QrCard, IubCard, PptCard
 ];
 
 /* ------------------------------- Stato -------------------------------- */
-let picked = [];       // Per Immagini / DigitalTool / PDF / Watermark
-let pickedRename = []; // Per Rename
+let picked = [];        // Per Immagini / DigitalTool / PDF / Watermark
+let pickedRename = [];  // Per Rename
+let pickedVideo = [];   // Per Video
 let currentMode = null;
 
 /* ------------------------ Sidebar: icone & nav ------------------------ */
@@ -51,7 +53,8 @@ function activateMenuVisual(mode){
     li.classList.toggle('active', active);
     const img = li.querySelector('.mi img');
     if (!img) return;
-    img.src = active ? (li.dataset.iconActive || li.dataset.icon) : (li.dataset.icon || img.src);
+    img.src = active ? (li.dataset.iconActive || li.dataset.icon)
+                     : (li.dataset.icon || img.src);
   });
 }
 function selectMode(mode){
@@ -80,16 +83,23 @@ function selectMode(mode){
       showEl(VideoCard);
       break;
     case 'watermark':
-      showEl(UploadCard);
+      showEl(UploadCard); // riuso il card Upload
       break;
     case 'bv':
       showEl(BvCard);
+      BtnProcedi.classList.add('hidden'); // azione con pulsante dedicato
       break;
     case 'qr':
       showEl(QrCard);
+      BtnProcedi.classList.add('hidden'); // azione con pulsante dedicato
       break;
     case 'iubenda':
       showEl(IubCard);
+      BtnProcedi.classList.add('hidden'); // azione con pulsante dedicato
+      break;
+    case 'ppt':
+      showEl(PptCard);
+      BtnProcedi.classList.add('hidden'); // solo bottoni download
       break;
     default:
       showEl(WelcomeCard);
@@ -108,9 +118,10 @@ initSidebarIcons();
 selectMode('welcome');
 
 /* ========================= Drag & Drop: GENERALE ====================== */
-const DropArea = $('#DropArea');
+const DropArea      = $('#DropArea');
 const TxtFolderPath = $('#TxtFolderPath');
-const BtnClearPath = $('#BtnClearPath');
+const BtnClearPath  = $('#BtnClearPath');
+
 if (DropArea) {
   function prevent(e){ e.preventDefault(); e.stopPropagation(); }
   ['dragenter','dragover','dragleave','drop'].forEach(ev =>
@@ -128,9 +139,7 @@ if (DropArea) {
   });
   DropArea.addEventListener('click', ()=>{
     const input = document.createElement('input');
-    input.type = 'file';
-    input.webkitdirectory = true;
-    input.multiple = true;
+    input.type = 'file'; input.webkitdirectory = true; input.multiple = true;
     input.onchange = ()=>{
       const fl = input.files ? Array.from(input.files) : [];
       picked = fl
@@ -152,9 +161,9 @@ if (DropArea) {
 }
 
 /* ========================= Drag & Drop: RENAME ======================== */
-const DropAreaRename = $('#DropAreaRename');
-const TxtFolderRename = $('#TxtFolderRename');
-const BtnClearRename = $('#BtnClearRename');
+const DropAreaRename    = $('#DropAreaRename');
+const TxtFolderRename   = $('#TxtFolderRename');
+const BtnClearRename    = $('#BtnClearRename');
 if (DropAreaRename) {
   function preventR(e){ e.preventDefault(); e.stopPropagation(); }
   ['dragenter','dragover','dragleave','drop'].forEach(ev =>
@@ -172,9 +181,8 @@ if (DropAreaRename) {
   });
   DropAreaRename.addEventListener('click', ()=>{
     const input = document.createElement('input');
-    input.type = 'file';
-    input.webkitdirectory = true;
-    input.multiple = true;
+    input.type = 'file'; input.webkitdirectory = true; input.multiple = true;
+    input.accept = 'image/*';
     input.onchange = ()=>{
       const fl = input.files ? Array.from(input.files) : [];
       pickedRename = fl
@@ -208,7 +216,9 @@ async function readDroppedDirectory(dt){
     } else if (entry.isDirectory){
       const reader = entry.createReader();
       const entries = await new Promise(res => reader.readEntries(res));
-      for (const en of entries){ await traverse(en, base ? `${base}/${entry.name}` : entry.name); }
+      for (const en of entries){
+        await traverse(en, base ? `${base}/${entry.name}` : entry.name);
+      }
     }
   }
   const hasEntries = items.length && typeof items[0].webkitGetAsEntry === 'function';
@@ -226,7 +236,7 @@ function slugify(t){
   if (!t) return '';
   return t.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[\u2019'`]/g,'')
+    .replace(/[’'`]/g,'')
     .replace(/[^a-z0-9]+/g,'-')
     .replace(/^-+|-+$/g,'');
 }
@@ -245,11 +255,12 @@ function canvasToBlob(canvas, mime, q=0.85){
 const TxtSlugIta = $('#TxtSlugIta');
 const TxtSlugEng = $('#TxtSlugEng');
 const Fmt1920 = $('#FmtSite1920');
-const FmtShare = $('#FmtSiteShare');
-const FmtCustom= $('#FmtSiteCustom');
-const CustomRow= $('#CustomSizeRow');
+const FmtShare= $('#FmtSiteShare');
+const FmtCustom=$('#FmtSiteCustom');
+const CustomRow=$('#CustomSizeRow');
 const CustomW = $('#CustomW');
 const CustomH = $('#CustomH');
+
 function toggleCustomRow(){ FmtCustom.checked ? showEl(CustomRow) : hideEl(CustomRow); }
 [Fmt1920, FmtShare, FmtCustom].forEach(r => r?.addEventListener('change', toggleCustomRow));
 toggleCustomRow();
@@ -263,6 +274,7 @@ function getSelectedFormat(){
   if (FmtShare.checked) return { w:1200, h:630 };
   return { w:1920, h:1080 };
 }
+
 async function loadFolderMap(){
   try {
     const res = await fetch('./assets/folder_map.csv', { cache:'no-store' });
@@ -298,6 +310,7 @@ function drawCoverToCanvas(bmp, W, H){
   ctx.drawImage(bmp, dx, dy, dw, dh);
   return canvas;
 }
+
 async function exportImages(){
   const slugIta = slugify(TxtSlugIta.value);
   const slugEng = slugify(TxtSlugEng.value);
@@ -306,6 +319,7 @@ async function exportImages(){
   if (!images.length){ alert("Carica una cartella con immagini."); return; }
   const { w:W, h:H } = getSelectedFormat();
   const folderMap = await loadFolderMap();
+
   const groups = new Map();
   for (const rec of images){
     const p = rec.relPath || rec.file.name;
@@ -313,11 +327,11 @@ async function exportImages(){
     if (!groups.has(folder)) groups.set(folder, []);
     groups.get(folder).push(rec);
   }
+
   const zip = new JSZip();
-  showEl(ActionProgressWrap);
-  ActionProgress.value = 0;
-  ActionProgressLabel.textContent = "Esportazione in corso…";
+  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = "Esportazione in corso…";
   const total = images.length; let processed = 0;
+
   for (const [relFolder, recs] of groups){
     let leaf = "";
     if (relFolder){
@@ -328,9 +342,11 @@ async function exportImages(){
     const leafEng = folderMap[leafIta] || leafIta;
     const slugFolderIta = slugify(leafIta);
     const slugFolderEng = slugify(leafEng);
+
     recs.sort((a,b)=>
       (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true })
     );
+
     let counter = 0;
     for (const rec of recs){
       counter++;
@@ -342,14 +358,15 @@ async function exportImages(){
       const bmp = await loadImageBitmap(rec.file);
       const canvas = drawCoverToCanvas(bmp, W, H);
       const webp = await canvasToBlob(canvas, 'image/webp', 0.85);
-      const jpg = await canvasToBlob(canvas, 'image/jpeg', 0.85);
+      const jpg  = await canvasToBlob(canvas, 'image/jpeg', 0.85);
       zip.file(`_EXPORT_SITO/ITA/WEBP/${outIta}.webp`, webp);
-      zip.file(`_EXPORT_SITO/ITA/JPG/${outIta}.jpg`, jpg);
+      zip.file(`_EXPORT_SITO/ITA/JPG/${outIta}.jpg`,  jpg);
       zip.file(`_EXPORT_SITO/ENG/WEBP/${outEng}.webp`, webp);
-      zip.file(`_EXPORT_SITO/ENG/JPG/${outEng}.jpg`, jpg);
+      zip.file(`_EXPORT_SITO/ENG/JPG/${outEng}.jpg`,  jpg);
       ActionProgress.value = Math.round((++processed/total)*100);
     }
   }
+
   const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
   const blob = await zip.generateAsync({type:'blob'});
   const a = document.createElement('a');
@@ -408,9 +425,7 @@ async function exportDigitalTool(){
     (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true })
   );
   const zip = new JSZip();
-  showEl(ActionProgressWrap);
-  ActionProgress.value = 0;
-  ActionProgressLabel.textContent = "Esportazione in corso…";
+  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = "Esportazione in corso…";
   const countsByFolder = new Map();
   const total = files.length; let processed = 0;
   for (const rec of files){
@@ -426,7 +441,7 @@ async function exportDigitalTool(){
     const webp = await toBlobCapped(canvas,'image/webp');
     const jpg  = await toBlobCapped(canvas,'image/jpeg');
     if (webp) zip.file(`${basePathWEBP}${nn}.webp`, webp);
-    if (jpg)  zip.file(`${basePathJPG}${nn}.jpg`, jpg);
+    if (jpg)  zip.file(`${basePathJPG}${nn}.jpg`,  jpg);
     ActionProgress.value = Math.round((++processed/total)*100);
   }
   const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
@@ -456,16 +471,14 @@ async function exportPdfToJpg(){
   if (!pdfs.length){ alert("Carica PDF."); return; }
   await ensurePdfJs();
   const zip = new JSZip();
-  showEl(ActionProgressWrap);
-  ActionProgress.value = 0;
-  ActionProgressLabel.textContent = "Esportazione in corso…";
+  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = "Esportazione in corso…";
   const TARGET = 1.5 * 1024 * 1024;
   const total = pdfs.length; let processed = 0;
   for (const rec of pdfs){
     const file = rec.file;
     const relPath = rec.relPath || rec.file.name;
     const relFolder = relPath.includes('/') ? relPath.slice(0, relPath.lastIndexOf('/')) : '';
-    const baseName = file.name.replace(/\.pdf$/i,'');
+    const baseName  = file.name.replace(/\.pdf$/i,'');
     const prefixDir = `_EXPORT_PDF2JPG/${relFolder ? relFolder + '/' : ''}`;
     const ab = await file.arrayBuffer();
     const pdf = await window.pdfjsLib.getDocument({data:ab}).promise;
@@ -505,20 +518,13 @@ const TxtRenameBase = $('#TxtRenameBase');
 async function exportRename(){
   const base = slugify(TxtRenameBase?.value || "").trim();
   const mode = base ? 2 : 1;
-  const files = pickedRename.filter(p =>
-    /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name)
-  );
-  if (!files.length){
-    alert("Carica una cartella per rinominare.");
-    return;
-  }
+  const files = pickedRename.filter(p => /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name));
+  if (!files.length){ alert("Carica una cartella per rinominare."); return; }
   const sorted = files.sort((a,b)=>
     (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true })
   );
   const zip = new JSZip();
-  showEl(ActionProgressWrap);
-  ActionProgress.value = 0;
-  ActionProgressLabel.textContent = "Esportazione in corso…";
+  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = "Esportazione in corso…";
   const total = sorted.length;
   for (let i=0; i<sorted.length; i++){
     const rec = sorted[i];
@@ -540,25 +546,20 @@ async function exportRename(){
 }
 
 /* ============================= VIDEO: Slideshow ======================= */
-/* - Formati: 1920×1080 | 1080×1920 | 1080×1080
-   - Pipeline preferita: WebCodecs (H.264) + MP4Box → MP4
-   - Fallback: MediaRecorder (MP4 su Safari / WebM su Chrome/Firefox)
-   - HD: 12 Mbps (1080p) / 8 Mbps (1080×1080) */
-let pickedVideo = [];
-const VidTitle = $('#VidTitle');
+// (pipeline WebCodecs→MP4Box, fallback MediaRecorder)
+const VidTitle    = $('#VidTitle');
 const VidDuration = $('#VidDuration');
-const VidFmtH = $('#VidFmtH');
-const VidFmtV = $('#VidFmtV');
-const VidFmtS = $('#VidFmtS');
+const VidFmtH     = $('#VidFmtH');
+const VidFmtV     = $('#VidFmtV');
+const VidFmtS     = $('#VidFmtS');
 const DropAreaVideo = $('#DropAreaVideo');
 const TxtFolderVideo = $('#TxtFolderVideo');
-const BtnClearVideo = $('#BtnClearVideo');
+const BtnClearVideo  = $('#BtnClearVideo');
 const VidCanvas = $('#VidCanvas');
+
 if (DropAreaVideo) {
   function preventV(e){ e.preventDefault(); e.stopPropagation(); }
-  ['dragenter','dragover','dragleave','drop'].forEach(ev =>
-    DropAreaVideo.addEventListener(ev, preventV)
-  );
+  ['dragenter','dragover','dragleave','drop'].forEach(ev => DropAreaVideo.addEventListener(ev, preventV));
   DropAreaVideo.addEventListener('dragenter', ()=> DropAreaVideo.classList.add('drag-over'));
   DropAreaVideo.addEventListener('dragleave', ()=> DropAreaVideo.classList.remove('drag-over'));
   DropAreaVideo.addEventListener('drop', async (e)=>{
@@ -566,7 +567,7 @@ if (DropAreaVideo) {
     const all = await readDroppedDirectory(e.dataTransfer);
     pickedVideo = all
       .filter(p => /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name))
-      .sort((a,b)=>(a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true }));
+      .sort((a,b)=> (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true }));
     TxtFolderVideo.textContent = pickedVideo.length
       ? `Selezionati ${pickedVideo.length} file…`
       : 'Nessun file supportato.';
@@ -574,16 +575,13 @@ if (DropAreaVideo) {
   });
   DropAreaVideo.addEventListener('click', ()=>{
     const input = document.createElement('input');
-    input.type = 'file';
-    input.webkitdirectory = true;
-    input.multiple = true;
-    input.accept = 'image/*';
+    input.type = 'file'; input.webkitdirectory = true; input.multiple = true; input.accept = 'image/*';
     input.onchange = ()=>{
       const fl = input.files ? Array.from(input.files) : [];
       pickedVideo = fl
         .filter(f => /\.(jpe?g|png|tif?f|webp)$/i.test(f.name))
         .map(f => ({ file:f, relPath:f.webkitRelativePath || f.name }))
-        .sort((a,b)=>(a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true }));
+        .sort((a,b)=> (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true }));
       TxtFolderVideo.textContent = pickedVideo.length
         ? `Selezionati ${pickedVideo.length} file…`
         : 'Nessun file supportato.';
@@ -598,6 +596,7 @@ if (DropAreaVideo) {
     BtnClearVideo.classList.add('hidden');
   });
 }
+
 /* ---- Timeline & Render ---- */
 function computeStill(T, N, F){
   let still = (T - (N - 1) * F) / N;
@@ -629,8 +628,7 @@ function drawCoverOn(ctx, bmp, W, H){
 function renderAt(tl, items, W, H, tSec){
   const { still, fade, offsets } = tl;
   const ctx = VidCanvas.getContext('2d', { alpha:false });
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
   let i=0;
   for (; i<items.length; i++){
     const start = offsets[i];
@@ -656,15 +654,14 @@ async function filesToBitmapsVideo(recs){
   }
   return arr;
 }
-/* ---- Formato, bitrate, feature detection ---- */
 function pickVideoSize(){
-  if (VidFmtV?.checked) return { W:1080, H:1920 }; // verticale
-  if (VidFmtS?.checked) return { W:1080, H:1080 }; // quadrato
-  return { W:1920, H:1080 }; // orizzontale
+  if (VidFmtV?.checked) return { W:1080, H:1920 };
+  if (VidFmtS?.checked) return { W:1080, H:1080 };
+  return { W:1920, H:1080 };
 }
 function pickBitrate(W,H,fps){
   const isSquare = (W===1080 && H===1080);
-  let bps = isSquare ? 8e6 : 12e6; // 8 Mbps (quadrato) / 12 Mbps (1080p)
+  let bps = isSquare ? 8e6 : 12e6;
   if (fps > 30) bps = Math.round(bps * (fps/30));
   return bps;
 }
@@ -689,22 +686,16 @@ async function supportsH264WebCodecs(){
     return test.supported ? test.config : null;
   } catch { return null; }
 }
+
 /* ---- Export: WebCodecs (H.264) + MP4Box → MP4 ---- */
 async function exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate}){
   if (!window.MP4Box) throw new Error('MP4Box.js non caricato');
-  showEl(ActionProgressWrap);
-  ActionProgress.value = 0;
-  ActionProgressLabel.textContent = 'Esportazione in corso…';
+  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Esportazione in corso…';
   VidCanvas.width = W; VidCanvas.height = H;
   const tl = buildTimelineVideo(items.length, T, F, fps);
   const cfg = await supportsH264WebCodecs();
   if (!cfg) throw new Error('H.264 WebCodecs non disponibile');
-  const encConfig = {
-    ...cfg,
-    width:W, height:H, framerate:fps,
-    bitrate, bitrateMode:'constant',
-    avc:{ format:'annexb' }
-  };
+  const encConfig = { ...cfg, width:W, height:H, framerate:fps, bitrate, bitrateMode:'constant', avc:{ format:'annexb' } };
   const mp4 = MP4Box.createFile();
   const chunks = [];
   const segCtx = { nextFileStart: 0 };
@@ -721,17 +712,11 @@ async function exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate}){
       const key = (chunk.type === 'key');
       const buf = new Uint8Array(chunk.byteLength); chunk.copyTo(buf);
       if (!trackId && meta?.decoderConfig?.description){
-        trackId = mp4.addTrack({
-          timescale: 1e6, width: W, height: H,
-          h264: { avcDecoderConfigRecord: meta.decoderConfig.description }
-        });
+        trackId = mp4.addTrack({ timescale: 1e6, width: W, height: H,
+          h264: { avcDecoderConfigRecord: meta.decoderConfig.description } });
         mp4.setSegmentOptions(trackId, segCtx, { nbSamples: 1e6 });
         const inits = mp4.initializeSegmentation();
-        inits.forEach(seg => {
-          seg.buffer.fileStart = segCtx.nextFileStart;
-          segCtx.nextFileStart += seg.buffer.byteLength;
-          chunks.push(seg.buffer);
-        });
+        inits.forEach(seg => { seg.buffer.fileStart = segCtx.nextFileStart; segCtx.nextFileStart += seg.buffer.byteLength; chunks.push(seg.buffer); });
       }
       mp4.addSample(trackId, buf.buffer, { dts:ts, cts:ts, duration:dur, is_sync:key });
     },
@@ -750,33 +735,22 @@ async function exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate}){
       await new Promise(r => setTimeout(r)); // cede tempo all'UI
     }
   }
-  await encoder.flush();
-  encoder.close();
-  mp4.flush();
-  hideEl(ActionProgressWrap);
-  console.log('[Slideshow] pipeline = WebCodecs→MP4, bitrate =', bitrate);
+  await encoder.flush(); encoder.close(); mp4.flush(); hideEl(ActionProgressWrap);
   return new Blob(chunks, { type:'video/mp4' });
 }
-/* ---- Export: MediaRecorder (time‑based) ---- */
+
+/* ---- Export: MediaRecorder ---- */
 async function exportWithMediaRecorder(items, {T,F,fps,W,H,mime,bitrate}){
-  showEl(ActionProgressWrap);
-  ActionProgress.value = 0;
-  ActionProgressLabel.textContent = 'Esportazione in corso…';
+  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Esportazione in corso…';
   VidCanvas.width = W; VidCanvas.height = H;
   const tl = buildTimelineVideo(items.length, T, F, fps);
   const str = VidCanvas.captureStream(fps);
-  const rec = new MediaRecorder(str, {
-    mimeType: mime,
-    videoBitsPerSecond: bitrate,
-    audioBitsPerSecond: 128000
-  });
+  const rec = new MediaRecorder(str, { mimeType: mime, videoBitsPerSecond: bitrate, audioBitsPerSecond: 128000 });
   const parts = [];
   rec.ondataavailable = e => { if (e.data?.size) parts.push(e.data); };
   const stopped = new Promise(res => rec.onstop = res);
   rec.start(Math.min(1000, Math.round(1000/fps)));
-  // Loop di disegno legato al TEMPO reale
-  const t0 = performance.now();
-  let rafId = 0;
+  const t0 = performance.now(); let rafId = 0;
   (function loop(){
     const now = performance.now();
     const tSec = Math.min((now - t0)/1000, T);
@@ -785,20 +759,17 @@ async function exportWithMediaRecorder(items, {T,F,fps,W,H,mime,bitrate}){
     if (tSec < T) rafId = requestAnimationFrame(loop);
   })();
   await new Promise(r => setTimeout(r, Math.max(0, T*1000)));
-  rec.stop();
-  if (rafId) cancelAnimationFrame(rafId);
-  await stopped;
-  hideEl(ActionProgressWrap);
-  console.log('[Slideshow] pipeline = MediaRecorder→', mime, ', bitrate =', bitrate);
+  rec.stop(); if (rafId) cancelAnimationFrame(rafId); await stopped; hideEl(ActionProgressWrap);
   return new Blob(parts, { type: mime });
 }
+
 /* ---- Export principale: selezione pipeline ---- */
 async function exportVideoSlideshow(){
   const title = (VidTitle?.value || '').trim();
   if (!title){ alert('Inserisci “Nome video”.'); return; }
   if (!pickedVideo.length){ alert('Carica una cartella con immagini.'); return; }
   const T = parseFloat(VidDuration.value); // 15/30/45
-  const F = 1.0; // 1s dissolvenza incrociata
+  const F = 1.0;  // dissolvenza
   const fps = 30;
   const { W, H } = pickVideoSize();
   const bitrate = pickBitrate(W,H,fps);
@@ -815,273 +786,256 @@ async function exportVideoSlideshow(){
   } else {
     const webmMime =
       (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9'))
-      ? 'video/webm;codecs=vp9'
-      : 'video/webm;codecs=vp8';
+        ? 'video/webm;codecs=vp9'
+        : 'video/webm;codecs=vp8';
     blob = await exportWithMediaRecorder(items, {T,F,fps,W,H,mime:webmMime,bitrate});
     filename = `${slugify(title)}.webm`;
   }
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download= filename;
-  a.click();
+  const a = document.createElement('a'); a.href = url; a.download= filename; a.click();
   URL.revokeObjectURL(url);
 }
 
-/* ============================= WATERMARK PORTALI ====================== */
-/* Allineato a Export-WatermarkPortali del PSM1:
-   - immagini: 1024×768 cover + logo centrale → _EXPORT_WATERMARK/immagini/immagini-XX.jpg
-   - pdf: prima pagina contain su 1024×768 bg bianco + logo → _EXPORT_WATERMARK/planimetria/<base>.jpg */
-async function loadBitmapFromUrl(url) {
-  const resp = await fetch(url, { cache: 'no-store' });
-  const blob = await resp.blob();
-  return await createImageBitmap(blob);
-}
-function drawCover(ctx, bmp, W, H) {
-  const iw = bmp.width, ih = bmp.height;
-  const cr = W / H, ir = iw / ih;
-  let dw, dh, dx, dy;
-  if (ir > cr) { dh = H; dw = Math.round(dh * ir); dx = Math.round((W - dw) / 2); dy = 0; }
-  else         { dw = W; dh = Math.round(dw / ir); dx = 0; dy = Math.round((H - dh) / 2); }
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(bmp, dx, dy, dw, dh);
-}
-async function exportWatermarkPortaliWeb() {
-  if (!picked.length) { alert('Carica una cartella con immagini/PDF.'); return; }
-
-  showEl(ActionProgressWrap);
-  ActionProgress.value = 0;
-  ActionProgressLabel.textContent = 'Esportazione in corso…';
-
-  const logo = await loadBitmapFromUrl('./assets/logo-watermark.png'); // asset repo
-  const zip = new JSZip();
-  const DST_IMG = '_EXPORT_WATERMARK/immagini/';
-  const DST_PDF = '_EXPORT_WATERMARK/planimetria/';
-  const W = 1024, H = 768;
-
-  const isImg = (n) => /\.(jpe?g|png|tif?f|webp)$/i.test(n);
-  const isPdf = (n) => /\.pdf$/i.test(n);
-  const asPath = (rec) => (rec.relPath || rec.file.name);
-
-  let images = picked.filter(p => isImg(p.file.name) && /^immagini\//i.test(asPath(p)));
-  let pdfs   = picked.filter(p => isPdf(p.file.name) && /^planimetria\//i.test(asPath(p)));
-  if (!images.length) images = picked.filter(p => isImg(p.file.name));
-  if (!pdfs.length)   pdfs   = picked.filter(p => isPdf(p.file.name));
-
-  const total = images.length + pdfs.length;
-  let processed = 0;
-
-  // immagini
-  let counter = 0;
-  for (const rec of images) {
-    counter++;
-    const nn = String(counter).padStart(2, '0');
-    const bmp = await loadImageBitmap(rec.file);
-    const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d', { alpha: false });
-    drawCover(ctx, bmp, W, H);
-    const lx = Math.round((W - logo.width) / 2);
-    const ly = Math.round((H - logo.height) / 2);
-    ctx.drawImage(logo, lx, ly);
-    const jpg = await canvasToBlob(canvas, 'image/jpeg', 0.90);
-    zip.file(`${DST_IMG}immagini-${nn}.jpg`, jpg);
-    ActionProgress.value = Math.round((++processed / total) * 100);
-    await new Promise(r => setTimeout(r));
-  }
-
-  // pdf (prima pagina)
-  if (pdfs.length) await ensurePdfJs();
-  for (const rec of pdfs) {
-    const baseName = rec.file.name.replace(/\.pdf$/i, '');
-    const ab = await rec.file.arrayBuffer();
-    const pdf = await window.pdfjsLib.getDocument({ data: ab }).promise;
-    const page = await pdf.getPage(1);
-
-    // calcolo scala per contenere in 1024x768
-    const vp1 = page.getViewport({ scale: 1.0 });
-    const scale = Math.min(W / vp1.width, H / vp1.height);
-    const viewport = page.getViewport({ scale });
-
-    const cPage = document.createElement('canvas');
-    cPage.width = Math.ceil(viewport.width);
-    cPage.height = Math.ceil(viewport.height);
-    const ctxPage = cPage.getContext('2d');
-    await page.render({ canvasContext: ctxPage, viewport }).promise;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d', { alpha: false });
-    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,W,H);
-    const dw = cPage.width, dh = cPage.height;
-    const dx = Math.round((W - dw) / 2), dy = Math.round((H - dh) / 2);
-    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(cPage, dx, dy);
-
-    const lx = Math.round((W - logo.width) / 2);
-    const ly = Math.round((H - logo.height) / 2);
-    ctx.drawImage(logo, lx, ly);
-
-    const jpg = await canvasToBlob(canvas, 'image/jpeg', 0.90);
-    zip.file(`${DST_PDF}${baseName}.jpg`, jpg);
-    ActionProgress.value = Math.round((++processed / total) * 100);
-    await new Promise(r => setTimeout(r));
-  }
-
-  const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
-  const blob = await zip.generateAsync({ type: 'blob' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `WATERMARK-${stamp}.zip`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  hideEl(ActionProgressWrap);
-}
-
-/* ============================= QR CODE + UTM ========================== */
-const QrWebsite   = $('#QrWebsite');
-const QrCampaignId= $('#QrCampaignId');
-const QrSource    = $('#QrSource');
-const QrMedium    = $('#QrMedium');
-const QrCampaign  = $('#QrCampaign');
-const QrTerm      = $('#QrTerm');
-const QrContent   = $('#QrContent');
-
-function buildUtmUrl(base, kv) {
-  const u = new URL(base);
-  for (const [k,v] of Object.entries(kv)) {
-    if (v) u.searchParams.set(k, v);
-  }
-  return u.toString();
-}
-
-async function exportQrCodeWeb() {
-  const base = (QrWebsite?.value || '').trim();
-  const source = (QrSource?.value || '').trim();
-  const medium = (QrMedium?.value || '').trim();
-  const campaign = (QrCampaign?.value || '').trim();
-  if (!/^https?:\/\//i.test(base)) { alert('L’URL deve iniziare con http:// oppure https://'); return; }
-  if (!source || !medium || !campaign) { alert('Compila i campi obbligatori: source, medium, campaign.'); return; }
-
-  const kv = { utm_source: source, utm_medium: medium, utm_campaign: campaign };
-  const cid = (QrCampaignId?.value || '').trim();
-  const term = (QrTerm?.value || '').trim();
-  const cont = (QrContent?.value || '').trim();
-  if (cid)  kv['utm_id'] = cid;
-  if (term) kv['utm_term'] = term;
-  if (cont) kv['utm_content'] = cont;
-
-  const finalUrl = buildUtmUrl(base, kv);
-
-  showEl(ActionProgressWrap);
-  ActionProgress.value = 10;
-  ActionProgressLabel.textContent = 'Generazione QR…';
-
-  const zip = new JSZip();
-  const slug = slugify(campaign) || 'qr';
-  const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
-
-  // SVG
-  const svgStr = await new Promise((res, rej) =>
-    QRCode.toString(finalUrl, { type:'svg', margin:2, errorCorrectionLevel:'M' }, (err, str)=> err?rej(err):res(str))
-  );
-  zip.file(`QR-${slug}-${stamp}.svg`, svgStr);
-
-  ActionProgress.value = 45;
-
-  // PNG 1024 (canvas → png con bg bianco)
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024; canvas.height = 1024;
-  await new Promise((res, rej) =>
-    QRCode.toCanvas(canvas, finalUrl, { width:1024, margin:2, errorCorrectionLevel:'M' }, (err)=> err?rej(err):res())
-  );
-  const c2 = document.createElement('canvas'); c2.width = 1024; c2.height = 1024;
-  const cx = c2.getContext('2d', { alpha:false }); cx.fillStyle = '#fff'; cx.fillRect(0,0,1024,1024);
-  cx.drawImage(canvas,0,0);
-  const png = await new Promise(res => c2.toBlob(res, 'image/png'));
-  zip.file(`QR-${slug}-${stamp}.png`, png);
-
-  ActionProgress.value = 75;
-
-  // TXT con URL finale
-  zip.file(`URL-${slug}-${stamp}.txt`, finalUrl);
-
-  const blob = await zip.generateAsync({ type:'blob' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `QR-EXPORT-${slug}-${stamp}.zip`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  hideEl(ActionProgressWrap);
-}
-
-/* ============================ IUBENDA SNIPPET ======================== */
-const IubWidgetUrl = $('#IubWidgetUrl');
-const IubSiteId    = $('#IubSiteId');
-const IubCookieIt  = $('#IubCookieIt');
-const IubEnableEn  = $('#IubEnableEn');
-const IubCookieEn  = $('#IubCookieEn');
-const IubEnRow     = $('#IubEnRow');
-
-IubEnableEn?.addEventListener('change', () => {
-  IubEnableEn.checked ? showEl(IubEnRow) : hideEl(IubEnRow);
-});
-
-function iubCallbackBlock() {
-  return `
-callback: {
-  onPreferenceExpressedOrNotNeeded: function (preference) {
-    dataLayer.push({ iubenda_ccpa_opted_out: _iub.cs.api.isCcpaOptedOut() });
-    dataLayer.push({ event: "cookie_consent_update" });
-    if (!preference) {
-      dataLayer.push({ event: "iubenda_preference_not_needed" });
-    } else {
-      if (preference.consent === true) {
-        dataLayer.push({ event: "iubenda_consent_given" });
-      } else if (preference.consent === false) {
-        dataLayer.push({ event: "iubenda_consent_rejected" });
-      } else if (preference.purposes) {
-        for (var purposeId in preference.purposes) {
-          if (preference.purposes[purposeId]) {
-            dataLayer.push({ event: "iubenda_consent_given_purpose_" + purposeId });
-          }
-        }
+/* ========================= WATERMARK PORTALI ========================= */
+async function loadLogoForWatermark() {
+  const candidates = ['./assets/logo-watermark.png', './assets/logo.png'];
+  for (const url of candidates) {
+    try {
+      const res = await fetch(url, { cache:'no-store' });
+      if (res.ok) {
+        const blob = await res.blob();
+        return await createImageBitmap(blob, { imageOrientation:'from-image' });
       }
+    } catch {}
+  }
+  return null;
+}
+function drawCoverToCanvasFixed(bmp, W=1024, H=768){
+  const c = document.createElement('canvas'); c.width=W; c.height=H;
+  const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  const scale = Math.max(W/bmp.width, H/bmp.height);
+  const dw = Math.round(bmp.width * scale), dh = Math.round(bmp.height * scale);
+  const dx = Math.round((W - dw)/2), dy = Math.round((H - dh)/2);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality='high';
+  ctx.drawImage(bmp, dx, dy, dw, dh);
+  return c;
+}
+function drawLogoCenter(canvas, logoBmp){
+  if (!logoBmp) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const maxSide = Math.min(W, H) * 0.35;
+  const lr = logoBmp.width / logoBmp.height;
+  let lw, lh;
+  if (lr >= 1) { lw = maxSide; lh = Math.round(lw / lr); }
+  else { lh = maxSide; lw = Math.round(lh * lr); }
+  const x = Math.round((W - lw)/2), y = Math.round((H - lh)/2);
+  ctx.drawImage(logoBmp, x, y, lw, lh);
+}
+async function exportWatermarkPortali(){
+  const images = picked.filter(p => /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name));
+  const pdfs   = picked.filter(p => /\.pdf$/i.test(p.file.name));
+  if (!images.length && !pdfs.length){ alert('Carica immagini o PDF.'); return; }
+  const logo = await loadLogoForWatermark();
+  const zip = new JSZip();
+  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Elaborazione…';
+
+  const total = images.length + pdfs.length; let done = 0;
+  // IMMAGINI
+  let counterImg = 0;
+  for (const rec of images){
+    const bmp = await loadImageBitmap(rec.file);
+    const canvas = drawCoverToCanvasFixed(bmp, 1024, 768);
+    drawLogoCenter(canvas, logo);
+    const jpg = await canvasToBlob(canvas,'image/jpeg',0.9);
+    const nn = String(++counterImg).padStart(2,'0');
+    zip.file(`_EXPORT_WATERMARK/immagini/immagini-${nn}.jpg`, jpg);
+    ActionProgress.value = Math.round((++done/total)*100);
+  }
+  // PDF (prima pagina)
+  if (pdfs.length){
+    await ensurePdfJs();
+    for (const rec of pdfs){
+      const ab = await rec.file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({data:ab}).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 300/72 });
+      const tmp = document.createElement('canvas');
+      tmp.width = Math.ceil(viewport.width);
+      tmp.height = Math.ceil(viewport.height);
+      await page.render({ canvasContext: tmp.getContext('2d'), viewport }).promise;
+      const bmp = await createImageBitmap(tmp);
+      const canvas = drawCoverToCanvasFixed(bmp, 1024, 768);
+      drawLogoCenter(canvas, logo);
+      const jpg = await canvasToBlob(canvas,'image/jpeg',0.9);
+      const base = rec.file.name.replace(/\.pdf$/i,'');
+      zip.file(`_EXPORT_WATERMARK/planimetria/${base}.jpg`, jpg);
+      ActionProgress.value = Math.round((++done/total)*100);
     }
   }
-}`.trim();
+  const blob = await zip.generateAsync({type:'blob'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `EXPORT_WATERMARK-${Date.now()}.zip`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  hideEl(ActionProgressWrap);
 }
 
-function getIubendaSnippetStringWeb({ widgetUrl, siteId, cookieIt, enableEn, cookieEn }) {
-  const callback = iubCallbackBlock();
-  if (!enableEn) {
-    return `
-<!-- IUBENDA - IT -->
-<script type="text/javascript">
-  window.dataLayer = window.dataLayer || [];
-  var _iub = _iub || [];
-  _iub.csConfiguration = {
-    siteId: ${siteId},
-    cookiePolicyId: ${cookieIt},
-    lang: "it",
-    storage: { useSiteId: true },
-    ${callback}
+/* ========================= BIGLIETTO DA VISITA ======================== */
+const BvPdfTpl   = $('#BvPdfTpl');
+const BvFullName = $('#BvFullName');
+const BvJobTitle = $('#BvJobTitle');
+const BvPhone    = $('#BvPhone');
+const BvEmail    = $('#BvEmail');
+const BvRea      = $('#BvRea');
+const BvAddFront = $('#BvAddFront');
+const BvMakeBtn  = $('#BvMakeBtn');
+
+async function exportBusinessCard(){
+  const f = BvPdfTpl?.files?.[0];
+  if (!f) { alert('Seleziona un PDF template con form (back_form/back_rea_form).'); return; }
+  const tplBytes = new Uint8Array(await f.arrayBuffer());
+
+  // 1) Carica e compila il "back" (con form)
+  let pdfDoc = await PDFLib.PDFDocument.load(tplBytes);
+  const form = pdfDoc.getForm();
+  const map = {
+    FullName: BvFullName.value || '',
+    JobTitle: BvJobTitle.value || '',
+    Phone:    BvPhone.value    || '',
+    Email:    BvEmail.value    || ''
   };
-</script>
-${widgetUrl}</script>
-`.trim();
+  if ((BvRea.value||'').trim()) map.ReaCode = BvRea.value.trim();
+  for (const k of Object.keys(map)){
+    try { form.getTextField(k).setText(map[k]); } catch {}
   }
-  return `
-<!-- IUBENDA - AUTO IT/EN (UNICO SCRIPT) -->
+  form.flatten(); // rende non editabile
+  const backFilledBytes = await pdfDoc.save();
+
+  // 2) Se richiesto, aggiungi il front.pdf come prima pagina
+  if (BvAddFront?.checked) {
+    const frontUrl = 'assets/templates/businesscard/abitareco/front.pdf';
+    let frontBytes;
+    try {
+      const resp = await fetch(frontUrl, { cache:'no-store' });
+      if (!resp.ok) throw new Error('front.pdf non trovato');
+      frontBytes = new Uint8Array(await resp.arrayBuffer());
+    } catch {
+      alert('front.pdf non trovato in assets/templates/businesscard/abitareco/. Procedo solo con il back compilato.');
+      const aOnly = document.createElement('a');
+      aOnly.href = URL.createObjectURL(new Blob([backFilledBytes], {type:'application/pdf'}));
+      aOnly.download = `biglietto-${(BvFullName.value||'utente').toLowerCase().replace(/\s+/g,'-')}.pdf`;
+      aOnly.click();
+      URL.revokeObjectURL(aOnly.href);
+      return;
+    }
+    const finalDoc = await PDFLib.PDFDocument.create();
+    const frontDoc = await PDFLib.PDFDocument.load(frontBytes);
+    const backDoc  = await PDFLib.PDFDocument.load(backFilledBytes);
+    const [frontPage] = await finalDoc.copyPages(frontDoc, [0]);
+    const [backPage]  = await finalDoc.copyPages(backDoc,  [0]);
+    finalDoc.addPage(frontPage);
+    finalDoc.addPage(backPage);
+    const out = await finalDoc.save();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([out], {type:'application/pdf'}));
+    a.download = `biglietto-${(BvFullName.value||'utente').toLowerCase().replace(/\s+/g,'-')}.pdf`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    return;
+  }
+
+  // 3) Solo back compilato
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([backFilledBytes], {type:'application/pdf'}));
+  a.download = `biglietto-${(BvFullName.value||'utente').toLowerCase().replace(/\s+/g,'-')}.pdf`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+BvMakeBtn?.addEventListener('click', exportBusinessCard);
+
+/* =============================== QR + UTM ============================= */
+const QrBase     = $('#QrBase');
+const QrSource   = $('#QrSource');
+const QrMedium   = $('#QrMedium');
+const QrCampaign = $('#QrCampaign');
+const QrId       = $('#QrId');
+const QrTerm     = $('#QrTerm');
+const QrContent  = $('#QrContent');
+const QrMakeBtn  = $('#QrMakeBtn');
+const QrCanvas   = $('#QrCanvas');
+const QrUrlOut   = $('#QrUrlOut');
+const QrDownloadPng = $('#QrDownloadPng');
+const QrDownloadSvg = $('#QrDownloadSvg');
+
+function buildUtmUrl(){
+  const base = (QrBase.value||'').trim();
+  const u = new URL(base);
+  const set = (k, el) => { const v = (el.value||'').trim(); if (v) u.searchParams.set(k,v); };
+  set('utm_source',   QrSource);
+  set('utm_medium',   QrMedium);
+  set('utm_campaign', QrCampaign);
+  set('utm_id',       QrId);
+  set('utm_term',     QrTerm);
+  set('utm_content',  QrContent);
+  return u.toString();
+}
+async function makeQr(){
+  try{
+    const url = buildUtmUrl();
+    QrUrlOut.textContent = url;
+    await QRCode.toCanvas(QrCanvas, url, { width:256, margin:1 });
+    // PNG
+    QrCanvas.toBlob(b=>{
+      if (!b) return;
+      const url = URL.createObjectURL(b);
+      QrDownloadPng.href = url;
+      QrDownloadPng.classList.remove('hidden');
+    }, 'image/png');
+    // SVG
+    const svgStr = await QRCode.toString(url, { type:'svg', margin:1, width:256 });
+    const svgUrl = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml'}));
+    QrDownloadSvg.href = svgUrl;
+    QrDownloadSvg.classList.remove('hidden');
+  } catch(e){ alert('Controlla URL base (deve iniziare con http/https)'); }
+}
+QrMakeBtn?.addEventListener('click', makeQr);
+
+/* ================================ IUBENDA ============================= */
+const IubSiteId    = $('#IubSiteId');
+const IubCookieIt  = $('#IubCookieIt');
+const IubCookieEn  = $('#IubCookieEn');
+const IubWidgetUrl = $('#IubWidgetUrl');
+const IubDualLang  = $('#IubDualLang');
+const IubMakeBtn   = $('#IubMakeBtn');
+const IubOut       = $('#IubOut');
+
+function makeIubendaSnippet(){
+  const siteId = (IubSiteId.value||'').trim();
+  const cpIt   = (IubCookieIt.value||'').trim();
+  const cpEn   = (IubCookieEn.value||'').trim();
+  const widget = (IubWidgetUrl.value||'//cdn.iubenda.com/cs/iubenda_cs.js').trim();
+  if (!siteId || !cpIt) { alert('Compila siteId e cookiePolicyId IT.'); return; }
+  const callback = `
+callback: {
+  onPreferenceExpressedOrNotNeeded: function (preference) {
+    window.dataLayer = window.dataLayer || [];
+    dataLayer.push({ event: "cookie_consent_update" });
+    if (!preference) { dataLayer.push({ event: "iubenda_preference_not_needed" }); return; }
+    if (preference.consent === true)  dataLayer.push({ event: "iubenda_consent_given" });
+    if (preference.consent === false) dataLayer.push({ event: "iubenda_consent_rejected" });
+  }
+}`;
+  let snippet;
+  if (IubDualLang.checked && cpEn){
+    snippet = `
 <script type="text/javascript">
   window.dataLayer = window.dataLayer || [];
   var _iub = _iub || [];
-  var pageLang = (document.documentElement.getAttribute("lang") || "")
-    .toLowerCase()
-    .split("-")[0];
-  if (!pageLang) { pageLang = (location.pathname.startsWith("/en") ? "en" : "it"); }
-  var cookiePolicyByLang = { it: ${cookieIt}, en: ${cookieEn || '""'} };
+  var pageLang = (document.documentElement.getAttribute("lang")||"").toLowerCase().split("-")[0];
+  if (!pageLang) pageLang = (location.pathname.startsWith("/en") ? "en" : "it");
+  var cookiePolicyByLang = { it: ${cpIt}, en: ${cpEn} };
   if (!cookiePolicyByLang[pageLang]) pageLang = "it";
   _iub.csConfiguration = {
     siteId: ${siteId},
@@ -1091,53 +1045,43 @@ ${widgetUrl}</script>
     ${callback}
   };
 </script>
-${widgetUrl}</script>
-`.trim();
-}
-
-async function exportIubendaSnippetWeb() {
-  const widgetUrl = (IubWidgetUrl?.value || '').trim();
-  const siteId    = (IubSiteId?.value || '').trim();
-  const cookieIt  = (IubCookieIt?.value || '').trim();
-  const enableEn  = !!IubEnableEn?.checked;
-  const cookieEn  = (IubCookieEn?.value || '').trim();
-
-  if (!widgetUrl || !siteId || !cookieIt) {
-    alert('Compila: Script widget, Site ID e Cookie Policy ID (IT).');
-    return;
+${widget}script>`;
+  } else {
+    snippet = `
+<script type="text/javascript">
+  window.dataLayer = window.dataLayer || [];
+  var _iub = _iub || [];
+  _iub.csConfiguration = {
+    siteId: ${siteId},
+    cookiePolicyId: ${cpIt},
+    lang: "it",
+    storage: { useSiteId: true },
+    ${callback}
+  };
+</script>
+${widget}script>`;
   }
-
-  showEl(ActionProgressWrap);
-  ActionProgress.value = 40;
-  ActionProgressLabel.textContent = 'Generazione snippet…';
-
-  const txt = getIubendaSnippetStringWeb({ widgetUrl, siteId, cookieIt, enableEn, cookieEn });
-  const blob = new Blob([txt], { type:'text/plain;charset=utf-8' });
-  const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
-  const safeSite = siteId.replace(/\D/g,'') || 'site';
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `IubendaSnippet-${safeSite}-${stamp}.txt`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-
-  hideEl(ActionProgressWrap);
+  IubOut.value = snippet.trim();
 }
+IubMakeBtn?.addEventListener('click', makeIubendaSnippet);
 
 /* -------------------------- Dispatcher globale ------------------------ */
 BtnProcedi?.addEventListener('click', async ()=>{
   try {
     BtnProcedi.disabled = true;
-    if (currentMode === 'images')     { await exportImages(); return; }
+    if (currentMode === 'images')    { await exportImages(); return; }
     if (currentMode === 'digitaltool'){ await exportDigitalTool(); return; }
-    if (currentMode === 'pdf2jpg')    { await exportPdfToJpg(); return; }
-    if (currentMode === 'rename')     { await exportRename(); return; }
-    if (currentMode === 'video')      { await exportVideoSlideshow(); return; }
-    if (currentMode === 'watermark')  { await exportWatermarkPortaliWeb(); return; }  // NEW
-    if (currentMode === 'qr')         { await exportQrCodeWeb(); return; }            // NEW
-    if (currentMode === 'iubenda')    { await exportIubendaSnippetWeb(); return; }    // NEW
+    if (currentMode === 'pdf2jpg')   { await exportPdfToJpg(); return; }
+    if (currentMode === 'rename')    { await exportRename(); return; }
+    if (currentMode === 'video')     { await exportVideoSlideshow(); return; }
+    if (currentMode === 'watermark') { await exportWatermarkPortali(); return; }
     alert("Funzione non attiva.");
   } finally {
     BtnProcedi.disabled = false;
   }
 });
+
+/* ------------------------------ PPT download -------------------------- */
+window.downloadPPT = (href) => {
+  const a = document.createElement('a'); a.href = href; a.download = href.split('/').pop(); a.click();
+};

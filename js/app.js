@@ -1,6 +1,7 @@
 /* =========================================================
  Abitare Co. – Digital Content Tool (Web)
- app.js — Immagini + DigitalTool + PDF→JPG + Rename + Video + Watermark (auto) + BV (3 brand) + QR + Iubenda + PPT
+ app.js — Immagini + DigitalTool + PDF→JPG + Rename + Video + Watermark (auto)
+        + BV (DIN + REA dinamico) + QR + Iubenda + PPT
 ========================================================= */
 "use strict";
 
@@ -102,17 +103,17 @@ function selectMode(mode){
 
     case 'bv':
       showEl(BvCard);
-      BtnProcedi.classList.remove('hidden'); // usa "Esporta ora"
+      BtnProcedi.classList.remove('hidden');
       break;
 
     case 'qr':
       showEl(QrCard);
-      BtnProcedi.classList.add('hidden'); // bottone dedicato in card
+      BtnProcedi.classList.add('hidden');
       break;
 
     case 'iubenda':
       showEl(IubCard);
-      BtnProcedi.classList.add('hidden'); // si usa "Copia codice"
+      BtnProcedi.classList.add('hidden');
       break;
 
     case 'ppt':
@@ -145,7 +146,7 @@ const TxtFolderPath = $('#TxtFolderPath');
 const BtnClearPath  = $('#BtnClearPath');
 
 if (DropArea) {
-  function prevent(e){ e.preventDefault(); e.stopPropagation(); }
+  const prevent = (e)=>{ e.preventDefault(); e.stopPropagation(); };
   ['dragenter','dragover','dragleave','drop'].forEach(ev => DropArea.addEventListener(ev, prevent));
   DropArea.addEventListener('dragenter', ()=> DropArea.classList.add('drag-over'));
   DropArea.addEventListener('dragleave', ()=> DropArea.classList.remove('drag-over'));
@@ -186,7 +187,7 @@ const TxtFolderRename = $('#TxtFolderRename');
 const BtnClearRename  = $('#BtnClearRename');
 
 if (DropAreaRename) {
-  function preventR(e){ e.preventDefault(); e.stopPropagation(); }
+  const preventR = (e)=>{ e.preventDefault(); e.stopPropagation(); };
   ['dragenter','dragover','dragleave','drop'].forEach(ev => DropAreaRename.addEventListener(ev, preventR));
   DropAreaRename.addEventListener('dragenter', ()=> DropAreaRename.classList.add('drag-over'));
   DropAreaRename.addEventListener('dragleave', ()=> DropAreaRename.classList.remove('drag-over'));
@@ -200,8 +201,7 @@ if (DropAreaRename) {
   });
   DropAreaRename.addEventListener('click', ()=>{
     const input = document.createElement('input');
-    input.type = 'file'; input.webkitdirectory = true; input.multiple = true;
-    input.accept = 'image/*';
+    input.type = 'file'; input.webkitdirectory = true; input.multiple = true; input.accept = 'image/*';
     input.onchange = ()=>{
       const fl = input.files ? Array.from(input.files) : [];
       pickedRename = fl
@@ -235,9 +235,7 @@ async function readDroppedDirectory(dt){
     } else if (entry.isDirectory){
       const reader = entry.createReader();
       const entries = await new Promise(res => reader.readEntries(res));
-      for (const en of entries){
-        await traverse(en, base ? `${base}/${entry.name}` : entry.name);
-      }
+      for (const en of entries){ await traverse(en, base ? `${base}/${entry.name}` : entry.name); }
     }
   }
   const hasEntries = items.length && typeof items[0].webkitGetAsEntry === 'function';
@@ -266,9 +264,7 @@ async function loadImageBitmap(file){
   URL.revokeObjectURL(url);
   return bmp;
 }
-function canvasToBlob(canvas, mime, q=0.85){
-  return new Promise(res => canvas.toBlob(res, mime, q));
-}
+function canvasToBlob(canvas, mime, q=0.85){ return new Promise(res => canvas.toBlob(res, mime, q)); }
 
 /* =============================== Immagini (Sito) ====================== */
 const TxtSlugIta = $('#TxtSlugIta');
@@ -285,8 +281,7 @@ function toggleCustomRow(){ FmtCustom.checked ? showEl(CustomRow) : hideEl(Custo
 toggleCustomRow();
 function getSelectedFormat(){
   if (FmtCustom.checked){
-    return { w: Math.max(1, Number(CustomW.value) || 1920),
-             h: Math.max(1, Number(CustomH.value) || 1080) };
+    return { w: Math.max(1, Number(CustomW.value) || 1920), h: Math.max(1, Number(CustomH.value) || 1080) };
   }
   if (FmtShare.checked) return { w:1200, h:630 };
   return { w:1920, h:1080 };
@@ -576,7 +571,7 @@ const BtnClearVideo  = $('#BtnClearVideo');
 const VidCanvas = $('#VidCanvas');
 
 if (DropAreaVideo) {
-  function preventV(e){ e.preventDefault(); e.stopPropagation(); }
+  const preventV = (e)=>{ e.preventDefault(); e.stopPropagation(); };
   ['dragenter','dragover','dragleave','drop'].forEach(ev => DropAreaVideo.addEventListener(ev, preventV));
   DropAreaVideo.addEventListener('dragenter', ()=> DropAreaVideo.classList.add('drag-over'));
   DropAreaVideo.addEventListener('dragleave', ()=> DropAreaVideo.classList.remove('drag-over'));
@@ -662,9 +657,7 @@ function renderAt(tl, items, W, H, tSec){
 }
 async function filesToBitmapsVideo(recs){
   const arr = [];
-  for (const r of recs){
-    arr.push({ name:r.file.name, bmp: await loadImageBitmap(r.file) });
-  }
+  for (const r of recs){ arr.push({ name:r.file.name, bmp: await loadImageBitmap(r.file) }); }
   return arr;
 }
 function pickVideoSize(){
@@ -710,11 +703,7 @@ async function exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate}){
   const mp4 = MP4Box.createFile();
   const chunks = [];
   const segCtx = { nextFileStart: 0 };
-  mp4.onSegment = (id, user, buffer) => {
-    buffer.fileStart = user.nextFileStart;
-    user.nextFileStart += buffer.byteLength;
-    chunks.push(buffer);
-  };
+  mp4.onSegment = (id, user, buffer) => { buffer.fileStart = user.nextFileStart; user.nextFileStart += buffer.byteLength; chunks.push(buffer); };
   let trackId = null;
   const encoder = new VideoEncoder({
     output: (chunk, meta) => {
@@ -727,8 +716,7 @@ async function exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate}){
           h264: { avcDecoderConfigRecord: meta.decoderConfig.description } });
         mp4.setSegmentOptions(trackId, segCtx, { nbSamples: 1e6 });
         const inits = mp4.initializeSegmentation();
-        inits.forEach(seg => { seg.buffer.fileStart = segCtx.nextFileStart;
-          segCtx.nextFileStart += seg.buffer.byteLength; chunks.push(seg.buffer); });
+        inits.forEach(seg => { seg.buffer.fileStart = segCtx.nextFileStart; segCtx.nextFileStart += seg.buffer.byteLength; chunks.push(seg.buffer); });
       }
       mp4.addSample(trackId, buf.buffer, { dts:ts, cts:ts, duration:dur, is_sync:key });
     }, error: e => console.error(e)
@@ -746,10 +734,7 @@ async function exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate}){
       await new Promise(r => setTimeout(r));
     }
   }
-  await encoder.flush();
-  encoder.close();
-  mp4.flush();
-  hideEl(ActionProgressWrap);
+  await encoder.flush(); encoder.close(); mp4.flush(); hideEl(ActionProgressWrap);
   return new Blob(chunks, { type:'video/mp4' });
 }
 async function exportWithMediaRecorder(items, {T,F,fps,W,H,mime,bitrate}){
@@ -771,73 +756,51 @@ async function exportWithMediaRecorder(items, {T,F,fps,W,H,mime,bitrate}){
     if (tSec < T) rafId = requestAnimationFrame(loop);
   })();
   await new Promise(r => setTimeout(r, Math.max(0, T*1000)));
-  rec.stop();
-  if (rafId) cancelAnimationFrame(rafId);
-  await stopped;
-  hideEl(ActionProgressWrap);
+  rec.stop(); if (rafId) cancelAnimationFrame(rafId); await stopped; hideEl(ActionProgressWrap);
   return new Blob(parts, { type: mime });
 }
 async function exportVideoSlideshow(){
   const title = (VidTitle?.value || '').trim();
   if (!title){ alert('Inserisci “Nome video”.'); return; }
   if (!pickedVideo.length){ alert('Carica una cartella con immagini.'); return; }
-  const T = parseFloat(VidDuration.value); // 15/30/45
-  const F = 1.0; // dissolvenza
-  const fps = 30;
-  const { W, H } = pickVideoSize();
-  const bitrate = pickBitrate(W,H,fps);
+  const T = parseFloat(VidDuration.value);
+  const F = 1.0;  const fps = 30;
+  const { W, H } = pickVideoSize(); const bitrate = pickBitrate(W,H,fps);
   const items = await filesToBitmapsVideo(pickedVideo);
-  const h264Cfg = await supportsH264WebCodecs();
-  const mp4Mime = supportsMp4Recorder();
+  const h264Cfg = await supportsH264WebCodecs(); const mp4Mime = supportsMp4Recorder();
   let blob, filename;
-  if (h264Cfg && window.MP4Box){
-    blob = await exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate});
-    filename = `${slugify(title)}.mp4`;
-  } else if (mp4Mime){
-    blob = await exportWithMediaRecorder(items, {T,F,fps,W,H,mime:mp4Mime,bitrate});
-    filename = `${slugify(title)}.mp4`;
-  } else {
-    const webmMime =
-      (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9'))
-        ? 'video/webm;codecs=vp9'
-        : 'video/webm;codecs=vp8';
-    blob = await exportWithMediaRecorder(items, {T,F,fps,W,H,mime:webmMime,bitrate});
-    filename = `${slugify(title)}.webm`;
-  }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download= filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  if (h264Cfg && window.MP4Box){ blob = await exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate}); filename = `${slugify(title)}.mp4`; }
+  else if (mp4Mime){ blob = await exportWithMediaRecorder(items, {T,F,fps,W,H,mime:mp4Mime,bitrate}); filename = `${slugify(title)}.mp4`; }
+  else { const webmMime = (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) ? 'video/webm;codecs=vp9' : 'video/webm;codecs=vp8';
+    blob = await exportWithMediaRecorder(items, {T,F,fps,W,H,mime:webmMime,bitrate}); filename = `${slugify(title)}.webm`; }
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download= filename; a.click(); URL.revokeObjectURL(url);
 }
 
 /* ========================= WATERMARK (auto) =========================== */
-// Logo personalizzato (drag&drop)
 const DropAreaLogo = $('#DropAreaLogo');
 const TxtLogoName  = $('#TxtLogoName');
 const BtnClearLogo = $('#BtnClearLogo');
 let customLogoFile = null;
 
 if (DropAreaLogo){
-  const stop = e => { e.preventDefault(); e.stopPropagation(); };
+  const stop = (e)=>{ e.preventDefault(); e.stopPropagation(); };
   ['dragenter','dragover','dragleave','drop'].forEach(ev => DropAreaLogo.addEventListener(ev, stop));
   DropAreaLogo.addEventListener('dragenter', ()=> DropAreaLogo.classList.add('drag-over'));
   DropAreaLogo.addEventListener('dragleave', ()=> DropAreaLogo.classList.remove('drag-over'));
   DropAreaLogo.addEventListener('drop', (e)=>{
     DropAreaLogo.classList.remove('drag-over');
     const f = e.dataTransfer?.files?.[0]; if (!f) return;
-    customLogoFile = f; TxtLogoName.textContent = f.name; BtnClearLogo.classList.remove('hidden');
+    customLogoFile = f; if (TxtLogoName) TxtLogoName.textContent = f.name; BtnClearLogo?.classList.remove('hidden');
   });
   DropAreaLogo.addEventListener('click', ()=>{
     const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
-    inp.onchange = ()=>{ const f = inp.files?.[0]; if (!f) return; customLogoFile = f; TxtLogoName.textContent = f.name; BtnClearLogo.classList.remove('hidden'); };
+    inp.onchange = ()=>{ const f = inp.files?.[0]; if (!f) return; customLogoFile = f; if (TxtLogoName) TxtLogoName.textContent = f.name; BtnClearLogo?.classList.remove('hidden'); };
     inp.click();
   });
   BtnClearLogo?.addEventListener('click', (e)=>{
     e.stopPropagation(); customLogoFile = null;
-    TxtLogoName.textContent = 'Trascina qui il logo o clicca per sfogliare… (PNG trasparente)';
-    BtnClearLogo.classList.add('hidden');
+    if (TxtLogoName) TxtLogoName.textContent = 'Trascina qui il logo o clicca per sfogliare… (PNG trasparente)';
+    BtnClearLogo?.classList.add('hidden');
   });
 }
 async function loadLogoForWatermark(file){
@@ -928,19 +891,21 @@ async function exportWatermarkPortali(){
   hideEl(ActionProgressWrap);
 }
 
-/* ========================= BIGLIETTO DA VISITA (3 brand) ============= */
+/* ========================= BIGLIETTO DA VISITA (DIN + REA dinamico) == */
 const BvBrandPills = $('#BvBrandPills');
 const BvForm       = $('#BvForm');
 const BvFullName   = $('#BvFullName');
 const BvJobTitle   = $('#BvJobTitle');
 const BvPhone      = $('#BvPhone');
 const BvEmail      = $('#BvEmail');
-const BvReaWrap    = $('#BvReaWrap');
+const BvReaWrap    = $('#BvReaWrap');   // checkbox container
+const BvReaInput   = $('#BvReaInput');  // input container (hidden until checked)
 const BvHasRea     = $('#BvHasRea');
 const BvRea        = $('#BvRea');
 
 let bvBrand = null; // 'abitareco' | 'commercial' | 'riabitareco'
 
+// brand selection
 BvBrandPills?.addEventListener('click', (e) => {
   const btn = e.target.closest('.brand-pill');
   if (!btn) return;
@@ -950,14 +915,45 @@ BvBrandPills?.addEventListener('click', (e) => {
 
   showEl(BvForm);
 
+  // REA visibile solo per Abitare Co. (checkbox); input appare se flaggato
   if (bvBrand === 'abitareco') {
     showEl(BvReaWrap);
+    if (!(BvHasRea?.checked)) hideEl(BvReaInput);
   } else {
-    hideEl(BvReaWrap);
+    hideEl(BvReaWrap); hideEl(BvReaInput);
     if (BvHasRea) BvHasRea.checked = false;
     if (BvRea)    BvRea.value = '';
   }
 });
+
+// checkbox -> mostra/nasconde input
+BvHasRea?.addEventListener('change', ()=>{
+  if (bvBrand !== 'abitareco') return;
+  (BvHasRea.checked) ? showEl(BvReaInput) : (hideEl(BvReaInput), BvRea && (BvRea.value=''));
+});
+
+// fetch primo file esistente da lista path
+async function fetchFirst(paths){
+  for (const p of paths){
+    try {
+      const res = await fetch(p, { cache:'no-store' });
+      if (res.ok) return new Uint8Array(await res.arrayBuffer());
+    } catch {}
+  }
+  return null;
+}
+// fontkit registration
+async function ensureFontkit(pdfDoc){
+  if (!window.fontkit) {
+    await new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src='https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js';
+      s.onload=resolve; s.onerror=reject;
+      document.head.appendChild(s);
+    });
+  }
+  pdfDoc.registerFontkit(window.fontkit);
+}
 
 async function exportBusinessCard(){
   if (!bvBrand) { alert('Seleziona un brand (Abitare Co. / Abitare Commercial / RiAbitare Co.).'); return; }
@@ -971,6 +967,7 @@ async function exportBusinessCard(){
   const wantsRea = (bvBrand === 'abitareco') && (BvHasRea?.checked);
   const reaCode  = (wantsRea ? (BvRea?.value || '').trim() : '');
 
+  // mappa template
   const tpl = {
     abitareco: {
       front: 'assets/templates/businesscard/abitareco/front.pdf',
@@ -992,32 +989,51 @@ async function exportBusinessCard(){
     }
   }[bvBrand];
 
-  async function loadPdfBytes(url){
-    const res = await fetch(url, { cache:'no-store' });
-    if (!res.ok) throw new Error('Template non trovato: ' + url);
-    return new Uint8Array(await res.arrayBuffer());
-  }
-
-  // 1) Back compilato
+  // 1) Back compilato con DIN
   const backTplUrl = (wantsRea && tpl.backRea) ? tpl.backRea : tpl.backNoRea;
-  const backTplBytes = await loadPdfBytes(backTplUrl);
-  const backDoc = await PDFLib.PDFDocument.load(backTplBytes);
+  const backTplBytes = await (await fetch(backTplUrl, { cache:'no-store' })).arrayBuffer();
+  let backDoc = await PDFLib.PDFDocument.load(backTplBytes);
+  await ensureFontkit(backDoc);
+
+  // DIN in assets/fonts/bv/ (+ fallback root)
+  const dinRegBytes = await fetchFirst([
+    'assets/fonts/bv/DINPro-Regular.ttf',
+    'assets/fonts/bv/DINPro-Regular.otf',
+    'assets/fonts/bv/DIN-Regular.ttf',
+    'assets/fonts/DINPro-Regular.ttf',
+    'assets/fonts/DINPro-Regular.otf',
+    'assets/fonts/DIN-Regular.ttf'
+  ]);
+  const dinBoldBytes = await fetchFirst([
+    'assets/fonts/bv/DINPro-Bold.ttf',
+    'assets/fonts/bv/DINPro-Bold.otf',
+    'assets/fonts/bv/DIN-Bold.ttf',
+    'assets/fonts/DINPro-Bold.ttf',
+    'assets/fonts/DINPro-Bold.otf',
+    'assets/fonts/DIN-Bold.ttf'
+  ]);
+
+  let dinReg = null, dinBold = null;
+  try { if (dinRegBytes)  dinReg  = await backDoc.embedFont(dinRegBytes); } catch {}
+  try { if (dinBoldBytes) dinBold = await backDoc.embedFont(dinBoldBytes); } catch {}
+
   const form = backDoc.getForm();
-  try { form.getTextField('FullName').setText(fullName); } catch {}
-  try { form.getTextField('JobTitle').setText(jobTitle); } catch {}
-  try { form.getTextField('Phone').setText(phone); } catch {}
-  try { form.getTextField('Email').setText(email); } catch {}
-  if (wantsRea && tpl.backRea) {
-    try { form.getTextField('ReaCode').setText(reaCode); } catch {}
+  // set & updateAppearances
+  try { const f=form.getTextField('FullName'); f.setText(fullName); (dinBold||dinReg)&&f.updateAppearances(dinBold||dinReg); } catch {}
+  try { const f=form.getTextField('JobTitle'); f.setText(jobTitle); (dinReg||dinBold)&&f.updateAppearances(dinReg||dinBold); } catch {}
+  try { const f=form.getTextField('Phone');    f.setText(phone);    (dinReg||dinBold)&&f.updateAppearances(dinReg||dinBold); } catch {}
+  try { const f=form.getTextField('Email');    f.setText(email);    (dinReg||dinBold)&&f.updateAppearances(dinReg||dinBold); } catch {}
+  if (wantsRea && tpl.backRea){
+    try { const f=form.getTextField('ReaCode'); f.setText(reaCode); (dinReg||dinBold)&&f.updateAppearances(dinReg||dinBold); } catch {}
   }
   form.flatten();
   const backFilledBytes = await backDoc.save();
 
   // 2) Front
-  const frontBytes = await loadPdfBytes(tpl.front);
+  const frontBytes = new Uint8Array(await (await fetch(tpl.front, { cache:'no-store' })).arrayBuffer());
   const frontDoc = await PDFLib.PDFDocument.load(frontBytes);
 
-  // 3) Merge (front poi back)
+  // 3) Merge (front -> back)
   const finalDoc = await PDFLib.PDFDocument.create();
   const [frontPg] = await finalDoc.copyPages(frontDoc, [0]);
   finalDoc.addPage(frontPg);
@@ -1027,7 +1043,7 @@ async function exportBusinessCard(){
 
   const out = await finalDoc.save();
 
-  // 4) Filename come da logica PSM1
+  // 4) Filename
   const safe = fullName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
                       .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'biglietto';
   const fileName = (tpl.nameMode === 'WithBrand') ? `BV-${bvBrand}-${safe}.pdf` : `BV-${safe}.pdf`;
@@ -1054,9 +1070,9 @@ const QrDownloadPng = $('#QrDownloadPng');
 const QrDownloadSvg = $('#QrDownloadSvg');
 
 function buildUtmUrl(){
-  const base = (QrBase.value||'').trim();
+  const base = (QrBase?.value||'').trim();
   const u = new URL(base);
-  const set = (k, el) => { const v = (el.value||'').trim(); if (v) u.searchParams.set(k,v); };
+  const set = (k, el) => { const v = (el?.value||'').trim(); if (v) u.searchParams.set(k,v); };
   set('utm_source',   QrSource);
   set('utm_medium',   QrMedium);
   set('utm_campaign', QrCampaign);
@@ -1068,7 +1084,7 @@ function buildUtmUrl(){
 async function makeQr(){
   try{
     const url = buildUtmUrl();
-    QrUrlOut.textContent = url;
+    if (QrUrlOut) QrUrlOut.textContent = url;
     await QRCode.toCanvas(QrCanvas, url, { width:256, margin:1 });
     // PNG
     QrCanvas.toBlob(b=>{
@@ -1148,19 +1164,13 @@ ${widget}script>`;
 </script>
 ${widget}script>`;
   }
-  IubOut.value = snippet.trim();
+  if (IubOut) IubOut.value = snippet.trim();
 }
 IubMakeBtn?.addEventListener('click', makeIubendaSnippet);
 
 IubCopyBtn?.addEventListener('click', async ()=>{
-  try {
-    await navigator.clipboard.writeText(IubOut.value || '');
-    alert('Snippet copiato negli appunti.');
-  } catch {
-    const ta = IubOut;
-    ta.select(); document.execCommand('copy');
-    alert('Snippet copiato (fallback).');
-  }
+  try { await navigator.clipboard.writeText(IubOut?.value || ''); alert('Snippet copiato negli appunti.'); }
+  catch { IubOut?.select(); document.execCommand('copy'); alert('Snippet copiato (fallback).'); }
 });
 
 /* -------------------------- Dispatcher globale ------------------------ */
@@ -1183,9 +1193,9 @@ BtnProcedi?.addEventListener('click', async ()=>{
 });
 
 /* ------------------------------ PPT: download & fonts ----------------- */
-window.downloadPPT = (href) => {
-  const a = document.createElement('a'); a.href = href; a.download = href.split('/').pop(); a.click();
-};
+window.downloadPPT = (href) => { const a = document.createElement('a'); a.href = href; a.download = href.split('/').pop(); a.click(); };
+
+// ZIP solo dai font PPT
 const FONTS_LIST = [
   'Manrope-Bold.ttf','Manrope-ExtraBold.ttf','Manrope-ExtraLight.ttf','Manrope-Light.ttf',
   'Manrope-Medium.ttf','Manrope-Regular.ttf','Manrope-SemiBold.ttf',
@@ -1195,7 +1205,7 @@ const FONTS_LIST = [
   'PPPangaia-Ultralight.otf','PPPangaia-UltralightItalic.otf'
 ];
 async function downloadFontsZip(){
-  const base = 'assets/fonts/';
+  const base = 'assets/fonts/ppt/';  // ← solo i font PPT, non i DIN del BV
   const zip = new JSZip();
   let added = 0;
   for (const name of FONTS_LIST){
@@ -1207,7 +1217,7 @@ async function downloadFontsZip(){
       added++;
     } catch {}
   }
-  if (!added){ alert('Nessun file font trovato in /assets/fonts/.'); return; }
+  if (!added){ alert('Nessun file font trovato in /assets/fonts/ppt/.'); return; }
   const out = await zip.generateAsync({type:'blob'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(out);

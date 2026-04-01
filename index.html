@@ -12,10 +12,9 @@
   <meta name="theme-color" content="#c4162b" />
 
   <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <!-- App styles -->
   <link rel="stylesheet" href="./css/styles.css" />
@@ -48,8 +47,8 @@
         <span class="mi"><img alt=""/></span><span class="txt">PDF → JPG</span>
       </li>
       <li data-mode="rename"
-          data-icon="./assets/icons/icon-rename.png"
-          data-icon-active="./assets/icons/icon-rename-selected.png">
+          data-icon="./assets/icons/icon-folder.png"
+          data-icon-active="./assets/icons/icon-folder-selected.png">
         <span class="mi"><img alt=""/></span><span class="txt">Rename</span>
       </li>
       <li data-mode="video"
@@ -203,7 +202,7 @@
           <canvas id="VidCanvas" width="1920" height="1080" hidden></canvas>
         </section>
 
-        <!-- WATERMARK (auto: immagini=cover, PDF=contain) -->
+        <!-- WATERMARK (auto) -->
         <section id="WatermarkCard" class="card hidden">
           <h3>Watermark per portali</h3>
           <div class="row" style="gap:16px;">
@@ -221,7 +220,7 @@
             </div>
           </div>
           <p class="muted">
-            Modalità automatica: <b>Immagini = Riempi (cover)</b>, <b>PDF (A3) = Contieni (bande bianche ai lati)</b>.
+            Modalità automatica: <b>Immagini = Riempi (cover)</b>, <b>PDF (A3) = Contieni</b> con bande bianche ai lati.  
             Usa “<b>Carica cartella</b>” in alto per selezionare immagini e/o PDF. Poi <b>Esporta ora</b>.
           </p>
         </section>
@@ -281,34 +280,38 @@
           </div>
         </section>
 
-        <!-- IUBENDA -->
-        <section id="IubendaCard" class="card hidden">
-          <h3>Iubenda – Genera snippet</h3>
-          <div class="row" style="gap:12px;">
-            <input id="IubSiteId"   class="input" placeholder="siteId (es. 1234567)" />
-            <input id="IubCookieIt" class="input" placeholder="cookiePolicyId IT" />
-            <input id="IubCookieEn" class="input" placeholder="cookiePolicyId EN (opz.)" />
-          </div>
-          <div class="row" style="gap:12px;align-items:center;">
-            <input id="IubWidgetUrl" class="input" placeholder='//cdn.iubenda.com/cs/iubenda_cs.js' />
-            <label><input id="IubDualLang" type="checkbox" /> IT/EN automatico</label>
-            <button id="IubMakeBtn" type="button" class="btn-primary">Genera snippet</button>
-          </div>
-          <textarea id="IubOut" class="input" placeholder="Snippet generato…"></textarea>
-        </section>
-
         <!-- TEMPLATE PPT -->
         <section id="PptCard" class="card hidden">
           <h3>Template PPT</h3>
-          <div class="form-group">
-            <label>Presentazioni disponibili</label>
-            <div class="row" style="gap:12px;">
+
+          <!-- Riga 1: due box -->
+          <div class="row" style="gap:16px;">
+            <div class="form-group">
+              <div class="form-section-title">Template Corporate</div>
+              <div class="form-section-sub">Presentazioni istituzionali: chi siamo, numeri chiave, valori del brand.</div>
               <button type="button" class="btn-primary"
-                      onclick="downloadPPT('assets/ppt/template-prese_ver2026.pptx')">
-                Scarica: Template Prese ver 2026
-              </button>
+                      onclick="downloadPPT('assets/ppt/template-corporate.pptx')">Scarica</button>
+            </div>
+
+            <div class="form-group">
+              <div class="form-section-title">Template Advisor</div>
+              <div class="form-section-sub">Analisi e advisory: ricerche, benchmark e valutazioni sintetiche.</div>
+              <button type="button" class="btn-primary"
+                      onclick="downloadPPT('assets/ppt/template-advisor.pptx')">Scarica</button>
             </div>
           </div>
+
+          <!-- Riga 2: un box sotto -->
+          <div class="row" style="gap:16px;">
+            <div class="form-group">
+              <div class="form-section-title">Template Marketing</div>
+              <div class="form-section-sub">Campagne e iniziative: annunci, lanci e contenuti commerciali.</div>
+              <button type="button" class="btn-primary"
+                      onclick="downloadPPT('assets/ppt/template-marketing.pptx')">Scarica</button>
+            </div>
+          </div>
+
+          <p class="muted">I file sono in <code>/assets/ppt/</code>. Se vuoi aggiungerne altri, dimmelo e li mettiamo in griglia.</p>
         </section>
 
       </div>

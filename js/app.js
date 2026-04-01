@@ -18,21 +18,28 @@ const ActionProgress      = $('#ActionProgress');
 const ActionProgressLabel = $('#ActionProgressLabel');
 
 /* ------------------------------ Cards UID ----------------------------- */
-const WelcomeCard = $('#WelcomeCard');
-const SlugCard    = $('#SlugCard');
-const FormatCard  = $('#FormatCard');
-const UploadCard  = $('#UploadCard');
-const DTCard      = $('#DTCard');
-const RenameCard  = $('#RenameCard');
-const VideoCard   = $('#VideoCard');
-const WatermarkCard = $('#WatermarkCard');
-const BvCard      = $('#BusinessCardCard');
-const QrCard      = $('#QrCard');
-const IubCard     = $('#IubendaCard');
-const PptCard     = $('#PptCard');
+const WelcomeCard    = $('#WelcomeCard');
+const SlugCard       = $('#SlugCard');
+const FormatCard     = $('#FormatCard');
+const UploadCard     = $('#UploadCard');
+const DTCard         = $('#DTCard');
+const RenameCard     = $('#RenameCard');
+const VideoCard      = $('#VideoCard');
+const WatermarkCard  = $('#WatermarkCard');
+const BvCard         = $('#BusinessCardCard');
+const QrCard         = $('#QrCard');
+const IubCard        = $('#IubendaCard');
+
+/* PPT: cards separate */
+const PptFontsCard     = $('#PptFontsCard');
+const PptCorporateCard = $('#PptCorporateCard');
+const PptAdvisorCard   = $('#PptAdvisorCard');
+const PptMarketingCard = $('#PptMarketingCard');
+
 const ALL_CARDS = [
   WelcomeCard, SlugCard, FormatCard, UploadCard,
-  DTCard, RenameCard, VideoCard, WatermarkCard, BvCard, QrCard, IubCard, PptCard
+  DTCard, RenameCard, VideoCard, WatermarkCard, BvCard, QrCard, IubCard,
+  PptFontsCard, PptCorporateCard, PptAdvisorCard, PptMarketingCard
 ];
 
 /* ------------------------------- Stato -------------------------------- */
@@ -91,13 +98,12 @@ function selectMode(mode){
       break;
 
     case 'watermark':
-      showEl(UploadCard);
-      showEl(WatermarkCard);
+      showEl(UploadCard); showEl(WatermarkCard);
       break;
 
     case 'bv':
       showEl(BvCard);
-      BtnProcedi.classList.add('hidden'); // azione via bottone dedicato
+      BtnProcedi.classList.add('hidden');
       break;
 
     case 'qr':
@@ -111,7 +117,10 @@ function selectMode(mode){
       break;
 
     case 'ppt':
-      showEl(PptCard);
+      showEl(PptFontsCard);
+      showEl(PptCorporateCard);
+      showEl(PptAdvisorCard);
+      showEl(PptMarketingCard);
       BtnProcedi.classList.add('hidden');
       break;
 
@@ -702,7 +711,6 @@ async function exportVideoSlideshow(){
 }
 
 /* ========================= WATERMARK (auto) =========================== */
-// Logo personalizzato (drag&drop)
 const DropAreaLogo = $('#DropAreaLogo');
 const TxtLogoName  = $('#TxtLogoName');
 const BtnClearLogo = $('#BtnClearLogo');
@@ -833,7 +841,6 @@ async function exportBusinessCard(){
   if (!f) { alert('Seleziona un PDF template con form (back_form/back_rea_form).'); return; }
   const tplBytes = new Uint8Array(await f.arrayBuffer());
 
-  // 1) Compila il back (con form)
   let pdfDoc = await PDFLib.PDFDocument.load(tplBytes);
   const form = pdfDoc.getForm();
   const map = {
@@ -847,7 +854,6 @@ async function exportBusinessCard(){
   form.flatten();
   const backFilledBytes = await pdfDoc.save();
 
-  // 2) Se richiesto, anteponi front.pdf
   if (BvAddFront?.checked) {
     const frontUrl = 'assets/templates/businesscard/abitareco/front.pdf';
     let frontBytes;
@@ -875,7 +881,6 @@ async function exportBusinessCard(){
     a.click(); URL.revokeObjectURL(a.href); return;
   }
 
-  // 3) Solo back compilato
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([backFilledBytes], {type:'application/pdf'}));
   a.download = `biglietto-${(BvFullName.value||'utente').toLowerCase().replace(/\s+/g,'-')}.pdf`;
@@ -914,14 +919,12 @@ async function makeQr(){
     const url = buildUtmUrl();
     QrUrlOut.textContent = url;
     await QRCode.toCanvas(QrCanvas, url, { width:256, margin:1 });
-    // PNG
     QrCanvas.toBlob(b=>{
       if (!b) return;
       const url = URL.createObjectURL(b);
       QrDownloadPng.href = url;
       QrDownloadPng.classList.remove('hidden');
     }, 'image/png');
-    // SVG
     const svgStr = await QRCode.toString(url, { type:'svg', margin:1, width:256 });
     const svgUrl = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml'}));
     QrDownloadSvg.href = svgUrl;
@@ -1009,7 +1012,51 @@ BtnProcedi?.addEventListener('click', async ()=>{
   }
 });
 
-/* ------------------------------ PPT download -------------------------- */
+/* ------------------------------ PPT: download ------------------------- */
 window.downloadPPT = (href) => {
-  const a = document.createElement('a'); a.href = href; a.download = href.split('/').pop(); a.click();
+  const a = document.createElement('a');
+  a.href = href; a.download = href.split('/').pop(); a.click();
 };
+
+/* ------------------------------ PPT: font ZIP ------------------------- */
+/* Lista font attesa in /assets/fonts/ (file mancanti vengono saltati) */
+const FONTS_LIST = [
+  // Manrope (TTF)
+  'Manrope-Bold.ttf','Manrope-ExtraBold.ttf','Manrope-ExtraLight.ttf','Manrope-Light.ttf',
+  'Manrope-Medium.ttf','Manrope-Regular.ttf','Manrope-SemiBold.ttf',
+  // PPPangaia (OTF)
+  'PPPangaia-Bold.otf','PPPangaia-BoldItalic.otf',
+  'PPPangaia-Medium.otf','PPPangaia-MediumItalic.otf',
+  'PPPangaia-Semibold.otf','PPPangaia-SemiboldItalic.otf',
+  'PPPangaia-Ultralight.otf','PPPangaia-UltralightItalic.otf'
+];
+
+async function downloadFontsZip(){
+  const base = 'assets/fonts/';
+  const zip = new JSZip();
+  let added = 0;
+
+  for (const name of FONTS_LIST){
+    try {
+      const res = await fetch(base + name, { cache:'no-store' });
+      if (!res.ok) continue;
+      const blob = await res.blob();
+      zip.file(name, blob);
+      added++;
+    } catch { /* skip */ }
+  }
+
+  if (!added){
+    alert('Nessun file font trovato in /assets/fonts/.');
+    return;
+  }
+
+  const out = await zip.generateAsync({type:'blob'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(out);
+  a.download = 'abitareco-fonts.zip';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+$('#BtnFontsZip')?.addEventListener('click', downloadFontsZip);

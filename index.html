@@ -4,17 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Abitare Co. – Digital Content Tool</title>
-
-  <!-- Favicon -->
-  <link rel="icon" href="./assets/logo.ico" type="image/x-icon" />
-
-  <!-- Theme color -->
   <meta name="theme-color" content="#c4162b" />
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Favicon (opzionale) -->
+  <link rel="icon" href="./assets/logo.ico" />
+
+  <!-- Google Fonts (UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
   <!-- App styles -->
   <link rel="stylesheet" href="./css/styles.css" />
@@ -29,7 +27,7 @@
 <div id="AppRoot" class="app">
   <!-- ═════════ SIDEBAR ═════════ -->
   <aside class="sidebar">
-    <img src="./assets/logo.png" class="logo" alt="Abitare Co." />
+    <img class="logo" src="./assets/logo.png" alt="Abitare Co." />
     <ul id="SideMenu" class="menu">
       <li data-mode="images"
           data-icon="./assets/icons/icon-sito.png"
@@ -244,11 +242,15 @@
               <input id="BvPhone" class="input" placeholder="Cellulare*" />
               <input id="BvEmail" class="input" placeholder="Email*" />
             </div>
+
+            <!-- REA: checkbox per Abitare Co.; campo visibile solo se flaggato -->
             <div id="BvReaWrap" class="row hidden" style="gap:12px;align-items:center;">
               <label style="display:flex;align-items:center;gap:8px;margin-bottom:0;">
                 <input id="BvHasRea" type="checkbox" />
                 <span>Inserisci REA</span>
               </label>
+            </div>
+            <div id="BvReaInput" class="row hidden" style="gap:12px;">
               <input id="BvRea" class="input" placeholder="Codice REA" />
             </div>
 
@@ -321,7 +323,7 @@
           </div>
         </section>
 
-        <!-- TEMPLATE PPT (già allineato) -->
+        <!-- TEMPLATE PPT -->
         <section id="PptFontsCard" class="card hidden">
           <h3>Template PPT · Font ufficiali</h3>
           <p class="form-section-sub">Per mantenere uno stile coerente scarica i font brand (Manrope + PPPangaia).</p>
@@ -368,12 +370,16 @@
 <!-- ═════════ LIBRARIES ═════════ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
-<!-- pdf-lib (PDF form handling) -->
+
+<!-- pdf-lib + fontkit (embedding DIN) -->
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<!-- qrcode (preview QR) -->
+<script src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
+
+<!-- qrcode -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 
 <!-- App logic -->
 <script src="./js/app.js"></script>
 </body>
 </html>
+``

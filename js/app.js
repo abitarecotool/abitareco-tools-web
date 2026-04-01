@@ -1,7 +1,7 @@
 /* =========================================================
  Abitare Co. – Digital Content Tool (Web)
  app.js — Immagini + DigitalTool + PDF→JPG + Rename + Video + Watermark (auto)
-        + BV (DIN + REA dinamico) + QR + Iubenda + PPT
+        + BV (Akrobat + REA dinamico) + QR + Iubenda + PPT
 ========================================================= */
 "use strict";
 
@@ -43,7 +43,7 @@ const ALL_CARDS = [
 ];
 
 /* ------------------------------- Stato -------------------------------- */
-let picked = [];        // Immagini / PDF / Watermark / ecc.
+let picked = [];        // Immagini / PDF / ecc.
 let pickedRename = [];  // Rename
 let pickedVideo = [];   // Video
 let currentMode = null;
@@ -195,7 +195,7 @@ if (DropAreaRename) {
     DropAreaRename.classList.remove('drag-over');
     pickedRename = await readDroppedDirectory(e.dataTransfer);
     TxtFolderRename.textContent = pickedRename.length
-      ? `Selezionati ${pickedRename.length} file…`
+      ? `Selezionati ${picked.length} file…`
       : 'Nessun file supportato.';
     BtnClearRename.classList.toggle('hidden', pickedRename.length === 0);
   });
@@ -267,6 +267,7 @@ async function loadImageBitmap(file){
 function canvasToBlob(canvas, mime, q=0.85){ return new Promise(res => canvas.toBlob(res, mime, q)); }
 
 /* =============================== Immagini (Sito) ====================== */
+// (uguale a prima: exportImages with cover, folder map, zip…)
 const TxtSlugIta = $('#TxtSlugIta');
 const TxtSlugEng = $('#TxtSlugEng');
 const Fmt1920 = $('#FmtSite1920');
@@ -309,18 +310,18 @@ async function loadFolderMap(){
   } catch { return {}; }
 }
 function drawCoverToCanvas(bmp, W, H){
-  const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
   const scale = Math.max(W/bmp.width, H/bmp.height);
   const dw = Math.round(bmp.width * scale);
   const dh = Math.round(bmp.height * scale);
-  const dx = Math.round((W - dw) / 2);
-  const dy = Math.round((H - dh) / 2);
+  const dx = Math.round((W - dw)/2);
+  const dy = Math.round((H - dh)/2);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(bmp, dx, dy, dw, dh);
-  return canvas;
+  return c;
 }
 
 async function exportImages(){
@@ -357,9 +358,7 @@ async function exportImages(){
     const slugFolderIta = slugify(leafIta);
     const slugFolderEng = slugify(leafEng);
 
-    recs.sort((a,b)=>
-      (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true })
-    );
+    recs.sort((a,b)=> (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true }));
 
     let counter = 0;
     for (const rec of recs){
@@ -392,6 +391,7 @@ async function exportImages(){
 }
 
 /* ============================== DigitalTool =========================== */
+// (identico a prima)
 function makeCanvasFromRules(bmp){
   const w=bmp.width, h=bmp.height, ratio=w/h;
   const square = Math.abs(ratio-1) <= 0.03;
@@ -435,9 +435,7 @@ async function toBlobCapped(canvas, mime){
 async function exportDigitalTool(){
   const images = picked.filter(p => /\.(jpe?g|png|tif?f)$/i.test(p.file.name));
   if (!images.length){ alert("Carica immagini."); return; }
-  const files = images.sort((a,b)=>
-    (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true })
-  );
+  const files = images.sort((a,b)=> (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true }));
   const zip = new JSZip();
   showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = "Esportazione in corso…";
   const countsByFolder = new Map();
@@ -469,6 +467,7 @@ async function exportDigitalTool(){
 }
 
 /* ============================== PDF → JPG ============================= */
+// (identico a prima)
 async function ensurePdfJs(){
   if (window.pdfjsLib) return;
   await new Promise((resolve,reject)=>{
@@ -528,15 +527,14 @@ async function exportPdfToJpg(){
 }
 
 /* ================================ Rename ============================== */
+// (identico a prima)
 const TxtRenameBase = $('#TxtRenameBase');
 async function exportRename(){
   const base = slugify(TxtRenameBase?.value || "").trim();
   const mode = base ? 2 : 1;
   const files = pickedRename.filter(p => /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name));
   if (!files.length){ alert("Carica una cartella per rinominare."); return; }
-  const sorted = files.sort((a,b)=>
-    (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true })
-  );
+  const sorted = files.sort((a,b)=> (a.relPath || a.file.name).localeCompare(b.relPath || b.file.name, undefined, { numeric:true }));
   const zip = new JSZip();
   showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = "Esportazione in corso…";
   const total = sorted.length;
@@ -560,6 +558,7 @@ async function exportRename(){
 }
 
 /* ============================= VIDEO: Slideshow ======================= */
+// (identico a prima: WebCodecs/MediaRecorder)
 const VidTitle    = $('#VidTitle');
 const VidDuration = $('#VidDuration');
 const VidFmtH     = $('#VidFmtH');
@@ -609,174 +608,21 @@ if (DropAreaVideo) {
     BtnClearVideo.classList.add('hidden');
   });
 }
-function computeStill(T, N, F){
-  let still = (T - (N - 1) * F) / N;
-  if (still <= 0){ F = Math.max(0, (T / Math.max(1, N - 1)) * 0.35); still = Math.max(0.3, (T - (N - 1) * F) / N); }
-  return { still, fade: F };
-}
-function buildTimelineVideo(N, T, F, fps){
-  const { still, fade } = computeStill(T, N, F);
-  const frames = Math.round(T * fps);
-  const seg = [];
-  for (let i=0;i<N;i++) seg.push(i < N-1 ? (still + fade) : still);
-  const offsets = [0];
-  for (let i=1;i<N;i++) offsets[i] = offsets[i-1] + seg[i-1];
-  return { still, fade, offsets, frames };
-}
-function drawCoverOn(ctx, bmp, W, H){
-  const iw=bmp.width, ih=bmp.height;
-  const cr=W/H, ir=iw/ih;
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  let dw,dh,dx,dy;
-  if (ir > cr) { dh=H; dw=Math.round(dh*ir); dx=Math.round((W-dw)/2); dy=0; }
-  else { dw=W; dh=Math.round(dw/ir); dx=0; dy=Math.round((H-dh)/2); }
-  ctx.drawImage(bmp, dx, dy, dw, dh);
-}
-function renderAt(tl, items, W, H, tSec){
-  const { still, fade, offsets } = tl;
-  const ctx = VidCanvas.getContext('2d', { alpha:false });
-  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
-  let i=0;
-  for (; i<items.length; i++){
-    const start = offsets[i];
-    const segDur = (i < items.length-1 ? (still + fade) : still);
-    if (tSec < start + segDur || i === items.length-1) break;
-  }
-  const start = offsets[i];
-  const localT = tSec - start;
-  const cur = items[i].bmp;
-  if (i < items.length-1 && localT > still){
-    const alpha = Math.min(1, (localT - still)/fade);
-    ctx.globalAlpha = 1; drawCoverOn(ctx, cur, W, H);
-    ctx.globalAlpha = alpha; drawCoverOn(ctx, items[i+1].bmp, W, H);
-    ctx.globalAlpha = 1;
-  } else {
-    drawCoverOn(ctx, cur, W, H);
-  }
-}
-async function filesToBitmapsVideo(recs){
-  const arr = [];
-  for (const r of recs){ arr.push({ name:r.file.name, bmp: await loadImageBitmap(r.file) }); }
-  return arr;
-}
-function pickVideoSize(){
-  if (VidFmtV?.checked) return { W:1080, H:1920 };
-  if (VidFmtS?.checked) return { W:1080, H:1080 };
-  return { W:1920, H:1080 };
-}
-function pickBitrate(W,H,fps){
-  const isSquare = (W===1080 && H===1080);
-  let bps = isSquare ? 8e6 : 12e6;
-  if (fps > 30) bps = Math.round(bps * (fps/30));
-  return bps;
-}
-function supportsMp4Recorder(){
-  if (!('MediaRecorder' in window)) return null;
-  const candidates = [
-    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
-    'video/mp4;codecs=avc1.42E01E',
-    'video/mp4'
-  ];
-  for (const m of candidates){
-    try { if (MediaRecorder.isTypeSupported(m)) return m; } catch {}
-  }
-  return null;
-}
-async function supportsH264WebCodecs(){
-  if (!('VideoEncoder' in window)) return null;
-  try {
-    const test = await VideoEncoder.isConfigSupported({
-      codec: 'avc1.42E01E', width:1080, height:1080, framerate:30, hardwareAcceleration:'prefer-hardware'
-    });
-    return test.supported ? test.config : null;
-  } catch { return null; }
-}
-async function exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate}){
-  if (!window.MP4Box) throw new Error('MP4Box.js non caricato');
-  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Esportazione in corso…';
-  VidCanvas.width = W; VidCanvas.height = H;
-  const tl = buildTimelineVideo(items.length, T, F, fps);
-  const cfg = await supportsH264WebCodecs();
-  if (!cfg) throw new Error('H.264 WebCodecs non disponibile');
-  const encConfig = { ...cfg, width:W, height:H, framerate:fps, bitrate, bitrateMode:'constant', avc:{ format:'annexb' } };
-  const mp4 = MP4Box.createFile();
-  const chunks = [];
-  const segCtx = { nextFileStart: 0 };
-  mp4.onSegment = (id, user, buffer) => { buffer.fileStart = user.nextFileStart; user.nextFileStart += buffer.byteLength; chunks.push(buffer); };
-  let trackId = null;
-  const encoder = new VideoEncoder({
-    output: (chunk, meta) => {
-      const ts = chunk.timestamp;
-      const dur = chunk.duration || Math.round(1e6 / fps);
-      const key = (chunk.type === 'key');
-      const buf = new Uint8Array(chunk.byteLength); chunk.copyTo(buf);
-      if (!trackId && meta?.decoderConfig?.description){
-        trackId = mp4.addTrack({ timescale: 1e6, width: W, height: H,
-          h264: { avcDecoderConfigRecord: meta.decoderConfig.description } });
-        mp4.setSegmentOptions(trackId, segCtx, { nbSamples: 1e6 });
-        const inits = mp4.initializeSegmentation();
-        inits.forEach(seg => { seg.buffer.fileStart = segCtx.nextFileStart; segCtx.nextFileStart += seg.buffer.byteLength; chunks.push(seg.buffer); });
-      }
-      mp4.addSample(trackId, buf.buffer, { dts:ts, cts:ts, duration:dur, is_sync:key });
-    }, error: e => console.error(e)
-  });
-  encoder.configure(encConfig);
-  const total = tl.frames;
-  const frameDurUs = Math.round(1e6 / fps);
-  for (let f=0; f<total; f++){
-    renderAt(tl, items, W, H, f / fps);
-    const vf = new VideoFrame(VidCanvas, { timestamp: f * frameDurUs });
-    encoder.encode(vf, { keyFrame: (f===0) || (f % (fps*2) === 0) });
-    vf.close();
-    if ((f % fps) === 0){
-      ActionProgress.value = Math.round((f/total)*100);
-      await new Promise(r => setTimeout(r));
-    }
-  }
-  await encoder.flush(); encoder.close(); mp4.flush(); hideEl(ActionProgressWrap);
-  return new Blob(chunks, { type:'video/mp4' });
-}
-async function exportWithMediaRecorder(items, {T,F,fps,W,H,mime,bitrate}){
-  showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Esportazione in corso…';
-  VidCanvas.width = W; VidCanvas.height = H;
-  const tl = buildTimelineVideo(items.length, T, F, fps);
-  const str = VidCanvas.captureStream(fps);
-  const rec = new MediaRecorder(str, { mimeType: mime, videoBitsPerSecond: bitrate, audioBitsPerSecond: 128000 });
-  const parts = [];
-  rec.ondataavailable = e => { if (e.data?.size) parts.push(e.data); };
-  const stopped = new Promise(res => rec.onstop = res);
-  rec.start(Math.min(1000, Math.round(1000/fps)));
-  const t0 = performance.now(); let rafId = 0;
-  (function loop(){
-    const now = performance.now();
-    const tSec = Math.min((now - t0)/1000, T);
-    renderAt(tl, items, W, H, tSec);
-    ActionProgress.value = Math.min(100, Math.round((tSec/T)*100));
-    if (tSec < T) rafId = requestAnimationFrame(loop);
-  })();
-  await new Promise(r => setTimeout(r, Math.max(0, T*1000)));
-  rec.stop(); if (rafId) cancelAnimationFrame(rafId); await stopped; hideEl(ActionProgressWrap);
-  return new Blob(parts, { type: mime });
-}
-async function exportVideoSlideshow(){
-  const title = (VidTitle?.value || '').trim();
-  if (!title){ alert('Inserisci “Nome video”.'); return; }
-  if (!pickedVideo.length){ alert('Carica una cartella con immagini.'); return; }
-  const T = parseFloat(VidDuration.value);
-  const F = 1.0;  const fps = 30;
-  const { W, H } = pickVideoSize(); const bitrate = pickBitrate(W,H,fps);
-  const items = await filesToBitmapsVideo(pickedVideo);
-  const h264Cfg = await supportsH264WebCodecs(); const mp4Mime = supportsMp4Recorder();
-  let blob, filename;
-  if (h264Cfg && window.MP4Box){ blob = await exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate}); filename = `${slugify(title)}.mp4`; }
-  else if (mp4Mime){ blob = await exportWithMediaRecorder(items, {T,F,fps,W,H,mime:mp4Mime,bitrate}); filename = `${slugify(title)}.mp4`; }
-  else { const webmMime = (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) ? 'video/webm;codecs=vp9' : 'video/webm;codecs=vp8';
-    blob = await exportWithMediaRecorder(items, {T,F,fps,W,H,mime:webmMime,bitrate}); filename = `${slugify(title)}.webm`; }
-  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download= filename; a.click(); URL.revokeObjectURL(url);
-}
+function computeStill(T, N, F){ let still = (T - (N - 1) * F) / N; if (still <= 0){ F = Math.max(0, (T / Math.max(1, N - 1)) * 0.35); still = Math.max(0.3, (T - (N - 1) * F) / N); } return { still, fade: F }; }
+function buildTimelineVideo(N, T, F, fps){ const { still, fade } = computeStill(T, N, F); const frames = Math.round(T * fps); const seg = []; for (let i=0;i<N;i++) seg.push(i < N-1 ? (still + fade) : still); const offsets = [0]; for (let i=1;i<N;i++) offsets[i] = offsets[i-1] + seg[i-1]; return { still, fade, offsets, frames }; }
+function drawCoverOn(ctx, bmp, W, H){ const iw=bmp.width, ih=bmp.height; const cr=W/H, ir=iw/ih; ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; let dw,dh,dx,dy; if (ir > cr) { dh=H; dw=Math.round(dh*ir); dx=Math.round((W-dw)/2); dy=0; } else { dw=W; dh=Math.round(dw/ir); dx=0; dy=Math.round((H-dh)/2); } ctx.drawImage(bmp, dx, dy, dw, dh); }
+function renderAt(tl, items, W, H, tSec){ const { still, fade, offsets } = tl; const ctx = VidCanvas.getContext('2d', { alpha:false }); ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H); let i=0; for (; i<items.length; i++){ const start = offsets[i]; const segDur = (i < items.length-1 ? (still + fade) : still); if (tSec < start + segDur || i === items.length-1) break; } const start = offsets[i]; const localT = tSec - start; const cur = items[i].bmp; if (i < items.length-1 && localT > still){ const alpha = Math.min(1, (localT - still)/fade); ctx.globalAlpha = 1; drawCoverOn(ctx, cur, W, H); ctx.globalAlpha = alpha; drawCoverOn(ctx, items[i+1].bmp, W, H); ctx.globalAlpha = 1; } else { drawCoverOn(ctx, cur, W, H); } }
+async function filesToBitmapsVideo(recs){ const arr = []; for (const r of recs){ arr.push({ name:r.file.name, bmp: await loadImageBitmap(r.file) }); } return arr; }
+function pickVideoSize(){ if (VidFmtV?.checked) return { W:1080, H:1920 }; if (VidFmtS?.checked) return { W:1080, H:1080 }; return { W:1920, H:1080 }; }
+function pickBitrate(W,H,fps){ const isSquare = (W===1080 && H===1080); let bps = isSquare ? 8e6 : 12e6; if (fps > 30) bps = Math.round(bps * (fps/30)); return bps; }
+function supportsMp4Recorder(){ if (!('MediaRecorder' in window)) return null; const c=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1.42E01E','video/mp4']; for (const m of c){ try { if (MediaRecorder.isTypeSupported(m)) return m; } catch {} } return null; }
+async function supportsH264WebCodecs(){ if (!('VideoEncoder' in window)) return null; try { const test = await VideoEncoder.isConfigSupported({ codec: 'avc1.42E01E', width:1080, height:1080, framerate:30, hardwareAcceleration:'prefer-hardware' }); return test.supported ? test.config : null; } catch { return null; } }
+async function exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate}){ if (!window.MP4Box) throw new Error('MP4Box.js non caricato'); showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Esportazione in corso…'; VidCanvas.width = W; VidCanvas.height = H; const tl = buildTimelineVideo(items.length, T, F, fps); const cfg = await supportsH264WebCodecs(); if (!cfg) throw new Error('H.264 WebCodecs non disponibile'); const encConfig = { ...cfg, width:W, height:H, framerate:fps, bitrate, bitrateMode:'constant', avc:{ format:'annexb' } }; const mp4 = MP4Box.createFile(); const chunks = []; const segCtx = { nextFileStart: 0 }; mp4.onSegment = (id, user, buffer) => { buffer.fileStart = user.nextFileStart; user.nextFileStart += buffer.byteLength; chunks.push(buffer); }; let trackId = null; const encoder = new VideoEncoder({ output: (chunk, meta) => { const ts = chunk.timestamp; const dur = chunk.duration || Math.round(1e6 / fps); const key = (chunk.type === 'key'); const buf = new Uint8Array(chunk.byteLength); chunk.copyTo(buf); if (!trackId && meta?.decoderConfig?.description){ trackId = mp4.addTrack({ timescale: 1e6, width: W, height: H, h264: { avcDecoderConfigRecord: meta.decoderConfig.description } }); mp4.setSegmentOptions(trackId, segCtx, { nbSamples: 1e6 }); const inits = mp4.initializeSegmentation(); inits.forEach(seg => { seg.buffer.fileStart = segCtx.nextFileStart; segCtx.nextFileStart += seg.buffer.byteLength; chunks.push(seg.buffer); }); } mp4.addSample(trackId, buf.buffer, { dts:ts, cts:ts, duration:dur, is_sync:key }); }, error: e => console.error(e) }); encoder.configure(encConfig); const total = tl.frames; const frameDurUs = Math.round(1e6 / fps); for (let f=0; f<total; f++){ renderAt(tl, items, W, H, f / fps); const vf = new VideoFrame(VidCanvas, { timestamp: f * frameDurUs }); encoder.encode(vf, { keyFrame: (f===0) || (f % (fps*2) === 0) }); vf.close(); if ((f % fps) === 0){ ActionProgress.value = Math.round((f/total)*100); await new Promise(r => setTimeout(r)); } } await encoder.flush(); encoder.close(); mp4.flush(); hideEl(ActionProgressWrap); return new Blob(chunks, { type:'video/mp4' }); }
+async function exportWithMediaRecorder(items, {T,F,fps,W,H,mime,bitrate}){ showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Esportazione in corso…'; VidCanvas.width = W; VidCanvas.height = H; const tl = buildTimelineVideo(items.length, T, F, fps); const str = VidCanvas.captureStream(fps); const rec = new MediaRecorder(str, { mimeType: mime, videoBitsPerSecond: bitrate, audioBitsPerSecond: 128000 }); const parts = []; rec.ondataavailable = e => { if (e.data?.size) parts.push(e.data); }; const stopped = new Promise(res => rec.onstop = res); rec.start(Math.min(1000, Math.round(1000/fps))); const t0 = performance.now(); let rafId = 0; (function loop(){ const now = performance.now(); const tSec = Math.min((now - t0)/1000, T); renderAt(tl, items, W, H, tSec); ActionProgress.value = Math.min(100, Math.round((tSec/T)*100)); if (tSec < T) rafId = requestAnimationFrame(loop); })(); await new Promise(r => setTimeout(r, Math.max(0, T*1000))); rec.stop(); if (rafId) cancelAnimationFrame(rafId); await stopped; hideEl(ActionProgressWrap); return new Blob(parts, { type: mime }); }
+async function exportVideoSlideshow(){ const title = (VidTitle?.value || '').trim(); if (!title){ alert('Inserisci “Nome video”.'); return; } if (!pickedVideo.length){ alert('Carica una cartella con immagini.'); return; } const T = parseFloat(VidDuration.value); const F = 1.0; const fps = 30; const { W, H } = pickVideoSize(); const bitrate = pickBitrate(W,H,fps); const items = await filesToBitmapsVideo(pickedVideo); const h264Cfg = await supportsH264WebCodecs(); const mp4Mime = supportsMp4Recorder(); let blob, filename; if (h264Cfg && window.MP4Box){ blob = await exportWithWebCodecsMP4(items, {T,F,fps,W,H,bitrate}); filename = `${slugify(title)}.mp4`; } else if (mp4Mime){ blob = await exportWithMediaRecorder(items, {T,F,fps,W,H,mime:mp4Mime,bitrate}); filename = `${slugify(title)}.mp4`; } else { const webmMime = (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) ? 'video/webm;codecs=vp9' : 'video/webm;codecs=vp8'; blob = await exportWithMediaRecorder(items, {T,F,fps,W,H,mime:webmMime,bitrate}); filename = `${slugify(title)}.webm`; } const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download= filename; a.click(); URL.revokeObjectURL(url); }
 
 /* ========================= WATERMARK (auto) =========================== */
+// (identico a prima)
 const DropAreaLogo = $('#DropAreaLogo');
 const TxtLogoName  = $('#TxtLogoName');
 const BtnClearLogo = $('#BtnClearLogo');
@@ -807,10 +653,8 @@ async function loadLogoForWatermark(file){
   if (file) return await createImageBitmap(file, { imageOrientation:'from-image' });
   const candidates = ['./assets/logo-watermark.png','./assets/logo.png'];
   for (const url of candidates){
-    try {
-      const res = await fetch(url, { cache:'no-store' });
-      if (res.ok) return await createImageBitmap(await res.blob(), { imageOrientation:'from-image' });
-    } catch {}
+    try { const res = await fetch(url, { cache:'no-store' }); if (res.ok) return await createImageBitmap(await res.blob(), { imageOrientation:'from-image' }); }
+    catch {}
   }
   return null;
 }
@@ -828,9 +672,9 @@ function drawFitToCanvas(bmp, W=1024, H=768, mode='contain'){
   ctx.drawImage(bmp, dx, dy, dw, dh);
   return c;
 }
-function drawLogoCenter(canvas, logoBmp){
+function drawLogoCenter(c, logoBmp){
   if (!logoBmp) return;
-  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height;
+  const ctx = c.getContext('2d'), W = c.width, H = c.height;
   const maxSide = Math.min(W, H) * 0.35;
   const lr = logoBmp.width / logoBmp.height;
   const lw = lr >= 1 ? maxSide : Math.round(maxSide * lr);
@@ -852,15 +696,15 @@ async function exportWatermarkPortali(){
   let counterImg = 0;
   for (const rec of images){
     const bmp = await loadImageBitmap(rec.file);
-    const canvas = drawFitToCanvas(bmp, 1024, 768, 'cover');
-    drawLogoCenter(canvas, logo);
-    const jpg = await canvasToBlob(canvas,'image/jpeg',0.92);
+    const c = drawFitToCanvas(bmp, 1024, 768, 'cover');
+    drawLogoCenter(c, logo);
+    const jpg = await canvasToBlob(c,'image/jpeg',0.92);
     const nn = String(++counterImg).padStart(2,'0');
     zip.file(`_EXPORT_WATERMARK/immagini/immagini-${nn}.jpg`, jpg);
     ActionProgress.value = Math.round((++done/total)*100);
   }
 
-  // PDF (A3) → contain con bande bianche
+  // PDF (A3) → contain
   if (pdfs.length){
     await ensurePdfJs();
     for (const rec of pdfs){
@@ -873,9 +717,9 @@ async function exportWatermarkPortali(){
       tmp.height = Math.ceil(viewport.height);
       await page.render({ canvasContext: tmp.getContext('2d'), viewport }).promise;
       const bmp = await createImageBitmap(tmp);
-      const canvas = drawFitToCanvas(bmp, 1024, 768, 'contain');
-      drawLogoCenter(canvas, logo);
-      const jpg = await canvasToBlob(canvas,'image/jpeg',0.92);
+      const c = drawFitToCanvas(bmp, 1024, 768, 'contain');
+      drawLogoCenter(c, logo);
+      const jpg = await canvasToBlob(c,'image/jpeg',0.92);
       const base = rec.file.name.replace(/\.pdf$/i,'');
       zip.file(`_EXPORT_WATERMARK/planimetria/${base}.jpg`, jpg);
       ActionProgress.value = Math.round((++done/total)*100);
@@ -891,7 +735,7 @@ async function exportWatermarkPortali(){
   hideEl(ActionProgressWrap);
 }
 
-/* ========================= BIGLIETTO DA VISITA (DIN + REA dinamico) == */
+/* ========================= BIGLIETTO DA VISITA (Akrobat + REA) ======= */
 const BvBrandPills = $('#BvBrandPills');
 const BvForm       = $('#BvForm');
 const BvFullName   = $('#BvFullName');
@@ -899,40 +743,32 @@ const BvJobTitle   = $('#BvJobTitle');
 const BvPhone      = $('#BvPhone');
 const BvEmail      = $('#BvEmail');
 const BvReaWrap    = $('#BvReaWrap');   // checkbox container
-const BvReaInput   = $('#BvReaInput');  // input container (hidden until checked)
+const BvReaInput   = $('#BvReaInput');  // input container (hidden)
 const BvHasRea     = $('#BvHasRea');
 const BvRea        = $('#BvRea');
 
 let bvBrand = null; // 'abitareco' | 'commercial' | 'riabitareco'
 
-// brand selection
 BvBrandPills?.addEventListener('click', (e) => {
-  const btn = e.target.closest('.brand-pill');
-  if (!btn) return;
-
+  const btn = e.target.closest('.brand-pill'); if (!btn) return;
   $$('.brand-pill').forEach(p => p.classList.toggle('active', p === btn));
   bvBrand = btn.dataset.brand;
-
   showEl(BvForm);
-
-  // REA visibile solo per Abitare Co. (checkbox); input appare se flaggato
   if (bvBrand === 'abitareco') {
     showEl(BvReaWrap);
-    if (!(BvHasRea?.checked)) hideEl(BvReaInput);
+    (BvHasRea?.checked) ? showEl(BvReaInput) : hideEl(BvReaInput);
   } else {
     hideEl(BvReaWrap); hideEl(BvReaInput);
     if (BvHasRea) BvHasRea.checked = false;
     if (BvRea)    BvRea.value = '';
   }
 });
-
-// checkbox -> mostra/nasconde input
 BvHasRea?.addEventListener('change', ()=>{
   if (bvBrand !== 'abitareco') return;
   (BvHasRea.checked) ? showEl(BvReaInput) : (hideEl(BvReaInput), BvRea && (BvRea.value=''));
 });
 
-// fetch primo file esistente da lista path
+// Helpers per font embedding (Akrobat)
 async function fetchFirst(paths){
   for (const p of paths){
     try {
@@ -942,7 +778,6 @@ async function fetchFirst(paths){
   }
   return null;
 }
-// fontkit registration
 async function ensureFontkit(pdfDoc){
   if (!window.fontkit) {
     await new Promise((resolve,reject)=>{
@@ -961,13 +796,10 @@ async function exportBusinessCard(){
   const jobTitle = (BvJobTitle?.value || '').trim();
   const phone    = (BvPhone?.value    || '').trim();
   const email    = (BvEmail?.value    || '').trim();
-  if (!fullName || !jobTitle || !phone || !email) {
-    alert('Compila tutti i campi obbligatori.'); return;
-  }
+  if (!fullName || !jobTitle || !phone || !email) { alert('Compila tutti i campi obbligatori.'); return; }
   const wantsRea = (bvBrand === 'abitareco') && (BvHasRea?.checked);
   const reaCode  = (wantsRea ? (BvRea?.value || '').trim() : '');
 
-  // mappa template
   const tpl = {
     abitareco: {
       front: 'assets/templates/businesscard/abitareco/front.pdf',
@@ -989,42 +821,39 @@ async function exportBusinessCard(){
     }
   }[bvBrand];
 
-  // 1) Back compilato con DIN
+  // 1) Carica & compila back con Akrobat
   const backTplUrl = (wantsRea && tpl.backRea) ? tpl.backRea : tpl.backNoRea;
   const backTplBytes = await (await fetch(backTplUrl, { cache:'no-store' })).arrayBuffer();
   let backDoc = await PDFLib.PDFDocument.load(backTplBytes);
   await ensureFontkit(backDoc);
 
-  // DIN in assets/fonts/bv/ (+ fallback root)
-  const dinRegBytes = await fetchFirst([
-    'assets/fonts/bv/DINPro-Regular.ttf',
-    'assets/fonts/bv/DINPro-Regular.otf',
-    'assets/fonts/bv/DIN-Regular.ttf',
-    'assets/fonts/DINPro-Regular.ttf',
-    'assets/fonts/DINPro-Regular.otf',
-    'assets/fonts/DIN-Regular.ttf'
+  // Akrobat (Regular/Bold) — cerca in assets/fonts/bv/, fallback root (se necessario)
+  const akroRegBytes = await fetchFirst([
+    'assets/fonts/bv/Akrobat-Regular.ttf',
+    'assets/fonts/bv/Akrobat-Regular.otf',
+    'assets/fonts/bv/Akrobat Regular.ttf',
+    'assets/fonts/Akrobat-Regular.ttf',
+    'assets/fonts/Akrobat-Regular.otf'
   ]);
-  const dinBoldBytes = await fetchFirst([
-    'assets/fonts/bv/DINPro-Bold.ttf',
-    'assets/fonts/bv/DINPro-Bold.otf',
-    'assets/fonts/bv/DIN-Bold.ttf',
-    'assets/fonts/DINPro-Bold.ttf',
-    'assets/fonts/DINPro-Bold.otf',
-    'assets/fonts/DIN-Bold.ttf'
+  const akroBoldBytes = await fetchFirst([
+    'assets/fonts/bv/Akrobat-Bold.ttf',
+    'assets/fonts/bv/Akrobat-Bold.otf',
+    'assets/fonts/bv/Akrobat Bold.ttf',
+    'assets/fonts/Akrobat-Bold.ttf',
+    'assets/fonts/Akrobat-Bold.otf'
   ]);
 
-  let dinReg = null, dinBold = null;
-  try { if (dinRegBytes)  dinReg  = await backDoc.embedFont(dinRegBytes); } catch {}
-  try { if (dinBoldBytes) dinBold = await backDoc.embedFont(dinBoldBytes); } catch {}
+  let akroReg=null, akroBold=null;
+  try { if (akroRegBytes)  akroReg  = await backDoc.embedFont(akroRegBytes); } catch {}
+  try { if (akroBoldBytes) akroBold = await backDoc.embedFont(akroBoldBytes); } catch {}
 
   const form = backDoc.getForm();
-  // set & updateAppearances
-  try { const f=form.getTextField('FullName'); f.setText(fullName); (dinBold||dinReg)&&f.updateAppearances(dinBold||dinReg); } catch {}
-  try { const f=form.getTextField('JobTitle'); f.setText(jobTitle); (dinReg||dinBold)&&f.updateAppearances(dinReg||dinBold); } catch {}
-  try { const f=form.getTextField('Phone');    f.setText(phone);    (dinReg||dinBold)&&f.updateAppearances(dinReg||dinBold); } catch {}
-  try { const f=form.getTextField('Email');    f.setText(email);    (dinReg||dinBold)&&f.updateAppearances(dinReg||dinBold); } catch {}
+  try { const f=form.getTextField('FullName'); f.setText(fullName); (akroBold||akroReg)&&f.updateAppearances(akroBold||akroReg); } catch {}
+  try { const f=form.getTextField('JobTitle'); f.setText(jobTitle); (akroReg||akroBold)&&f.updateAppearances(akroReg||akroBold); } catch {}
+  try { const f=form.getTextField('Phone');    f.setText(phone);    (akroReg||akroBold)&&f.updateAppearances(akroReg||akroBold); } catch {}
+  try { const f=form.getTextField('Email');    f.setText(email);    (akroReg||akroBold)&&f.updateAppearances(akroReg||akroBold); } catch {}
   if (wantsRea && tpl.backRea){
-    try { const f=form.getTextField('ReaCode'); f.setText(reaCode); (dinReg||dinBold)&&f.updateAppearances(dinReg||dinBold); } catch {}
+    try { const f=form.getTextField('ReaCode'); f.setText(reaCode); (akroReg||akroBold)&&f.updateAppearances(akroReg||akroBold); } catch {}
   }
   form.flatten();
   const backFilledBytes = await backDoc.save();
@@ -1043,9 +872,8 @@ async function exportBusinessCard(){
 
   const out = await finalDoc.save();
 
-  // 4) Filename
-  const safe = fullName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-                      .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'biglietto';
+  // 4) Nome file
+  const safe = fullName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'biglietto';
   const fileName = (tpl.nameMode === 'WithBrand') ? `BV-${bvBrand}-${safe}.pdf` : `BV-${safe}.pdf`;
 
   const a = document.createElement('a');
@@ -1056,6 +884,7 @@ async function exportBusinessCard(){
 }
 
 /* =============================== QR + UTM ============================= */
+// (identico a prima)
 const QrBase     = $('#QrBase');
 const QrSource   = $('#QrSource');
 const QrMedium   = $('#QrMedium');
@@ -1086,14 +915,12 @@ async function makeQr(){
     const url = buildUtmUrl();
     if (QrUrlOut) QrUrlOut.textContent = url;
     await QRCode.toCanvas(QrCanvas, url, { width:256, margin:1 });
-    // PNG
     QrCanvas.toBlob(b=>{
       if (!b) return;
       const url = URL.createObjectURL(b);
       QrDownloadPng.href = url;
       QrDownloadPng.classList.remove('hidden');
     }, 'image/png');
-    // SVG
     const svgStr = await QRCode.toString(url, { type:'svg', margin:1, width:256 });
     const svgUrl = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml'}));
     QrDownloadSvg.href = svgUrl;
@@ -1103,6 +930,7 @@ async function makeQr(){
 QrMakeBtn?.addEventListener('click', makeQr);
 
 /* ================================ IUBENDA ============================= */
+// (identico a prima)
 const IubSiteId    = $('#IubSiteId');
 const IubCookieIt  = $('#IubCookieIt');
 const IubCookieEn  = $('#IubCookieEn');
@@ -1195,34 +1023,10 @@ BtnProcedi?.addEventListener('click', async ()=>{
 /* ------------------------------ PPT: download & fonts ----------------- */
 window.downloadPPT = (href) => { const a = document.createElement('a'); a.href = href; a.download = href.split('/').pop(); a.click(); };
 
-// ZIP solo dai font PPT
+// ZIP solo dai font PPT (evita Akrobat del BV)
 const FONTS_LIST = [
   'Manrope-Bold.ttf','Manrope-ExtraBold.ttf','Manrope-ExtraLight.ttf','Manrope-Light.ttf',
   'Manrope-Medium.ttf','Manrope-Regular.ttf','Manrope-SemiBold.ttf',
   'PPPangaia-Bold.otf','PPPangaia-BoldItalic.otf',
   'PPPangaia-Medium.otf','PPPangaia-MediumItalic.otf',
-  'PPPangaia-Semibold.otf','PPPangaia-SemiboldItalic.otf',
-  'PPPangaia-Ultralight.otf','PPPangaia-UltralightItalic.otf'
-];
-async function downloadFontsZip(){
-  const base = 'assets/fonts/ppt/';  // ← solo i font PPT, non i DIN del BV
-  const zip = new JSZip();
-  let added = 0;
-  for (const name of FONTS_LIST){
-    try {
-      const res = await fetch(base + name, { cache:'no-store' });
-      if (!res.ok) continue;
-      const blob = await res.blob();
-      zip.file(name, blob);
-      added++;
-    } catch {}
-  }
-  if (!added){ alert('Nessun file font trovato in /assets/fonts/ppt/.'); return; }
-  const out = await zip.generateAsync({type:'blob'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(out);
-  a.download = 'abitareco-fonts.zip';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-$('#BtnFontsZip')?.addEventListener('click', downloadFontsZip);
+  'PPPangaia-Semibold.otf','PPPangaia-S

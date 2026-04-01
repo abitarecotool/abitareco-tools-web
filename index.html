@@ -14,8 +14,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <!-- App styles -->
   <link rel="stylesheet" href="./css/styles.css" />
@@ -203,7 +202,7 @@
           <canvas id="VidCanvas" width="1920" height="1080" hidden></canvas>
         </section>
 
-        <!-- WATERMARK (auto) -->
+        <!-- WATERMARK -->
         <section id="WatermarkCard" class="card hidden">
           <h3>Watermark per portali</h3>
           <div class="row" style="gap:16px;">
@@ -228,30 +227,33 @@
 
         <!-- BIGLIETTO DA VISITA -->
         <section id="BusinessCardCard" class="card hidden">
-          <h3>Biglietto da visita (PDF compilabile)</h3>
-          <div class="row" style="gap:12px;">
-            <div class="form-group" style="flex:1">
-              <label>Template PDF (back_form/back_rea_form)</label>
-              <input id="BvPdfTpl" type="file" accept="application/pdf" class="input" />
+          <h3>Che biglietto da visita vuoi generare?</h3>
+
+          <div class="brand-pills" id="BvBrandPills">
+            <button type="button" class="brand-pill" data-brand="abitareco">Abitare Co.</button>
+            <button type="button" class="brand-pill" data-brand="commercial">Abitare Commercial</button>
+            <button type="button" class="brand-pill" data-brand="riabitareco">RiAbitare Co.</button>
+          </div>
+
+          <div id="BvForm" class="hidden">
+            <div class="row" style="gap:12px;">
+              <input id="BvFullName" class="input" placeholder="Nome e Cognome*" />
+              <input id="BvJobTitle" class="input" placeholder="Job title*" />
             </div>
+            <div class="row" style="gap:12px;">
+              <input id="BvPhone" class="input" placeholder="Cellulare*" />
+              <input id="BvEmail" class="input" placeholder="Email*" />
+            </div>
+            <div id="BvReaWrap" class="row hidden" style="gap:12px;align-items:center;">
+              <label style="display:flex;align-items:center;gap:8px;margin-bottom:0;">
+                <input id="BvHasRea" type="checkbox" />
+                <span>Inserisci REA</span>
+              </label>
+              <input id="BvRea" class="input" placeholder="Codice REA" />
+            </div>
+
+            <p class="muted">Seleziona il brand, compila i dati e clicca “Esporta ora”.</p>
           </div>
-          <div class="row" style="gap:12px;">
-            <input id="BvFullName" class="input" placeholder="Nome Cognome" />
-            <input id="BvJobTitle" class="input" placeholder="Ruolo" />
-          </div>
-          <div class="row" style="gap:12px;">
-            <input id="BvPhone" class="input" placeholder="Telefono" />
-            <input id="BvEmail" class="input" placeholder="Email" />
-          </div>
-          <div class="row" style="gap:12px;align-items:center;">
-            <input id="BvRea" class="input" placeholder="REA (opzionale)" />
-            <label><input id="BvAddFront" type="checkbox"/> Aggiungi fronte AbitareCo (front.pdf)</label>
-            <button id="BvMakeBtn" type="button" class="btn-primary">Compila & Scarica PDF</button>
-          </div>
-          <p class="muted">
-            I campi nel PDF devono chiamarsi: <code>FullName</code>, <code>JobTitle</code>,
-            <code>Phone</code>, <code>Email</code>, opzionale <code>ReaCode</code>.
-          </p>
         </section>
 
         <!-- QR + UTM -->
@@ -281,30 +283,62 @@
           </div>
         </section>
 
-        <!-- TEMPLATE PPT — BOX: FONT UFFICIALI -->
+        <!-- IUBENDA -->
+        <section id="IubendaCard" class="card hidden">
+          <h3>Genera snippet Iubenda</h3>
+          <p class="form-section-sub">Inserisci widget URL, siteId e cookiePolicyId. Preview pulita; copia il codice.</p>
+
+          <div class="form-group">
+            <label for="IubWidgetUrl">Widget URL *</label>
+            <input id="IubWidgetUrl" class="input" placeholder="//cdn.iubenda.com/cs/iubenda_cs.js" />
+          </div>
+
+          <div class="row" style="gap:12px;">
+            <div class="form-group">
+              <label for="IubSiteId">siteId *</label>
+              <input id="IubSiteId" class="input" placeholder="es. 1234567" />
+            </div>
+            <div class="form-group">
+              <label for="IubCookieIt">cookiePolicyId (IT) *</label>
+              <input id="IubCookieIt" class="input" placeholder="es. 12345678" />
+            </div>
+            <div class="form-group">
+              <label for="IubCookieEn">cookiePolicyId (EN) (opz.)</label>
+              <input id="IubCookieEn" class="input" placeholder="es. 87654321" />
+            </div>
+          </div>
+
+          <label style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+            <input id="IubDualLang" type="checkbox" />
+            <span>Switch automatico IT/EN</span>
+          </label>
+
+          <textarea id="IubOut" class="input" placeholder="Preview snippet (pulita):"></textarea>
+
+          <div class="row" style="gap:12px;align-items:center;">
+            <button id="IubMakeBtn" type="button" class="btn-outline">Genera snippet</button>
+            <button id="IubCopyBtn" type="button" class="btn-primary">Copia codice</button>
+          </div>
+        </section>
+
+        <!-- TEMPLATE PPT (già allineato) -->
         <section id="PptFontsCard" class="card hidden">
           <h3>Template PPT · Font ufficiali</h3>
           <p class="form-section-sub">Per mantenere uno stile coerente scarica i font brand (Manrope + PPPangaia).</p>
           <button type="button" class="btn-primary" id="BtnFontsZip">Scarica font ufficiali</button>
         </section>
-
-        <!-- TEMPLATE PPT — BOX: CORPORATE -->
         <section id="PptCorporateCard" class="card hidden">
           <h3>Template Corporate</h3>
           <p class="form-section-sub">Presentazioni istituzionali: chi siamo, numeri chiave, valori del brand.</p>
           <button type="button" class="btn-primary"
                   onclick="downloadPPT('assets/ppt/template-corporate.pptx')">Scarica</button>
         </section>
-
-        <!-- TEMPLATE PPT — BOX: ADVISOR -->
         <section id="PptAdvisorCard" class="card hidden">
           <h3>Template Advisor</h3>
           <p class="form-section-sub">Analisi e advisory: ricerche, benchmark e valutazioni sintetiche.</p>
           <button type="button" class="btn-primary"
                   onclick="downloadPPT('assets/ppt/template-advisor.pptx')">Scarica</button>
         </section>
-
-        <!-- TEMPLATE PPT — BOX: MARKETING -->
         <section id="PptMarketingCard" class="card hidden">
           <h3>Template Marketing</h3>
           <p class="form-section-sub">Campagne e iniziative: annunci, lanci e contenuti commerciali.</p>
@@ -334,9 +368,9 @@
 <!-- ═════════ LIBRARIES ═════════ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
-<!-- pdf-lib (compila/flatten PDF form in browser) -->
+<!-- pdf-lib (PDF form handling) -->
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<!-- qrcode (genera QR in canvas/SVG) -->
+<!-- qrcode (preview QR) -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 
 <!-- App logic -->

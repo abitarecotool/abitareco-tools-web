@@ -4,15 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Abitare Co. – Digital Content Tool</title>
+
   <!-- Favicon -->
   <link rel="icon" href="./assets/logo.ico" type="image/x-icon" />
+
   <!-- Theme color -->
   <meta name="theme-color" content="#c4162b" />
+
   <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" />
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap"/>
+
   <!-- App styles -->
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
@@ -85,6 +89,7 @@
   <main>
     <div class="content">
       <div class="cards-scroll">
+
         <!-- WELCOME -->
         <section id="WelcomeCard" class="card">
           <h2>Welcome!</h2>
@@ -198,26 +203,35 @@
           <canvas id="VidCanvas" width="1920" height="1080" hidden></canvas>
         </section>
 
-        <!-- WATERMARK -->
-        <section id="BusinessCardCard" class="card hidden"></section> <!-- anchor -->
-        <section id="QrCard" class="card hidden"></section> <!-- anchor -->
-        <section id="IubendaCard" class="card hidden"></section> <!-- anchor -->
-
-        <section id="VideoCardAnchor" class="card hidden"></section>
-
+        <!-- WATERMARK (auto: immagini=cover, PDF=contain) -->
         <section id="WatermarkCard" class="card hidden">
           <h3>Watermark per portali</h3>
-          <p class="muted">Usa “Carica cartella” qui sopra (immagini e/o PDF). Poi clicca <b>Esporta ora</b>.</p>
-          <p class="muted">Suggerito: caricare <code>assets/logo-watermark.png</code> (trasparente).
-            Se assente, useremo <code>assets/logo.png</code>.</p>
+          <div class="row" style="gap:16px;">
+            <div class="form-group" style="flex:1;">
+              <label>Logo watermark (opzionale)</label>
+              <div id="DropAreaLogo" class="drop" tabindex="0" role="button" aria-label="Carica logo watermark">
+                <div class="drop-inner">
+                  <span id="TxtLogoName" class="muted">Trascina qui il logo o clicca per sfogliare… (PNG trasparente)</span>
+                  <button id="BtnClearLogo" class="btn-small hidden" type="button" title="Rimuovi">✕</button>
+                </div>
+              </div>
+              <p class="muted" style="margin-top:8px;">
+                Se non scegli un logo, useremo <code>assets/logo-watermark.png</code> (o <code>assets/logo.png</code>).
+              </p>
+            </div>
+          </div>
+          <p class="muted">
+            Modalità automatica: <b>Immagini = Riempi (cover)</b>, <b>PDF (A3) = Contieni (bande bianche ai lati)</b>.
+            Usa “<b>Carica cartella</b>” in alto per selezionare immagini e/o PDF. Poi <b>Esporta ora</b>.
+          </p>
         </section>
 
         <!-- BIGLIETTO DA VISITA -->
         <section id="BusinessCardCard" class="card hidden">
           <h3>Biglietto da visita (PDF compilabile)</h3>
           <div class="row" style="gap:12px;">
-            <div class="form-group">
-              <label>Template PDF (con campi form)</label>
+            <div class="form-group" style="flex:1">
+              <label>Template PDF (back_form/back_rea_form)</label>
               <input id="BvPdfTpl" type="file" accept="application/pdf" class="input" />
             </div>
           </div>
@@ -235,8 +249,8 @@
             <button id="BvMakeBtn" type="button" class="btn-primary">Compila & Scarica PDF</button>
           </div>
           <p class="muted">
-            I nomi dei campi nel PDF devono essere: <code>FullName</code>, <code>JobTitle</code>, 
-            <code>Phone</code>, <code>Email</code> e opzionale <code>ReaCode</code>.
+            I campi nel PDF devono chiamarsi: <code>FullName</code>, <code>JobTitle</code>,
+            <code>Phone</code>, <code>Email</code>, opzionale <code>ReaCode</code>.
           </p>
         </section>
 
@@ -256,12 +270,14 @@
           </div>
           <div class="row" style="gap:12px;align-items:center;">
             <button id="QrMakeBtn" type="button" class="btn-primary">Genera QR</button>
-            <a id="QrDownloadPng" class="btn-small hidden" download="qr.png">Scarica PNG</a>
-            <a id="QrDownloadSvg" class="btn-small hidden" download="qr.svg">Scarica SVG</a>
+            <a id="QrDownloadPng" class="btn-outline hidden" download="qr.png">Scarica PNG</a>
+            <a id="QrDownloadSvg" class="btn-outline hidden" download="qr.svg">Scarica SVG</a>
           </div>
           <div style="margin-top:12px;">
-            <canvas id="QrCanvas" width="256" height="256" style="border:1px solid #eee"></canvas>
-            <pre id="QrUrlOut" class="muted" style="white-space:pre-wrap;margin-top:8px;"></pre>
+            <span class="qr-preview-label">Anteprima QR</span><br/>
+            <canvas id="QrCanvas" width="256" height="256"
+                    style="border:1px solid #eee;border-radius:8px;background:#fff"></canvas>
+            <div id="QrUrlOut" class="muted" style="margin-top:8px;"></div>
           </div>
         </section>
 
@@ -269,30 +285,32 @@
         <section id="IubendaCard" class="card hidden">
           <h3>Iubenda – Genera snippet</h3>
           <div class="row" style="gap:12px;">
-            <input id="IubSiteId" class="input" placeholder="siteId (es. 1234567)" />
+            <input id="IubSiteId"   class="input" placeholder="siteId (es. 1234567)" />
             <input id="IubCookieIt" class="input" placeholder="cookiePolicyId IT" />
             <input id="IubCookieEn" class="input" placeholder="cookiePolicyId EN (opz.)" />
           </div>
-          <div class="row" style="gap:12px;">
-            <input id="IubWidgetUrl" class="input" placeholder='URL script (es. //cdn.iubenda.com/cs/iubenda_cs.js)' />
+          <div class="row" style="gap:12px;align-items:center;">
+            <input id="IubWidgetUrl" class="input" placeholder='//cdn.iubenda.com/cs/iubenda_cs.js' />
             <label><input id="IubDualLang" type="checkbox" /> IT/EN automatico</label>
             <button id="IubMakeBtn" type="button" class="btn-primary">Genera snippet</button>
           </div>
-          <textarea id="IubOut" rows="10" class="input" placeholder="Snippet generato…" style="margin-top:12px;"></textarea>
-          <p class="muted">Lo snippet include un <code>callback</code> con eventi su <code>dataLayer</code> (consenso, rifiuto, ecc.).</p>
+          <textarea id="IubOut" class="input" placeholder="Snippet generato…"></textarea>
         </section>
 
         <!-- TEMPLATE PPT -->
         <section id="PptCard" class="card hidden">
           <h3>Template PPT</h3>
-          <div class="row" style="gap:12px;">
-            <button type="button" class="btn-primary"
-                    onclick="downloadPPT('assets/ppt/template-prese_ver2026.pptx')">
-              Scarica: Template Prese ver 2026
-            </button>
+          <div class="form-group">
+            <label>Presentazioni disponibili</label>
+            <div class="row" style="gap:12px;">
+              <button type="button" class="btn-primary"
+                      onclick="downloadPPT('assets/ppt/template-prese_ver2026.pptx')">
+                Scarica: Template Prese ver 2026
+              </button>
+            </div>
           </div>
-          <p class="muted">I file devono essere in <code>/assets/ppt/</code>.</p>
         </section>
+
       </div>
 
       <!-- ACTION BAR -->

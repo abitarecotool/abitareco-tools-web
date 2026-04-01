@@ -1,7 +1,7 @@
 /* =========================================================
  Abitare Co. – Digital Content Tool (Web)
  app.js — Immagini + DigitalTool + PDF→JPG + Rename + Video + Watermark (auto)
-        + BV (Akrobat + REA dinamico) + QR + Iubenda + PPT
+        + BV (Akrobat / Calibri + REA dinamico) + QR + Iubenda + PPT
 ========================================================= */
 "use strict";
 
@@ -43,7 +43,7 @@ const ALL_CARDS = [
 ];
 
 /* ------------------------------- Stato -------------------------------- */
-let picked = [];        // Immagini / PDF / Watermark / ecc.
+let picked = [];        // Immagini / PDF / ecc.
 let pickedRename = [];  // Rename
 let pickedVideo = [];   // Video
 let currentMode = null;
@@ -195,7 +195,7 @@ if (DropAreaRename) {
     DropAreaRename.classList.remove('drag-over');
     pickedRename = await readDroppedDirectory(e.dataTransfer);
     TxtFolderRename.textContent = pickedRename.length
-      ? `Selezionati ${pickedRename.length} file…`
+      ? `Selezionati ${picked.length} file…`
       : 'Nessun file supportato.';
     BtnClearRename.classList.toggle('hidden', pickedRename.length === 0);
   });
@@ -235,9 +235,7 @@ async function readDroppedDirectory(dt){
     } else if (entry.isDirectory){
       const reader = entry.createReader();
       const entries = await new Promise(res => reader.readEntries(res));
-      for (const en of entries){
-        await traverse(en, base ? `${base}/${entry.name}` : entry.name);
-      }
+      for (const en of entries){ await traverse(en, base ? `${base}/${entry.name}` : entry.name); }
     }
   }
   const hasEntries = items.length && typeof items[0].webkitGetAsEntry === 'function';
@@ -250,7 +248,7 @@ async function readDroppedDirectory(dt){
   return out;
 }
 
-/* ========================= Helpers Immagini (comuni) ================== */
+/* ========================= Helpers comuni ============================= */
 function slugify(t){
   if (!t) return '';
   return t.toLowerCase()
@@ -890,7 +888,7 @@ async function exportWatermarkPortali(){
   hideEl(ActionProgressWrap);
 }
 
-/* ========================= BIGLIETTO DA VISITA (Akrobat + REA) ======= */
+/* ========================= BIGLIETTO DA VISITA (Akrobat/Calibri) ===== */
 const BvBrandPills = $('#BvBrandPills');
 const BvForm       = $('#BvForm');
 const BvFullName   = $('#BvFullName');
@@ -904,11 +902,13 @@ const BvRea        = $('#BvRea');
 
 let bvBrand = null; // 'abitareco' | 'commercial' | 'riabitareco'
 
+// UI: brand / REA
 BvBrandPills?.addEventListener('click', (e) => {
   const btn = e.target.closest('.brand-pill'); if (!btn) return;
   $$('.brand-pill').forEach(p => p.classList.toggle('active', p === btn));
   bvBrand = btn.dataset.brand;
   showEl(BvForm);
+
   if (bvBrand === 'abitareco') {
     showEl(BvReaWrap);
     (BvHasRea?.checked) ? showEl(BvReaInput) : hideEl(BvReaInput);
@@ -923,7 +923,7 @@ BvHasRea?.addEventListener('change', ()=>{
   (BvHasRea.checked) ? showEl(BvReaInput) : (hideEl(BvReaInput), BvRea && (BvRea.value=''));
 });
 
-// Helpers per font embedding (Akrobat)
+// Font helpers (brand -> Akrobat / Calibri)
 async function fetchFirst(paths){
   for (const p of paths){
     try {
@@ -943,6 +943,49 @@ async function ensureFontkit(pdfDoc){
     });
   }
   pdfDoc.registerFontkit(window.fontkit);
+}
+async function loadBrandFontsForBV(pdfDoc, brand) {
+  await ensureFontkit(pdfDoc);
+
+  let regCandidates = [];
+  let boldCandidates = [];
+
+  if (brand === 'riabitareco') {
+    // Calibri (dallo screenshot: calibri.ttf, calibrib.ttf, calibriz.ttf…)
+    regCandidates = [
+      'assets/fonts/bv/calibri.ttf',
+      'assets/fonts/bv/Calibri.ttf',
+      'assets/fonts/bv/Calibri-Regular.ttf',
+      'assets/fonts/bv/Calibri Regular.ttf'
+    ];
+    boldCandidates = [
+      'assets/fonts/bv/calibrib.ttf',
+      'assets/fonts/bv/Calibri-Bold.ttf',
+      'assets/fonts/bv/Calibri Bold.ttf',
+      'assets/fonts/bv/CalibriBold.ttf'
+    ];
+  } else {
+    // Akrobat
+    regCandidates = [
+      'assets/fonts/bv/Akrobat-Regular.otf',
+      'assets/fonts/bv/Akrobat-Regular.ttf',
+      'assets/fonts/bv/Akrobat Regular.ttf'
+    ];
+    boldCandidates = [
+      'assets/fonts/bv/Akrobat-Bold.otf',
+      'assets/fonts/bv/Akrobat-Bold.ttf',
+      'assets/fonts/bv/Akrobat Bold.ttf'
+    ];
+  }
+
+  const regBytes  = await fetchFirst(regCandidates);
+  const boldBytes = await fetchFirst(boldCandidates);
+
+  let fontReg = null, fontBold = null;
+  try { if (regBytes)  fontReg  = await pdfDoc.embedFont(regBytes); }  catch {}
+  try { if (boldBytes) fontBold = await pdfDoc.embedFont(boldBytes); } catch {}
+
+  return { fontReg, fontBold };
 }
 
 async function exportBusinessCard(){
@@ -976,48 +1019,29 @@ async function exportBusinessCard(){
     }
   }[bvBrand];
 
-  // 1) Carica & compila back con Akrobat
+  // Back compilato + font brand
   const backTplUrl = (wantsRea && tpl.backRea) ? tpl.backRea : tpl.backNoRea;
   const backTplBytes = await (await fetch(backTplUrl, { cache:'no-store' })).arrayBuffer();
   let backDoc = await PDFLib.PDFDocument.load(backTplBytes);
-  await ensureFontkit(backDoc);
 
-  // Akrobat (Regular/Bold) — cerca in assets/fonts/bv/, fallback root (se necessario)
-  const akroRegBytes = await fetchFirst([
-    'assets/fonts/bv/Akrobat-Regular.ttf',
-    'assets/fonts/bv/Akrobat-Regular.otf',
-    'assets/fonts/bv/Akrobat Regular.ttf',
-    'assets/fonts/Akrobat-Regular.ttf',
-    'assets/fonts/Akrobat-Regular.otf'
-  ]);
-  const akroBoldBytes = await fetchFirst([
-    'assets/fonts/bv/Akrobat-Bold.ttf',
-    'assets/fonts/bv/Akrobat-Bold.otf',
-    'assets/fonts/bv/Akrobat Bold.ttf',
-    'assets/fonts/Akrobat-Bold.ttf',
-    'assets/fonts/Akrobat-Bold.otf'
-  ]);
-
-  let akroReg=null, akroBold=null;
-  try { if (akroRegBytes)  akroReg  = await backDoc.embedFont(akroRegBytes); } catch {}
-  try { if (akroBoldBytes) akroBold = await backDoc.embedFont(akroBoldBytes); } catch {}
+  const { fontReg, fontBold } = await loadBrandFontsForBV(backDoc, bvBrand);
 
   const form = backDoc.getForm();
-  try { const f=form.getTextField('FullName'); f.setText(fullName); (akroBold||akroReg)&&f.updateAppearances(akroBold||akroReg); } catch {}
-  try { const f=form.getTextField('JobTitle'); f.setText(jobTitle); (akroReg||akroBold)&&f.updateAppearances(akroReg||akroBold); } catch {}
-  try { const f=form.getTextField('Phone');    f.setText(phone);    (akroReg||akroBold)&&f.updateAppearances(akroReg||akroBold); } catch {}
-  try { const f=form.getTextField('Email');    f.setText(email);    (akroReg||akroBold)&&f.updateAppearances(akroReg||akroBold); } catch {}
+  try { const f=form.getTextField('FullName'); f.setText(fullName); (fontBold||fontReg)&&f.updateAppearances(fontBold||fontReg); } catch {}
+  try { const f=form.getTextField('JobTitle'); f.setText(jobTitle); (fontReg||fontBold)&&f.updateAppearances(fontReg||fontBold); } catch {}
+  try { const f=form.getTextField('Phone');    f.setText(phone);    (fontReg||fontBold)&&f.updateAppearances(fontReg||fontBold); } catch {}
+  try { const f=form.getTextField('Email');    f.setText(email);    (fontReg||fontBold)&&f.updateAppearances(fontReg||fontBold); } catch {}
   if (wantsRea && tpl.backRea){
-    try { const f=form.getTextField('ReaCode'); f.setText(reaCode); (akroReg||akroBold)&&f.updateAppearances(akroReg||akroBold); } catch {}
+    try { const f=form.getTextField('ReaCode'); f.setText(reaCode); (fontReg||fontBold)&&f.updateAppearances(fontReg||fontBold); } catch {}
   }
   form.flatten();
   const backFilledBytes = await backDoc.save();
 
-  // 2) Front
+  // Front
   const frontBytes = new Uint8Array(await (await fetch(tpl.front, { cache:'no-store' })).arrayBuffer());
   const frontDoc = await PDFLib.PDFDocument.load(frontBytes);
 
-  // 3) Merge (front -> back)
+  // Merge (front -> back)
   const finalDoc = await PDFLib.PDFDocument.create();
   const [frontPg] = await finalDoc.copyPages(frontDoc, [0]);
   finalDoc.addPage(frontPg);
@@ -1027,7 +1051,7 @@ async function exportBusinessCard(){
 
   const out = await finalDoc.save();
 
-  // 4) Nome file
+  // Filename
   const safe = fullName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'biglietto';
   const fileName = (tpl.nameMode === 'WithBrand') ? `BV-${bvBrand}-${safe}.pdf` : `BV-${safe}.pdf`;
 
@@ -1178,7 +1202,7 @@ BtnProcedi?.addEventListener('click', async ()=>{
 /* ------------------------------ PPT: download & fonts ----------------- */
 window.downloadPPT = (href) => { const a = document.createElement('a'); a.href = href; a.download = href.split('/').pop(); a.click(); };
 
-// ZIP solo dai font PPT (evita Akrobat del BV)
+// ZIP solo dai font PPT (evita i font BV)
 const FONTS_LIST = [
   'Manrope-Bold.ttf','Manrope-ExtraBold.ttf','Manrope-ExtraLight.ttf','Manrope-Light.ttf',
   'Manrope-Medium.ttf','Manrope-Regular.ttf','Manrope-SemiBold.ttf',
@@ -1188,7 +1212,7 @@ const FONTS_LIST = [
   'PPPangaia-Ultralight.otf','PPPangaia-UltralightItalic.otf'
 ];
 async function downloadFontsZip(){
-  const base = 'assets/fonts/ppt/';  // ← solo font PPT
+  const base = 'assets/fonts/ppt/';
   const zip = new JSZip();
   let added = 0;
   for (const name of FONTS_LIST){

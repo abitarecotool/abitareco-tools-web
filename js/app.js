@@ -702,7 +702,7 @@ async function exportVideoSlideshow(){
 }
 
 /* ========================= WATERMARK (auto) =========================== */
-// Logo personalizzato
+// Logo personalizzato (drag&drop)
 const DropAreaLogo = $('#DropAreaLogo');
 const TxtLogoName  = $('#TxtLogoName');
 const BtnClearLogo = $('#BtnClearLogo');

@@ -1085,7 +1085,7 @@ const QrTerm = $('#QrTerm');
 const QrContent = $('#QrContent');
 const QrGeneratedUrl = $('#QrGeneratedUrl');
 const QrCopyUrl = $('#QrCopyUrl');
-// Preview / download links (non usati: download automatico)
+// Non mostriamo anteprima: teniamo i riferimenti ma li nascondiamo.
 const QrCanvas = $('#QrCanvas');
 const QrPreviewWrap = $('#QrPreviewWrap');
 const QrDownloadPng = $('#QrDownloadPng');
@@ -1140,20 +1140,9 @@ function validateQrInputs(){
 }
 
 function hideQrUIExtras(){
-  // niente anteprima e niente pulsanti download singoli
   if (QrPreviewWrap) QrPreviewWrap.classList.add('hidden');
   if (QrDownloadPng) { QrDownloadPng.classList.add('hidden'); QrDownloadPng.removeAttribute('href'); }
   if (QrDownloadSvg) { QrDownloadSvg.classList.add('hidden'); QrDownloadSvg.removeAttribute('href'); }
-}
-
-async function waitForQRCodeLib(timeoutMs = 8000){
-  // la libreria viene caricata dall'index.html via <script type="module"> e messa in window.QRCode
-  const t0 = Date.now();
-  while (Date.now() - t0 < timeoutMs){
-    if (window.QRCode && typeof window.QRCode.toCanvas === 'function') return;
-    await new Promise(r => setTimeout(r, 50));
-  }
-  throw new Error('Libreria QRCode non disponibile (bloccata o non caricata).');
 }
 
 function safeDownloadBlob(blob, filename){
@@ -1166,6 +1155,23 @@ function safeDownloadBlob(blob, filename){
   a.click();
   a.remove();
   setTimeout(() => { try { URL.revokeObjectURL(url); } catch {} }, 2000);
+}
+
+async function ensureQrLib(){
+  // Useremo qrcodejs (https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js)
+  // che espone window.QRCode come costruttore.
+  if (typeof window.QRCode === 'function' && window.QRCode.CorrectLevel) return;
+  throw new Error('Libreria QRCode non disponibile (qrcodejs non caricata).');
+}
+
+function canvasToEmbeddedSvg(canvas){
+  // SVG che contiene l'immagine PNG incorporata (compatibile e leggero)
+  const pngDataUrl = canvas.toDataURL('image/png');
+  const w = canvas.width, h = canvas.height;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n` +
+         `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">` +
+         `<image href="${pngDataUrl}" width="${w}" height="${h}"/>` +
+         `</svg>\n`;
 }
 
 function updateQrGeneratedUrl(){
@@ -1183,28 +1189,42 @@ function updateQrGeneratedUrl(){
 async function makeQr(){
   try {
     const v = validateQrInputs();
-    if (!v.ok){
-      alert(v.msg);
-      return;
-    }
+    if (!v.ok){ alert(v.msg); return; }
     const url = v.url;
     if (QrGeneratedUrl) QrGeneratedUrl.value = url;
 
-    // 1) aspetta libreria QR
-    await waitForQRCodeLib(9000);
+    await ensureQrLib();
 
-    // 2) genera PNG e SVG SENZA anteprima (canvas in memoria)
+    // Generazione senza preview: creiamo un contenitore offscreen
     const size = 512;
-    const canvas = document.createElement('canvas');
-    canvas.width = size; canvas.height = size;
+    const wrap = document.createElement('div');
+    wrap.style.position = 'fixed';
+    wrap.style.left = '-99999px';
+    wrap.style.top = '-99999px';
+    document.body.appendChild(wrap);
 
-    await window.QRCode.toCanvas(canvas, url, { width:size, margin:1, errorCorrectionLevel:'M' });
+    // qrcodejs scrive canvas o table nel DOM
+    const qr = new window.QRCode(wrap, {
+      text: url,
+      width: size,
+      height: size,
+      correctLevel: window.QRCode.CorrectLevel.M
+    });
+
+    // aspetta che qrcodejs abbia scritto il canvas
+    await new Promise(r => setTimeout(r, 0));
+    const canvas = wrap.querySelector('canvas');
+    if (!canvas) {
+      wrap.remove();
+      throw new Error('Impossibile generare il QR (canvas non creato).');
+    }
+
     const pngBlob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
-    if (!pngBlob) throw new Error('Impossibile esportare PNG dal canvas.');
+    if (!pngBlob) { wrap.remove(); throw new Error('Impossibile esportare PNG.'); }
 
-    const svgStr = await window.QRCode.toString(url, { type:'svg', margin:1, width:size, errorCorrectionLevel:'M' });
+    const svgStr = canvasToEmbeddedSvg(canvas);
+    wrap.remove();
 
-    // 3) zip e download automatico
     if (!window.JSZip) throw new Error('JSZip non disponibile (CDN).');
     const zip = new JSZip();
     zip.file('qr.png', pngBlob);
@@ -1214,7 +1234,6 @@ async function makeQr(){
     const camp = slugify((QrCampaign?.value || 'qr')) || 'qr';
     const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
     const zipBlob = await zip.generateAsync({ type:'blob' });
-
     safeDownloadBlob(zipBlob, `QR-${camp}-${stamp}.zip`);
   } catch (err){
     console.error(err);

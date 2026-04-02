@@ -260,28 +260,58 @@
 
         <!-- QR + UTM -->
         <section id="QrCard" class="card hidden">
-          <h3>QR Code + UTM Builder</h3>
-          <div class="form-group"><input id="QrBase" class="input" placeholder="URL base (https://…)" /></div>
-          <div class="row" style="gap:12px;">
-            <input id="QrSource" class="input" placeholder="utm_source" />
-            <input id="QrMedium" class="input" placeholder="utm_medium" />
-            <input id="QrCampaign" class="input" placeholder="utm_campaign" />
+          <h3>Genera QR Code</h3>
+          <p class="form-section-sub">Inserisci l’URL e i parametri UTM. L’URL generata si compila automaticamente; poi clicca <b>Genera QR</b> in basso.</p>
+
+          <div class="form-group">
+            <label for="QrBase">Website URL *</label>
+            <input id="QrBase" class="input" placeholder="https://…" />
           </div>
+
           <div class="row" style="gap:12px;">
-            <input id="QrId" class="input" placeholder="utm_id (opz.)" />
-            <input id="QrTerm" class="input" placeholder="utm_term (opz.)" />
-            <input id="QrContent" class="input" placeholder="utm_content (opz.)" />
+            <div class="form-group">
+              <label for="QrSource">Campaign source *</label>
+              <input id="QrSource" class="input" placeholder="utm_source" />
+            </div>
+            <div class="form-group">
+              <label for="QrMedium">Campaign medium *</label>
+              <input id="QrMedium" class="input" placeholder="utm_medium" />
+            </div>
+            <div class="form-group">
+              <label for="QrCampaign">Campaign name *</label>
+              <input id="QrCampaign" class="input" placeholder="utm_campaign" />
+            </div>
           </div>
+
+          <div class="row" style="gap:12px;">
+            <div class="form-group">
+              <label for="QrId">Campaign ID</label>
+              <input id="QrId" class="input" placeholder="utm_id (opz.)" />
+            </div>
+            <div class="form-group">
+              <label for="QrTerm">Campaign term</label>
+              <input id="QrTerm" class="input" placeholder="utm_term (opz.)" />
+            </div>
+            <div class="form-group">
+              <label for="QrContent">Campaign content</label>
+              <input id="QrContent" class="input" placeholder="utm_content (opz.)" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="QrGeneratedUrl">URL generata *</label>
+            <input id="QrGeneratedUrl" class="input" type="text" readonly placeholder="—" />
+          </div>
+
           <div class="row" style="gap:12px;align-items:center;">
-            <button id="QrMakeBtn" type="button" class="btn-primary hidden">Genera QR</button>
+            <button id="QrCopyUrl" type="button" class="btn-outline">Copia URL</button>
             <a id="QrDownloadPng" class="btn-outline hidden" download="qr.png">Scarica PNG</a>
             <a id="QrDownloadSvg" class="btn-outline hidden" download="qr.svg">Scarica SVG</a>
           </div>
-          <div style="margin-top:12px;">
+
+          <div id="QrPreviewWrap" class="hidden" style="margin-top:12px;">
             <span class="qr-preview-label">Anteprima QR</span><br/>
-            <canvas id="QrCanvas" width="256" height="256"
-                    style="border:1px solid #eee;border-radius:8px;background:#fff"></canvas>
-            <div id="QrUrlOut" class="muted" style="margin-top:8px;"></div>
+            <canvas id="QrCanvas" width="256" height="256" style="border:1px solid #eee;border-radius:8px;background:#fff"></canvas>
           </div>
         </section>
 

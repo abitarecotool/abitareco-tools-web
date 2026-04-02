@@ -1177,6 +1177,19 @@ async function ensureQRCodeLib(){
   throw new Error('Libreria QRCode non disponibile (CDN non raggiungibile).');
 }
 
+function safeDownloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // alcuni browser (Safari) hanno bisogno di un piccolo delay prima del revoke
+  setTimeout(() => { try { URL.revokeObjectURL(url); } catch {} }, 2000);
+}
+
 function updateQrGeneratedUrl(){
   const url = buildUtmUrl();
   if (QrGeneratedUrl) QrGeneratedUrl.value = url || '';
@@ -1192,57 +1205,60 @@ function updateQrGeneratedUrl(){
 }
 
 async function makeQr(){
-  const v = validateQrInputs();
-  if (!v.ok){
-    alert(v.msg);
-    return;
+  try {
+    const v = validateQrInputs();
+    if (!v.ok){
+      alert(v.msg);
+      return;
+    }
+    const url = v.url;
+    if (QrGeneratedUrl) QrGeneratedUrl.value = url;
+
+    // Assicura libreria
+    await ensureQRCodeLib();
+
+    // Render canvas (preview)
+    await window.QRCode.toCanvas(QrCanvas, url, { width:256, margin:1, errorCorrectionLevel:'M' });
+    if (QrPreviewWrap) QrPreviewWrap.classList.remove('hidden');
+
+    // PNG blob
+    const pngBlob = await new Promise((res) => QrCanvas.toBlob(res, 'image/png'));
+    if (!pngBlob) throw new Error('Impossibile esportare PNG dal canvas.');
+
+    // SVG
+    const svgStr = await window.QRCode.toString(url, { type:'svg', margin:1, width:256, errorCorrectionLevel:'M' });
+
+    // Link download singoli (opzionale)
+    if (__qrPngUrl) { try { URL.revokeObjectURL(__qrPngUrl); } catch {} }
+    __qrPngUrl = URL.createObjectURL(pngBlob);
+    if (QrDownloadPng){
+      QrDownloadPng.href = __qrPngUrl;
+      QrDownloadPng.classList.remove('hidden');
+    }
+
+    if (__qrSvgUrl) { try { URL.revokeObjectURL(__qrSvgUrl); } catch {} }
+    __qrSvgUrl = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml'}));
+    if (QrDownloadSvg){
+      QrDownloadSvg.href = __qrSvgUrl;
+      QrDownloadSvg.classList.remove('hidden');
+    }
+
+    // ZIP automatico
+    if (!window.JSZip) throw new Error('JSZip non disponibile (CDN).');
+    const zip = new JSZip();
+    zip.file('qr.png', pngBlob);
+    zip.file('qr.svg', svgStr);
+    zip.file('url.txt', url + '\n');
+
+    const camp = slugify((QrCampaign?.value || 'qr')) || 'qr';
+    const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
+    const zipBlob = await zip.generateAsync({ type:'blob' });
+
+    safeDownloadBlob(zipBlob, `QR-${camp}-${stamp}.zip`);
+  } catch (err){
+    console.error(err);
+    alert('Errore durante la generazione del QR: ' + (err?.message || err));
   }
-  const url = v.url;
-  if (QrGeneratedUrl) QrGeneratedUrl.value = url;
-
-  // Assicura libreria
-  await ensureQRCodeLib();
-
-  // Render canvas (preview)
-  await window.QRCode.toCanvas(QrCanvas, url, { width:256, margin:1, errorCorrectionLevel:'M' });
-  if (QrPreviewWrap) QrPreviewWrap.classList.remove('hidden');
-
-  // PNG blob
-  const pngBlob = await new Promise((res) => QrCanvas.toBlob(res, 'image/png'));
-  if (!pngBlob) throw new Error('Impossibile esportare PNG dal canvas.');
-
-  // SVG
-  const svgStr = await window.QRCode.toString(url, { type:'svg', margin:1, width:256, errorCorrectionLevel:'M' });
-
-  // Link download singoli (opzionale)
-  if (__qrPngUrl) { try { URL.revokeObjectURL(__qrPngUrl); } catch {} }
-  __qrPngUrl = URL.createObjectURL(pngBlob);
-  if (QrDownloadPng){
-    QrDownloadPng.href = __qrPngUrl;
-    QrDownloadPng.classList.remove('hidden');
-  }
-
-  if (__qrSvgUrl) { try { URL.revokeObjectURL(__qrSvgUrl); } catch {} }
-  __qrSvgUrl = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml'}));
-  if (QrDownloadSvg){
-    QrDownloadSvg.href = __qrSvgUrl;
-    QrDownloadSvg.classList.remove('hidden');
-  }
-
-  // ZIP automatico (quello che ti aspettavi dal testo UI)
-  const zip = new JSZip();
-  zip.file('qr.png', pngBlob);
-  zip.file('qr.svg', svgStr);
-  zip.file('url.txt', url + '\n');
-
-  const camp = slugify((QrCampaign?.value || 'qr')) || 'qr';
-  const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
-  const zipBlob = await zip.generateAsync({ type:'blob' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(zipBlob);
-  a.download = `QR-${camp}-${stamp}.zip`;
-  a.click();
-  URL.revokeObjectURL(a.href);
 }
 
 QrCopyUrl?.addEventListener('click', async () => {

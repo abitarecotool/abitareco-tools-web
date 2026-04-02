@@ -1085,87 +1085,103 @@ const QrDownloadPng = $('#QrDownloadPng');
 const QrDownloadSvg = $('#QrDownloadSvg');
 
 function buildUtmUrl(){
-  const base = (QrBase?.value||'').trim();
-  const u = new URL(base);
-  const set = (k, el) => { const v = (el?.value||'').trim(); if (v) u.searchParams.set(k,v); };
-  set('utm_source',   QrSource);
-  set('utm_medium',   QrMedium);
-  set('utm_campaign', QrCampaign);
-  set('utm_id',       QrId);
-  set('utm_term',     QrTerm);
-  set('utm_content',  QrContent);
-  return u.toString();
+  const base = (QrBase?.value || '').trim();
+  if (!base) return '';
+  try {
+    const u = new URL(base);
+    const set = (k, el) => {
+      const v = (el?.value || '').trim();
+      if (v) u.searchParams.set(k, v);
+      else u.searchParams.delete(k);
+    };
+    set('utm_source', QrSource);
+    set('utm_medium', QrMedium);
+    set('utm_campaign', QrCampaign);
+    set('utm_id', QrId);
+    set('utm_term', QrTerm);
+    set('utm_content', QrContent);
+    return u.toString();
+  } catch {
+    return '';
+  }
 }
-// Object URL cleanup (avoid memory leaks when regenerating QR)
+
+// Object URL cleanup (avoid memory leaks)
 let __qrPngUrl = null;
 let __qrSvgUrl = null;
 function clearQrOutputs(){
   if (__qrPngUrl) { try { URL.revokeObjectURL(__qrPngUrl); } catch {} __qrPngUrl = null; }
   if (__qrSvgUrl) { try { URL.revokeObjectURL(__qrSvgUrl); } catch {} __qrSvgUrl = null; }
-  if (QrUrlOut) QrUrlOut.textContent = '';
   if (QrDownloadPng) { QrDownloadPng.classList.add('hidden'); QrDownloadPng.removeAttribute('href'); }
   if (QrDownloadSvg) { QrDownloadSvg.classList.add('hidden'); QrDownloadSvg.removeAttribute('href'); }
-  // Clear canvas
+  if (QrPreviewWrap) QrPreviewWrap.classList.add('hidden');
   if (QrCanvas) {
     const ctx = QrCanvas.getContext('2d');
     if (ctx) ctx.clearRect(0, 0, QrCanvas.width, QrCanvas.height);
   }
 }
 
-async function makeQr(opts = {}){
-  const silent = !!opts.silent;
-  try{
-    const base = (QrBase?.value || '').trim();
-    // Basic guard to avoid noisy errors during live typing
-    if (!base || !/^https?:\/\//i.test(base)) {
-      clearQrOutputs();
-      if (!silent && base) alert('Controlla URL base (deve iniziare con http/https)');
-      return;
-    }
-    const url = buildUtmUrl();
-    if (QrUrlOut) QrUrlOut.textContent = url;
+function updateQrGeneratedUrl(){
+  const url = buildUtmUrl();
+  if (QrGeneratedUrl) QrGeneratedUrl.value = url || '';
+  if (QrCopyUrl) QrCopyUrl.disabled = !url;
+  // Se l'utente cambia i campi, nascondiamo preview/download finché non rigenera
+  clearQrOutputs();
+}
 
-    // Render QR on canvas
-    await QRCode.toCanvas(QrCanvas, url, { width:256, margin:1 });
-
-    // PNG
-    await new Promise(res => {
-      QrCanvas.toBlob(b=>{
-        if (!b) { res(); return; }
-        if (__qrPngUrl) { try { URL.revokeObjectURL(__qrPngUrl); } catch {} }
-        __qrPngUrl = URL.createObjectURL(b);
-        QrDownloadPng.href = __qrPngUrl;
-        QrDownloadPng.classList.remove('hidden');
-        res();
-      }, 'image/png');
-    });
-
-    // SVG
-    const svgStr = await QRCode.toString(url, { type:'svg', margin:1, width:256 });
-    if (__qrSvgUrl) { try { URL.revokeObjectURL(__qrSvgUrl); } catch {} }
-    __qrSvgUrl = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml'}));
-    QrDownloadSvg.href = __qrSvgUrl;
-    QrDownloadSvg.classList.remove('hidden');
-
-  } catch(e){
-    clearQrOutputs();
-    if (!silent) alert('Controlla URL base (deve iniziare con http/https)');
+async function makeQr(){
+  const url = buildUtmUrl();
+  if (!url || !/^https?:\/\//i.test(url)) {
+    alert('Controlla Website URL (deve iniziare con http/https)');
+    return;
   }
-}
-QrMakeBtn?.addEventListener('click', () => makeQr({silent:false}));
+  if (QrGeneratedUrl) QrGeneratedUrl.value = url;
 
-// Live preview (debounced)
-let __qrDebounce = 0;
-function scheduleQrPreview(){
-  if (currentMode !== 'qr') return;
-  if (__qrDebounce) clearTimeout(__qrDebounce);
-  __qrDebounce = setTimeout(() => makeQr({silent:true}), 250);
+  await QRCode.toCanvas(QrCanvas, url, { width:256, margin:1 });
+  if (QrPreviewWrap) QrPreviewWrap.classList.remove('hidden');
+
+  // PNG
+  await new Promise(res => {
+    QrCanvas.toBlob(b=>{
+      if (!b) { res(); return; }
+      if (__qrPngUrl) { try { URL.revokeObjectURL(__qrPngUrl); } catch {} }
+      __qrPngUrl = URL.createObjectURL(b);
+      QrDownloadPng.href = __qrPngUrl;
+      QrDownloadPng.classList.remove('hidden');
+      res();
+    }, 'image/png');
+  });
+
+  // SVG
+  const svgStr = await QRCode.toString(url, { type:'svg', margin:1, width:256 });
+  if (__qrSvgUrl) { try { URL.revokeObjectURL(__qrSvgUrl); } catch {} }
+  __qrSvgUrl = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml'}));
+  QrDownloadSvg.href = __qrSvgUrl;
+  QrDownloadSvg.classList.remove('hidden');
 }
-[QrBase, QrSource, QrMedium, QrCampaign, QrId, QrTerm, QrContent].forEach(el => {
-  el?.addEventListener('input', scheduleQrPreview);
-  el?.addEventListener('change', scheduleQrPreview);
+
+// Copia URL
+QrCopyUrl?.addEventListener('click', async () => {
+  const txt = (QrGeneratedUrl?.value || '').trim();
+  if (!txt) return;
+  try { await navigator.clipboard.writeText(txt); alert('URL copiata negli appunti.'); }
+  catch { QrGeneratedUrl?.select(); document.execCommand('copy'); alert('URL copiata (fallback).'); }
 });
 
+// Live URL builder (debounced)
+let __qrDebounce = 0;
+function scheduleQrUrlUpdate(){
+  if (currentMode !== 'qr') return;
+  if (__qrDebounce) clearTimeout(__qrDebounce);
+  __qrDebounce = setTimeout(updateQrGeneratedUrl, 150);
+}
+[QrBase, QrSource, QrMedium, QrCampaign, QrId, QrTerm, QrContent].forEach(el => {
+  el?.addEventListener('input', scheduleQrUrlUpdate);
+  el?.addEventListener('change', scheduleQrUrlUpdate);
+});
+
+// (facoltativo) Bottone interno se presente
+QrMakeBtn?.addEventListener('click', makeQr);
 
 /* ================================ IUBENDA ============================= */
 const IubSiteId    = $('#IubSiteId');

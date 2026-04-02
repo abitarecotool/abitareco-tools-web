@@ -1085,6 +1085,7 @@ const QrTerm = $('#QrTerm');
 const QrContent = $('#QrContent');
 const QrGeneratedUrl = $('#QrGeneratedUrl');
 const QrCopyUrl = $('#QrCopyUrl');
+// Preview / download links (non usati: download automatico)
 const QrCanvas = $('#QrCanvas');
 const QrPreviewWrap = $('#QrPreviewWrap');
 const QrDownloadPng = $('#QrDownloadPng');
@@ -1138,45 +1139,21 @@ function validateQrInputs(){
   return { ok:true, url: built };
 }
 
-let __qrPngUrl = null;
-let __qrSvgUrl = null;
-function clearQrOutputs(){
-  if (__qrPngUrl) { try { URL.revokeObjectURL(__qrPngUrl); } catch {} __qrPngUrl = null; }
-  if (__qrSvgUrl) { try { URL.revokeObjectURL(__qrSvgUrl); } catch {} __qrSvgUrl = null; }
+function hideQrUIExtras(){
+  // niente anteprima e niente pulsanti download singoli
+  if (QrPreviewWrap) QrPreviewWrap.classList.add('hidden');
   if (QrDownloadPng) { QrDownloadPng.classList.add('hidden'); QrDownloadPng.removeAttribute('href'); }
   if (QrDownloadSvg) { QrDownloadSvg.classList.add('hidden'); QrDownloadSvg.removeAttribute('href'); }
-  if (QrPreviewWrap) QrPreviewWrap.classList.add('hidden');
-  if (QrCanvas) {
-    const ctx = QrCanvas.getContext('2d');
-    if (ctx) ctx.clearRect(0, 0, QrCanvas.width, QrCanvas.height);
-  }
 }
 
-async function ensureQRCodeLib(){
-  // NOTE: con qrcode@1.5.4 la build browser è in /lib/browser.min.js (non /build/...) 
-  // Se la libreria è già caricata, ok.
-  if (window.QRCode && typeof window.QRCode.toCanvas === 'function') return;
-
-  const candidates = [
-    'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/lib/browser.min.js',
-    'https://unpkg.com/qrcode@1.5.4/lib/browser.min.js',
-    // fallback extra (qrcodejs) — se vuoi, potrai anche metterla localmente
-    // 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
-  ];
-
-  for (const src of candidates){
-    await new Promise((resolve) => {
-      const s = document.createElement('script');
-      s.src = src;
-      s.async = true;
-      s.onload = () => resolve();
-      s.onerror = () => resolve();
-      document.head.appendChild(s);
-    });
+async function waitForQRCodeLib(timeoutMs = 8000){
+  // la libreria viene caricata dall'index.html via <script type="module"> e messa in window.QRCode
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeoutMs){
     if (window.QRCode && typeof window.QRCode.toCanvas === 'function') return;
+    await new Promise(r => setTimeout(r, 50));
   }
-
-  throw new Error('Libreria QRCode non disponibile (script non caricato).');
+  throw new Error('Libreria QRCode non disponibile (bloccata o non caricata).');
 }
 
 function safeDownloadBlob(blob, filename){
@@ -1200,8 +1177,7 @@ function updateQrGeneratedUrl(){
     const v = validateQrInputs();
     BtnProcedi.disabled = !v.ok;
   }
-
-  clearQrOutputs();
+  hideQrUIExtras();
 }
 
 async function makeQr(){
@@ -1214,30 +1190,21 @@ async function makeQr(){
     const url = v.url;
     if (QrGeneratedUrl) QrGeneratedUrl.value = url;
 
-    await ensureQRCodeLib();
+    // 1) aspetta libreria QR
+    await waitForQRCodeLib(9000);
 
-    await window.QRCode.toCanvas(QrCanvas, url, { width:256, margin:1, errorCorrectionLevel:'M' });
-    if (QrPreviewWrap) QrPreviewWrap.classList.remove('hidden');
+    // 2) genera PNG e SVG SENZA anteprima (canvas in memoria)
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
 
-    const pngBlob = await new Promise((res) => QrCanvas.toBlob(res, 'image/png'));
+    await window.QRCode.toCanvas(canvas, url, { width:size, margin:1, errorCorrectionLevel:'M' });
+    const pngBlob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
     if (!pngBlob) throw new Error('Impossibile esportare PNG dal canvas.');
 
-    const svgStr = await window.QRCode.toString(url, { type:'svg', margin:1, width:256, errorCorrectionLevel:'M' });
+    const svgStr = await window.QRCode.toString(url, { type:'svg', margin:1, width:size, errorCorrectionLevel:'M' });
 
-    if (__qrPngUrl) { try { URL.revokeObjectURL(__qrPngUrl); } catch {} }
-    __qrPngUrl = URL.createObjectURL(pngBlob);
-    if (QrDownloadPng){
-      QrDownloadPng.href = __qrPngUrl;
-      QrDownloadPng.classList.remove('hidden');
-    }
-
-    if (__qrSvgUrl) { try { URL.revokeObjectURL(__qrSvgUrl); } catch {} }
-    __qrSvgUrl = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml'}));
-    if (QrDownloadSvg){
-      QrDownloadSvg.href = __qrSvgUrl;
-      QrDownloadSvg.classList.remove('hidden');
-    }
-
+    // 3) zip e download automatico
     if (!window.JSZip) throw new Error('JSZip non disponibile (CDN).');
     const zip = new JSZip();
     zip.file('qr.png', pngBlob);

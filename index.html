@@ -5,11 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Abitare Co. – Digital Content Tool</title>
   <meta name="theme-color" content="#c4162b" />
-
-  <!-- Favicon (opzionale) -->
   <link rel="icon" href="./assets/logo.ico" />
 
-  <!-- Google Fonts (UI) -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -17,6 +15,7 @@
   <!-- App styles -->
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
+
 <body>
 <noscript>
   <div style="padding:12px;background:#fff3cd;border:1px solid #ffe69c;color:#664d03;">
@@ -29,56 +28,16 @@
   <aside class="sidebar">
     <img class="logo" src="./assets/logo.png" alt="Abitare Co." />
     <ul id="SideMenu" class="menu">
-      <li data-mode="images"
-          data-icon="./assets/icons/icon-sito.png"
-          data-icon-active="./assets/icons/icon-sito-selected.png">
-        <span class="mi"><img alt=""/></span><span class="txt">Immagini</span>
-      </li>
-      <li data-mode="digitaltool"
-          data-icon="./assets/icons/icon-digital.png"
-          data-icon-active="./assets/icons/icon-digital-selected.png">
-        <span class="mi"><img alt=""/></span><span class="txt">DigitalTool</span>
-      </li>
-      <li data-mode="pdf2jpg"
-          data-icon="./assets/icons/icon-pdf.png"
-          data-icon-active="./assets/icons/icon-pdf-selected.png">
-        <span class="mi"><img alt=""/></span><span class="txt">PDF → JPG</span>
-      </li>
-      <li data-mode="rename"
-          data-icon="./assets/icons/icon-rename.png"
-          data-icon-active="./assets/icons/icon-rename-selected.png">
-        <span class="mi"><img alt=""/></span><span class="txt">Rename</span>
-      </li>
-      <li data-mode="video"
-          data-icon="./assets/icons/icon-video.png"
-          data-icon-active="./assets/icons/icon-video-selected.png">
-        <span class="mi"><img alt=""/></span><span class="txt">Video Slideshow</span>
-      </li>
-      <li data-mode="watermark"
-          data-icon="./assets/icons/icon-watermark.png"
-          data-icon-active="./assets/icons/icon-watermark-selected.png">
-        <span class="mi"><img alt=""/></span><span class="txt">Watermark</span>
-      </li>
-      <li data-mode="bv"
-          data-icon="./assets/icons/icon-bv.png"
-          data-icon-active="./assets/icons/icon-bv-selected.png">
-        <span class="mi"><img alt=""/></span><span class="txt">Biglietto da visita</span>
-      </li>
-      <li data-mode="qr"
-          data-icon="./assets/icons/icon-qr.png"
-          data-icon-active="./assets/icons/icon-qr-selected.png">
-        <span class="mi"><img alt=""/></span><span class="txt">Genera QR Code</span>
-      </li>
-      <li data-mode="iubenda"
-          data-icon="./assets/icons/icon-iubenda.png"
-          data-icon-active="./assets/icons/icon-iubenda-selected.png">
-        <span class="mi"><img alt=""/></span><span class="txt">Iubenda</span>
-      </li>
-      <li data-mode="ppt"
-          data-icon="./assets/icons/icon-ppt.png"
-          data-icon-active="./assets/icons/icon-ppt-selected.png">
-        <span class="mi"><img alt=""/></span><span class="txt">Template PPT</span>
-      </li>
+      <li data-mode="images"      data-icon="./assets/icons/icon-sito.png"        data-icon-active="./assets/icons/icon-sito-selected.png"><span class="mi"><img alt=""/></span><span class="txt">Immagini</span></li>
+      <li data-mode="digitaltool" data-icon="./assets/icons/icon-digital.png"     data-icon-active="./assets/icons/icon-digital-selected.png"><span class="mi"><img alt=""/></span><span class="txt">DigitalTool</span></li>
+      <li data-mode="pdf2jpg"     data-icon="./assets/icons/icon-pdf.png"         data-icon-active="./assets/icons/icon-pdf-selected.png"><span class="mi"><img alt=""/></span><span class="txt">PDF → JPG</span></li>
+      <li data-mode="rename"      data-icon="./assets/icons/icon-rename.png"      data-icon-active="./assets/icons/icon-rename-selected.png"><span class="mi"><img alt=""/></span><span class="txt">Rename</span></li>
+      <li data-mode="video"       data-icon="./assets/icons/icon-video.png"       data-icon-active="./assets/icons/icon-video-selected.png"><span class="mi"><img alt=""/></span><span class="txt">Video Slideshow</span></li>
+      <li data-mode="watermark"   data-icon="./assets/icons/icon-watermark.png"   data-icon-active="./assets/icons/icon-watermark-selected.png"><span class="mi"><img alt=""/></span><span class="txt">Watermark</span></li>
+      <li data-mode="bv"          data-icon="./assets/icons/icon-bv.png"          data-icon-active="./assets/icons/icon-bv-selected.png"><span class="mi"><img alt=""/></span><span class="txt">Biglietto da visita</span></li>
+      <li data-mode="qr"          data-icon="./assets/icons/icon-qr.png"          data-icon-active="./assets/icons/icon-qr-selected.png"><span class="mi"><img alt=""/></span><span class="txt">Genera QR Code</span></li>
+      <li data-mode="iubenda"     data-icon="./assets/icons/icon-iubenda.png"     data-icon-active="./assets/icons/icon-iubenda-selected.png"><span class="mi"><img alt=""/></span><span class="txt">Iubenda</span></li>
+      <li data-mode="ppt"         data-icon="./assets/icons/icon-ppt.png"         data-icon-active="./assets/icons/icon-ppt-selected.png"><span class="mi"><img alt=""/></span><span class="txt">Template PPT</span></li>
     </ul>
   </aside>
 
@@ -123,8 +82,7 @@
         <!-- UPLOAD GENERALE -->
         <section id="UploadCard" class="card hidden">
           <h3>Carica cartella*</h3>
-          <div id="DropArea" class="drop" tabindex="0" role="button"
-               aria-label="Carica cartella" title="Clicca per selezionare una cartella o trascinala qui">
+          <div id="DropArea" class="drop" tabindex="0" role="button" aria-label="Carica cartella" title="Clicca per selezionare una cartella o trascinala qui">
             <div class="drop-inner">
               <span id="TxtFolderPath" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
               <button id="BtnClearPath" class="btn-small hidden" title="Rimuovi cartella" type="button">✕</button>
@@ -144,13 +102,8 @@
         <!-- RENAME -->
         <section id="RenameCard" class="card hidden">
           <h3>Rinomina files</h3>
-          <p class="muted" style="margin-bottom:16px;">
-            Se non inserisci un nome base, verranno generati solo numeri (01, 02, 03…)
-          </p>
-          <div class="form-group">
-            <label for="TxtRenameBase">Nome base (opzionale)</label>
-            <input id="TxtRenameBase" class="input" type="text" placeholder="es. cucina" />
-          </div>
+          <p class="muted" style="margin-bottom:16px;">Se non inserisci un nome base, verranno generati solo numeri (01, 02, 03…)</p>
+          <div class="form-group"><label for="TxtRenameBase">Nome base (opzionale)</label><input id="TxtRenameBase" class="input" type="text" placeholder="es. cucina" /></div>
           <div class="form-group">
             <label>Carica cartella*</label>
             <div id="DropAreaRename" class="drop" tabindex="0" role="button" aria-label="Carica cartella da rinominare">
@@ -166,21 +119,10 @@
         <section id="VideoCard" class="card hidden">
           <h3>Video Slideshow</h3>
           <p class="muted" style="margin-bottom:16px;">Imposta nome, durata e formato. Poi clicca "Esporta ora".</p>
-          <div class="form-group">
-            <label for="VidTitle">Nome video*</label>
-            <input id="VidTitle" class="input" type="text" placeholder="es. abitareco-presentazione" />
-          </div>
+          <div class="form-group"><label for="VidTitle">Nome video*</label><input id="VidTitle" class="input" type="text" placeholder="es. abitareco-presentazione" /></div>
           <div class="row" style="margin-bottom:16px;">
-            <div>
-              <label for="VidDuration">Durata</label>
-              <select id="VidDuration" class="input" style="height:41px;">
-                <option value="15">15 secondi</option>
-                <option value="30" selected>30 secondi</option>
-                <option value="45">45 secondi</option>
-              </select>
-            </div>
-            <div>
-              <label>Formato</label>
+            <div><label for="VidDuration">Durata</label><select id="VidDuration" class="input" style="height:41px;"><option value="15">15 secondi</option><option value="30" selected>30 secondi</option><option value="45">45 secondi</option></select></div>
+            <div><label>Formato</label>
               <div class="radios" style="display:flex;flex-direction:column;gap:6px;">
                 <label><input type="radio" name="VidFmt" id="VidFmtH" checked/> Orizzontale (1920×1080)</label>
                 <label><input type="radio" name="VidFmt" id="VidFmtV"/> Verticale (1080×1920)</label>
@@ -212,48 +154,27 @@
                   <button id="BtnClearLogo" class="btn-small hidden" type="button" title="Rimuovi">✕</button>
                 </div>
               </div>
-              <p class="muted" style="margin-top:8px;">
-                Se non scegli un logo, useremo <code>assets/logo-watermark.png</code> (o <code>assets/logo.png</code>).
-              </p>
+              <p class="muted" style="margin-top:8px;">Se non scegli un logo, useremo <code>assets/logo-watermark.png</code> (o <code>assets/logo.png</code>).</p>
             </div>
           </div>
-          <p class="muted">
-            Modalità automatica: <b>Immagini = Riempi (cover)</b>, <b>PDF (A3) = Contieni</b> con bande bianche ai lati.  
-            Usa “<b>Carica cartella</b>” in alto per selezionare immagini e/o PDF. Poi <b>Esporta ora</b>.
-          </p>
+          <p class="muted">Modalità automatica: <b>Immagini = Riempi (cover)</b>, <b>PDF (A3) = Contieni</b> con bande bianche ai lati. Usa “<b>Carica cartella</b>” in alto per selezionare immagini e/o PDF. Poi <b>Esporta ora</b>.</p>
         </section>
 
         <!-- BIGLIETTO DA VISITA -->
         <section id="BusinessCardCard" class="card hidden">
           <h3>Che biglietto da visita vuoi generare?</h3>
-
           <div class="brand-pills" id="BvBrandPills">
             <button type="button" class="brand-pill" data-brand="abitareco">Abitare Co.</button>
             <button type="button" class="brand-pill" data-brand="commercial">Abitare Commercial</button>
             <button type="button" class="brand-pill" data-brand="riabitareco">RiAbitare Co.</button>
           </div>
-
           <div id="BvForm" class="hidden">
-            <div class="row" style="gap:12px;">
-              <input id="BvFullName" class="input" placeholder="Nome e Cognome*" />
-              <input id="BvJobTitle" class="input" placeholder="Job title*" />
-            </div>
-            <div class="row" style="gap:12px;">
-              <input id="BvPhone" class="input" placeholder="Cellulare*" />
-              <input id="BvEmail" class="input" placeholder="Email*" />
-            </div>
-
-            <!-- REA: checkbox per Abitare Co.; campo visibile solo se flaggato -->
+            <div class="row" style="gap:12px;"><input id="BvFullName" class="input" placeholder="Nome e Cognome*" /><input id="BvJobTitle" class="input" placeholder="Job title*" /></div>
+            <div class="row" style="gap:12px;"><input id="BvPhone" class="input" placeholder="Cellulare*" /><input id="BvEmail" class="input" placeholder="Email*" /></div>
             <div id="BvReaWrap" class="row hidden" style="gap:12px;align-items:center;">
-              <label style="display:flex;align-items:center;gap:8px;margin-bottom:0;">
-                <input id="BvHasRea" type="checkbox" />
-                <span>Inserisci REA</span>
-              </label>
+              <label style="display:flex;align-items:center;gap:8px;margin-bottom:0;"><input id="BvHasRea" type="checkbox" /><span>Inserisci REA</span></label>
             </div>
-            <div id="BvReaInput" class="row hidden" style="gap:12px;">
-              <input id="BvRea" class="input" placeholder="Codice REA" />
-            </div>
-
+            <div id="BvReaInput" class="row hidden" style="gap:12px;"><input id="BvRea" class="input" placeholder="Codice REA" /></div>
             <p class="muted">Seleziona il brand, compila i dati e clicca “Esporta ora”.</p>
           </div>
         </section>
@@ -262,63 +183,33 @@
         <section id="QrCard" class="card hidden">
           <h3>Genera QR Code</h3>
           <p class="form-section-sub">Inserisci l’URL e i parametri UTM. L’URL generata si compila automaticamente; poi clicca <b>Genera QR</b> in basso per scaricare lo ZIP.</p>
-
-          <div class="form-group">
-            <label for="QrBase">Website URL *</label>
-            <input id="QrBase" class="input" placeholder="https://…" />
-          </div>
-
+          <div class="form-group"><label for="QrBase">Website URL *</label><input id="QrBase" class="input" placeholder="https://…" /></div>
           <div class="row" style="gap:12px;">
-            <div class="form-group">
-              <label for="QrSource">Campaign source *</label>
-              <input id="QrSource" class="input" placeholder="utm_source" />
-            </div>
-            <div class="form-group">
-              <label for="QrMedium">Campaign medium *</label>
-              <input id="QrMedium" class="input" placeholder="utm_medium" />
-            </div>
-            <div class="form-group">
-              <label for="QrCampaign">Campaign name *</label>
-              <input id="QrCampaign" class="input" placeholder="utm_campaign" />
-            </div>
+            <div class="form-group"><label for="QrSource">Campaign source *</label><input id="QrSource" class="input" placeholder="utm_source" /></div>
+            <div class="form-group"><label for="QrMedium">Campaign medium *</label><input id="QrMedium" class="input" placeholder="utm_medium" /></div>
+            <div class="form-group"><label for="QrCampaign">Campaign name *</label><input id="QrCampaign" class="input" placeholder="utm_campaign" /></div>
           </div>
-
           <div class="row" style="gap:12px;">
-            <div class="form-group">
-              <label for="QrId">Campaign ID</label>
-              <input id="QrId" class="input" placeholder="utm_id (opz.)" />
-            </div>
-            <div class="form-group">
-              <label for="QrTerm">Campaign term</label>
-              <input id="QrTerm" class="input" placeholder="utm_term (opz.)" />
-            </div>
-            <div class="form-group">
-              <label for="QrContent">Campaign content</label>
-              <input id="QrContent" class="input" placeholder="utm_content (opz.)" />
-            </div>
+            <div class="form-group"><label for="QrId">Campaign ID</label><input id="QrId" class="input" placeholder="utm_id (opz.)" /></div>
+            <div class="form-group"><label for="QrTerm">Campaign term</label><input id="QrTerm" class="input" placeholder="utm_term (opz.)" /></div>
+            <div class="form-group"><label for="QrContent">Campaign content</label><input id="QrContent" class="input" placeholder="utm_content (opz.)" /></div>
           </div>
-
-          <div class="form-group">
-            <label for="QrGeneratedUrl">URL generata *</label>
-            <input id="QrGeneratedUrl" class="input" type="text" readonly placeholder="—" />
-          </div>
-
+          <div class="form-group"><label for="QrGeneratedUrl">URL generata *</label><input id="QrGeneratedUrl" class="input" type="text" readonly placeholder="—" /></div>
           <div class="row" style="gap:12px;align-items:center;">
             <button id="QrCopyUrl" type="button" class="btn-outline" style="min-width:150px;height:40px;flex:0 0 auto;">Copia URL</button>
             <a id="QrDownloadPng" class="btn-outline hidden" download="qr.png">Scarica PNG</a>
             <a id="QrDownloadSvg" class="btn-outline hidden" download="qr.svg">Scarica SVG</a>
           </div>
-
           <div id="QrPreviewWrap" class="hidden" style="margin-top:12px;">
             <span class="qr-preview-label">Anteprima QR</span><br/>
             <canvas id="QrCanvas" width="256" height="256" style="border:1px solid #eee;border-radius:8px;background:#fff"></canvas>
           </div>
         </section>
 
-        <!-- IUBENDA -->
+        <!-- IUBENDA (grafica aggiornata) -->
         <section id="IubendaCard" class="card hidden">
           <h3>Genera snippet Iubenda</h3>
-          <p class="form-section-sub">Inserisci widget URL, siteId e cookiePolicyId. Preview pulita; copia il codice.</p>
+          <p class="form-section-sub">Inserisci <b>widget URL</b>, <b>siteId</b> e <b>cookiePolicyId</b> (IT). Se il sito è anche in inglese, abilita lo switch per aggiungere il campo EN. Lo snippet è pulito e pronto da incollare.</p>
 
           <div class="form-group">
             <label for="IubWidgetUrl">Widget URL *</label>
@@ -326,30 +217,24 @@
           </div>
 
           <div class="row" style="gap:12px;">
-            <div class="form-group">
-              <label for="IubSiteId">siteId *</label>
-              <input id="IubSiteId" class="input" placeholder="es. 1234567" />
-            </div>
-            <div class="form-group">
-              <label for="IubCookieIt">cookiePolicyId (IT) *</label>
-              <input id="IubCookieIt" class="input" placeholder="es. 12345678" />
-            </div>
-            <div class="form-group">
-              <label for="IubCookieEn">cookiePolicyId (EN) (opz.)</label>
-              <input id="IubCookieEn" class="input" placeholder="es. 87654321" />
-            </div>
+            <div class="form-group"><label for="IubSiteId">siteId *</label><input id="IubSiteId" class="input" placeholder="es. 1234567" /></div>
+            <div class="form-group"><label for="IubCookieIt">cookiePolicyId (IT) *</label><input id="IubCookieIt" class="input" placeholder="es. 12345678" /></div>
+            <div class="form-group IubEnWrap hidden"><label for="IubCookieEn">cookiePolicyId (EN)</label><input id="IubCookieEn" class="input" placeholder="es. 87654321" /></div>
           </div>
 
-          <label style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+          <label class="radios" style="margin:6px 0 10px;">
             <input id="IubDualLang" type="checkbox" />
-            <span>Switch automatico IT/EN</span>
+            <span>Sito anche in inglese</span>
           </label>
 
-          <textarea id="IubOut" class="input" placeholder="Preview snippet (pulita):"></textarea>
+          <div class="form-group">
+            <label for="IubOut">Preview snippet (pulita):</label>
+            <textarea id="IubOut" class="input" placeholder="Preview snippet (pulita)"></textarea>
+          </div>
 
-          <div class="row" style="gap:12px;align-items:center;">
-            <button id="IubMakeBtn" type="button" class="btn-outline">Genera snippet</button>
-            <button id="IubCopyBtn" type="button" class="btn-primary">Copia codice</button>
+          <!-- Niente pulsante 'Genera' qui: lo trovi nel footer come gli altri tool -->
+          <div class="row" style="gap:12px;align-items:center;justify-content:flex-end;">
+            <button id="IubCopyBtn" type="button" class="btn-outline" style="min-width:150px;height:40px;">Copia codice</button>
           </div>
         </section>
 
@@ -362,25 +247,22 @@
         <section id="PptCorporateCard" class="card hidden">
           <h3>Template Corporate</h3>
           <p class="form-section-sub">Presentazioni istituzionali: chi siamo, numeri chiave, valori del brand.</p>
-          <button type="button" class="btn-primary"
-                  onclick="downloadPPT('assets/ppt/template-corporate.pptx')">Scarica</button>
+          <button type="button" class="btn-primary" onclick="downloadPPT('assets/ppt/template-corporate.pptx')">Scarica</button>
         </section>
         <section id="PptAdvisorCard" class="card hidden">
           <h3>Template Advisor</h3>
           <p class="form-section-sub">Analisi e advisory: ricerche, benchmark e valutazioni sintetiche.</p>
-          <button type="button" class="btn-primary"
-                  onclick="downloadPPT('assets/ppt/template-advisor.pptx')">Scarica</button>
+          <button type="button" class="btn-primary" onclick="downloadPPT('assets/ppt/template-advisor.pptx')">Scarica</button>
         </section>
         <section id="PptMarketingCard" class="card hidden">
           <h3>Template Marketing</h3>
           <p class="form-section-sub">Campagne e iniziative: annunci, lanci e contenuti commerciali.</p>
-          <button type="button" class="btn-primary"
-                  onclick="downloadPPT('assets/ppt/template-marketing.pptx')">Scarica</button>
+          <button type="button" class="btn-primary" onclick="downloadPPT('assets/ppt/template-marketing.pptx')">Scarica</button>
         </section>
 
       </div>
 
-      <!-- ACTION BAR -->
+      <!-- ═════════ ACTION BAR ═════════ -->
       <section id="ActionBar" class="actionbar">
         <div class="action-left">
           <div id="ActionProgressWrap" class="action-progress hidden">
@@ -393,6 +275,7 @@
         </div>
         <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
       </section>
+
     </div>
   </main>
 </div><!-- /AppRoot -->
@@ -400,16 +283,13 @@
 <!-- ═════════ LIBRARIES ═════════ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
-
-<!-- pdf-lib + fontkit (embedding DIN) -->
+<!-- pdf-lib + fontkit -->
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
-
-<!-- qrcode -->
-
-<!-- qrcodejs (no require, browser-ready) -->
+<!-- qrcodejs (per QR) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <!-- App logic -->
-<script src="./js/app.js?v=20260402-qrfix3"></script>
+<script src="./js/app.js?v=20260402-iubenda"></script>
 </body>
 </html>

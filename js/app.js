@@ -76,6 +76,9 @@ function activateMenuVisual(mode){
 function selectMode(mode){
   currentMode = mode;
   ALL_CARDS.forEach(hideEl);
+  // reset primary action button for each mode (QR overrides below)
+  setPrimaryActionLabel(DEFAULT_PRIMARY_LABEL);
+  if (BtnProcedi) BtnProcedi.disabled = false;
   BtnProcedi.classList.remove('hidden');
 
   switch(mode){
@@ -1087,6 +1090,15 @@ const QrPreviewWrap = $('#QrPreviewWrap');
 const QrDownloadPng = $('#QrDownloadPng');
 const QrDownloadSvg = $('#QrDownloadSvg');
 
+function isValidHttpUrl(str){
+  try {
+    const u = new URL(str);
+    return (u.protocol === 'http:' || u.protocol === 'https:');
+  } catch {
+    return false;
+  }
+}
+
 function buildUtmUrl(){
   const base = (QrBase?.value || '').trim();
   if (!base) return '';
@@ -1109,6 +1121,23 @@ function buildUtmUrl(){
   }
 }
 
+function validateQrInputs(){
+  const base = (QrBase?.value || '').trim();
+  const src = (QrSource?.value || '').trim();
+  const med = (QrMedium?.value || '').trim();
+  const camp = (QrCampaign?.value || '').trim();
+
+  if (!base) return { ok:false, msg:'Compila Website URL.' };
+  if (!isValidHttpUrl(base)) return { ok:false, msg:'Website URL deve iniziare con http:// o https://'};
+  if (!src) return { ok:false, msg:'Compila Campaign source (utm_source).'};
+  if (!med) return { ok:false, msg:'Compila Campaign medium (utm_medium).'};
+  if (!camp) return { ok:false, msg:'Compila Campaign name (utm_campaign).'};
+
+  const built = buildUtmUrl();
+  if (!built || !isValidHttpUrl(built)) return { ok:false, msg:'URL generata non valida. Controlla i campi.' };
+  return { ok:true, url: built };
+}
+
 let __qrPngUrl = null;
 let __qrSvgUrl = null;
 function clearQrOutputs(){
@@ -1123,54 +1152,107 @@ function clearQrOutputs(){
   }
 }
 
+async function ensureQRCodeLib(){
+  // NOTE: con qrcode@1.5.4 la build browser è in /lib/browser.min.js (non /build/...) 
+  // Se la libreria è già caricata, ok.
+  if (window.QRCode && typeof window.QRCode.toCanvas === 'function') return;
+
+  const candidates = [
+    'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/lib/browser.min.js',
+    'https://unpkg.com/qrcode@1.5.4/lib/browser.min.js',
+    // fallback extra (qrcodejs) — se vuoi, potrai anche metterla localmente
+    // 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+  ];
+
+  for (const src of candidates){
+    await new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => resolve();
+      document.head.appendChild(s);
+    });
+    if (window.QRCode && typeof window.QRCode.toCanvas === 'function') return;
+  }
+
+  throw new Error('Libreria QRCode non disponibile (script non caricato).');
+}
+
+function safeDownloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => { try { URL.revokeObjectURL(url); } catch {} }, 2000);
+}
+
 function updateQrGeneratedUrl(){
   const url = buildUtmUrl();
   if (QrGeneratedUrl) QrGeneratedUrl.value = url || '';
   if (QrCopyUrl) QrCopyUrl.disabled = !url;
+
+  if (currentMode === 'qr' && BtnProcedi){
+    const v = validateQrInputs();
+    BtnProcedi.disabled = !v.ok;
+  }
+
   clearQrOutputs();
 }
 
 async function makeQr(){
-  const url = buildUtmUrl();
-  if (!url || !/^https?:\/\//i.test(url)) {
-    alert('Controlla Website URL (deve iniziare con http/https)');
-    return;
+  try {
+    const v = validateQrInputs();
+    if (!v.ok){
+      alert(v.msg);
+      return;
+    }
+    const url = v.url;
+    if (QrGeneratedUrl) QrGeneratedUrl.value = url;
+
+    await ensureQRCodeLib();
+
+    await window.QRCode.toCanvas(QrCanvas, url, { width:256, margin:1, errorCorrectionLevel:'M' });
+    if (QrPreviewWrap) QrPreviewWrap.classList.remove('hidden');
+
+    const pngBlob = await new Promise((res) => QrCanvas.toBlob(res, 'image/png'));
+    if (!pngBlob) throw new Error('Impossibile esportare PNG dal canvas.');
+
+    const svgStr = await window.QRCode.toString(url, { type:'svg', margin:1, width:256, errorCorrectionLevel:'M' });
+
+    if (__qrPngUrl) { try { URL.revokeObjectURL(__qrPngUrl); } catch {} }
+    __qrPngUrl = URL.createObjectURL(pngBlob);
+    if (QrDownloadPng){
+      QrDownloadPng.href = __qrPngUrl;
+      QrDownloadPng.classList.remove('hidden');
+    }
+
+    if (__qrSvgUrl) { try { URL.revokeObjectURL(__qrSvgUrl); } catch {} }
+    __qrSvgUrl = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml'}));
+    if (QrDownloadSvg){
+      QrDownloadSvg.href = __qrSvgUrl;
+      QrDownloadSvg.classList.remove('hidden');
+    }
+
+    if (!window.JSZip) throw new Error('JSZip non disponibile (CDN).');
+    const zip = new JSZip();
+    zip.file('qr.png', pngBlob);
+    zip.file('qr.svg', svgStr);
+    zip.file('url.txt', url + '\n');
+
+    const camp = slugify((QrCampaign?.value || 'qr')) || 'qr';
+    const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
+    const zipBlob = await zip.generateAsync({ type:'blob' });
+
+    safeDownloadBlob(zipBlob, `QR-${camp}-${stamp}.zip`);
+  } catch (err){
+    console.error(err);
+    alert('Errore durante la generazione del QR: ' + (err?.message || err));
   }
-  if (QrGeneratedUrl) QrGeneratedUrl.value = url;
-  await QRCode.toCanvas(QrCanvas, url, { width:256, margin:1 });
-  if (QrPreviewWrap) QrPreviewWrap.classList.remove('hidden');
-
-  // Crea ZIP con PNG e SVG
-  const zip = new JSZip();
-  
-  // PNG
-  const pngBlob = await new Promise(res => {
-    QrCanvas.toBlob(b => { res(b || new Blob()); }, 'image/png');
-  });
-  zip.file('qr.png', pngBlob);
-
-  // SVG
-  const svgStr = await QRCode.toString(url, { type:'svg', margin:1, width:256 });
-  zip.file('qr.svg', new Blob([svgStr], {type:'image/svg+xml'}));
-
-  // Scarica ZIP
-  const zipBlob = await zip.generateAsync({type:'blob'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(zipBlob);
-  a.download = `QR-${slugify((QrCampaign?.value || 'qrcode'))}-${Date.now()}.zip`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-
-  // Mantieni i link per download manuale
-  if (__qrPngUrl) { try { URL.revokeObjectURL(__qrPngUrl); } catch {} }
-  __qrPngUrl = URL.createObjectURL(pngBlob);
-  QrDownloadPng.href = __qrPngUrl;
-  QrDownloadPng.classList.remove('hidden');
-
-  if (__qrSvgUrl) { try { URL.revokeObjectURL(__qrSvgUrl); } catch {} }
-  __qrSvgUrl = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml'}));
-  QrDownloadSvg.href = __qrSvgUrl;
-  QrDownloadSvg.classList.remove('hidden');
 }
 
 QrCopyUrl?.addEventListener('click', async () => {
@@ -1190,7 +1272,6 @@ function scheduleQrUrlUpdate(){
   el?.addEventListener('input', scheduleQrUrlUpdate);
   el?.addEventListener('change', scheduleQrUrlUpdate);
 });
-
 /* ================================ IUBENDA ============================= */
 const IubSiteId    = $('#IubSiteId');
 const IubCookieIt  = $('#IubCookieIt');

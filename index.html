@@ -406,20 +406,10 @@
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
 
 <!-- qrcode -->
-<!-- QRCode (ESM via jsDelivr +esm) -->
-<script type="module">
-  // Carica QRCode come ES Module e lo espone in window.QRCode
-  // Evita errori tipo 'require is not defined' dovuti a build non-browser.
-  if (!window.__QR_ESM_LOADED) {
-    window.__QR_ESM_LOADED = true;
-    import QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm';
-    // NB: alcuni browser non permettono top-level await in tutti i contesti, usiamo promise.
-    Promise.resolve(QRCode).then((m) => { window.QRCode = m?.default || m; window.__QRCodeReady = true; }).catch(() => { window.__QRCodeReady = false; });
-  }
-</script>
 
+<!-- qrcodejs (no require, browser-ready) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- App logic -->
-<script src="./js/app.js?v=20260402-qrfix2"></script>
+<script src="./js/app.js?v=20260402-qrfix3"></script>
 </body>
 </html>
-``

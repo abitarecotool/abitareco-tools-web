@@ -405,22 +405,10 @@
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
 
-<!-- qrcode (con fallback) -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
-<script>
-  // Se QRCode non è disponibile dopo 2 secondi, prova un CDN alternativo
-  setTimeout(() => {
-    if (!window.QRCode) {
-      console.warn('QRCode CDN failed, trying alternative...');
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode.js/1.5.3/qrcode.min.js';
-      s.onerror = () => console.error('QRCode non disponibile da nessun CDN');
-      document.head.appendChild(s);
-    }
-  }, 1500);
-</script>
+<!-- qrcode -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/lib/browser.min.js"></script>
 
 <!-- App logic -->
-<script src="./js/app.js"></script>
+<script src="./js/app.js?v=20260402-qrfix"></script>
 </body>
 </html>

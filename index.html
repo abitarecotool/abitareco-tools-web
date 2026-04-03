@@ -2,11 +2,10 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  
   <meta name="robots" content="noindex, nofollow" />
   <meta name="googlebot" content="noindex, nofollow" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Abitare Co. – Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Abitare Co. – Digital Content Tool</title>
   <meta name="theme-color" content="#c4162b" />
 
   <!-- Favicon (opzionale) -->
@@ -22,6 +21,34 @@
 </head>
 
 <body>
+<!-- AUTH PRELOADER (2s) -->
+<div id="AuthPreloader" aria-hidden="true">
+  <div class="auth-bounce" aria-label="Loading">
+    <img src="./assets/logo.ico" alt="Abitare Co." />
+  </div>
+</div>
+
+<!-- AUTH MODAL OVERLAY -->
+<div id="AuthOverlay" aria-hidden="true">
+  <div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="AuthTitle">
+    <div class="auth-icon">
+      <img src="./assets/logo.ico" alt="" />
+    </div>
+    <div class="auth-title" id="AuthTitle">Accesso riservato</div>
+    <div class="auth-sub">Inserisci la password per entrare nel tool interno.</div>
+
+    <div style="text-align:left;">
+      <label for="AuthPassword">Password *</label>
+      <input id="AuthPassword" class="input" type="password" placeholder="Password" autocomplete="current-password" />
+      <div id="AuthError"></div>
+    </div>
+
+    <div class="auth-actions">
+      <button id="AuthCancel" type="button" class="btn-outline">Annulla</button>
+      <button id="AuthConfirm" type="button" class="btn-primary">Conferma</button>
+    </div>
+  </div>
+</div>
 <noscript>
   <div style="padding:12px;background:#fff3cd;border:1px solid #ffe69c;color:#664d03;">
     Questo strumento richiede JavaScript attivo.
@@ -384,6 +411,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <!-- App logic -->
-<script src="../../Downloads/js/app.js?v=20260402-iubenda-fix"></script>
+<script src="./js/app.js?v=20260403-auth"></script>
 </body>
 </html>

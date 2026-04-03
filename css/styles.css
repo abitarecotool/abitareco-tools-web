@@ -547,3 +547,113 @@ input[type="radio"], input[type="checkbox"] {
   .content > .cards-scroll { padding: 20px 16px; }
   .actionbar { padding: 12px 16px 16px; }
 }
+
+/* ============================================================
+   AUTH / PRELOADER (minimal) — Added 2026-04-03
+   ============================================================ */
+#AuthPreloader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  z-index: 99999;
+  opacity: 1;
+  transition: opacity .35s ease;
+}
+#AuthPreloader.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+.auth-bounce {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: authBounce 1.05s infinite ease-in-out;
+}
+.auth-bounce img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+@keyframes authBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+#AuthOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(27, 41, 61, 0.58);
+  z-index: 99998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+#AuthOverlay.show {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.auth-modal {
+  width: 460px;
+  max-width: calc(100vw - 32px);
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  padding: 26px 28px 20px;
+  position: relative;
+  text-align: center;
+}
+.auth-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 2px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -48px auto 10px;
+  box-shadow: 0 10px 22px rgba(0,0,0,.10);
+}
+.auth-icon img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.auth-title {
+  font-weight: 800;
+  font-size: 14px;
+  margin: 8px 0 4px;
+  color: var(--gray-700);
+}
+.auth-sub {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-bottom: 14px;
+}
+#AuthError {
+  font-size: 12px;
+  color: var(--red);
+  margin: 8px 0 0;
+  min-height: 16px;
+}
+.auth-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 14px;
+}
+.auth-actions .btn-outline,
+.auth-actions .btn-primary {
+  min-width: 150px;
+  height: 40px;
+}

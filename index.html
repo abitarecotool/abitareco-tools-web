@@ -18,6 +18,73 @@
 
   <!-- App styles -->
   <link rel="stylesheet" href="./css/styles.css" />
+
+  <!-- Voice overlay styles (inline: così modifichi solo index + app.js) -->
+<style id="VoiceOverlayStyles">
+  .voice-overlay{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(27, 41, 61, 0.58);
+    z-index: 99990;
+    opacity:0; pointer-events:none;
+    transition: opacity .25s ease;
+  }
+  .voice-overlay.show{ opacity:1; pointer-events:all; }
+
+  .voice-modal{
+    width: 820px;
+    max-width: calc(100vw - 32px);
+    border-radius: 16px;
+    padding: 22px 22px 18px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 20px 60px rgba(0,0,0,.22);
+    position: relative;
+  }
+  .voice-wave-wrap{
+    border-radius: 14px;
+    overflow: hidden;
+    background: radial-gradient(120% 120% at 10% 10%,
+      rgba(196,22,43,.25) 0%,
+      rgba(97,52,182,.20) 45%,
+      rgba(0,0,0,.10) 100%);
+  }
+  #VoiceWave{ width:100%; height:auto; display:block; }
+
+  .voice-caption{
+    display:flex; align-items:center; gap:10px;
+    margin-top: 12px;
+    color: rgba(255,255,255,.92);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .voice-dot{
+    width:10px; height:10px; border-radius:999px;
+    background:#c4162b;
+    box-shadow: 0 0 0 0 rgba(196,22,43,.55);
+    animation: voicePulse 1.0s infinite ease-in-out;
+  }
+  @keyframes voicePulse{
+    0%{ box-shadow:0 0 0 0 rgba(196,22,43,.55); transform:scale(1); }
+    70%{ box-shadow:0 0 0 10px rgba(196,22,43,0); transform:scale(1.08); }
+    100%{ box-shadow:0 0 0 0 rgba(196,22,43,0); transform:scale(1); }
+  }
+  .voice-close{
+    position:absolute; top:12px; right:12px;
+    width:34px; height:34px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.18);
+    color: rgba(255,255,255,.9);
+    cursor:pointer;
+    font-size:16px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .voice-close:hover{ background: rgba(0,0,0,.28); }
+</style>
+
 </head>
 
 <body>
@@ -429,6 +496,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <!-- App logic -->
-<script src="./js/app.js?v=20260403-noindex-auth"></script>
+<script src="./js/app.js?v=20260407-voicewave"></script>
 </body>
 </html>

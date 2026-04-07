@@ -142,12 +142,13 @@ main {
 }
 
 .card h2, .card h3 {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  line-height: 1.15;
+  letter-spacing: -0.2px;
 }
-
-.card h3 { font-size: 16px; }
+.card h3 { font-size: 24px; }
 
 .card .muted {
   color: var(--gray-500);
@@ -549,7 +550,7 @@ input[type="radio"], input[type="checkbox"] {
 }
 
 /* ============================================================
-   AUTH / PRELOADER (minimal) — Added 2026-04-03
+   AUTH / PRELOADER (minimal)
    ============================================================ */
 #AuthPreloader {
   position: fixed;

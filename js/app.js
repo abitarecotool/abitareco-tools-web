@@ -19,7 +19,7 @@ const AUTH_PASSWORD = 'Abitare52!';
 const AUTH_SESSION_KEY = 'abitare_tools_auth_ok';
 
 // ===== Welcome voice overlay + waveform visualizer =====
-let __welcomeViz = { raf:0, ctx:null, analyser:null, src:null, canvas:null, cctx:null };
+let __welcomeViz = { raf:0, ctx:null, analyser:null, src:null };
 
 function startWelcomeVoiceOverlay(audioEl){
   try {
@@ -29,22 +29,26 @@ function startWelcomeVoiceOverlay(audioEl){
     const btnClose = document.getElementById('VoiceClose');
     if (btnClose && !btnClose.__bound){
       btnClose.__bound = true;
-      btnClose.addEventListener('click', () => { try { audioEl.pause(); } catch {} stopWelcomeVoiceOverlay(); });
-    }
-    if (ov && !ov.__bound){
-      ov.__bound = true;
-      ov.addEventListener('click', (e) => {
-        // clic sull'overlay (fuori dalla modal) chiude
-        if (e.target === ov){ try { audioEl.pause(); } catch {} stopWelcomeVoiceOverlay(); }
+      btnClose.addEventListener('click', () => {
+        try { audioEl.pause(); } catch {}
+        stopWelcomeVoiceOverlay();
       });
     }
 
-    // Setup analyser
+    if (ov && !ov.__bound){
+      ov.__bound = true;
+      ov.addEventListener('click', (e) => {
+        if (e.target === ov){
+          try { audioEl.pause(); } catch {}
+          stopWelcomeVoiceOverlay();
+        }
+      });
+    }
+
     const canvas = document.getElementById('VoiceWave');
     if (!canvas) return;
     const cctx = canvas.getContext('2d');
 
-    // Reuse or create AudioContext
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
 
@@ -55,23 +59,18 @@ function startWelcomeVoiceOverlay(audioEl){
       __welcomeViz.analyser.smoothingTimeConstant = 0.86;
     }
 
-    // Resume context (must be called in user gesture path)
+    // Resume AudioContext nel click login
     try { if (__welcomeViz.ctx.state === 'suspended') __welcomeViz.ctx.resume(); } catch {}
 
-    // (Re)connect source
+    // Collega l’audio (se il browser lo consente)
     try { if (__welcomeViz.src) __welcomeViz.src.disconnect(); } catch {}
-    try { __welcomeViz.src = __welcomeViz.ctx.createMediaElementSource(audioEl); } catch (e) {
-      // MediaElementSource can be created only once per element in some browsers
-      // fallback: skip analyser but keep overlay
-      __welcomeViz.src = null;
-    }
-    if (__welcomeViz.src){
+    try {
+      __welcomeViz.src = __welcomeViz.ctx.createMediaElementSource(audioEl);
       __welcomeViz.src.connect(__welcomeViz.analyser);
       __welcomeViz.analyser.connect(__welcomeViz.ctx.destination);
+    } catch {
+      __welcomeViz.src = null;
     }
-
-    __welcomeViz.canvas = canvas;
-    __welcomeViz.cctx = cctx;
 
     const W = canvas.width, H = canvas.height;
     const grad = cctx.createLinearGradient(0, 0, W, 0);
@@ -85,28 +84,30 @@ function startWelcomeVoiceOverlay(audioEl){
       __welcomeViz.raf = requestAnimationFrame(draw);
       cctx.clearRect(0,0,W,H);
 
-      // soft vignette
+      // base soft
       cctx.fillStyle = 'rgba(0,0,0,0.10)';
       cctx.fillRect(0,0,W,H);
 
-      let amp = 0.0;
       if (__welcomeViz.analyser){
         __welcomeViz.analyser.getByteTimeDomainData(data);
       } else {
-        // fallback: fake speaking wave
-        const t = performance.now() / 1000;
+        // fallback “fake wave”
+        const t = performance.now()/1000;
         for (let i=0;i<data.length;i++) data[i] = 128 + Math.sin(t*6 + i*0.08)*40;
       }
 
-      // compute amplitude (0..1)
+      // amp
       let sum = 0;
       for (let i=0;i<data.length;i++){
         const v = (data[i]-128)/128;
         sum += v*v;
       }
-      amp = Math.min(1, Math.sqrt(sum/data.length) * 2.6);
+      const amp = Math.min(1, Math.sqrt(sum/data.length) * 2.6);
 
-      // draw glow
+      const mid = H/2;
+      const step = W / (data.length-1);
+
+      // glow
       cctx.save();
       cctx.globalAlpha = 0.35 + amp*0.25;
       cctx.strokeStyle = grad;
@@ -114,19 +115,15 @@ function startWelcomeVoiceOverlay(audioEl){
       cctx.shadowColor = 'rgba(196,22,43,0.35)';
       cctx.shadowBlur = 22;
       cctx.beginPath();
-
-      const mid = H/2;
-      const step = W / (data.length-1);
       for (let i=0;i<data.length;i++){
         const x = i*step;
         const y = mid + ((data[i]-128)/128) * (mid*0.72) * (0.55 + amp);
-        if (i===0) cctx.moveTo(x,y);
-        else cctx.lineTo(x,y);
+        if (i===0) cctx.moveTo(x,y); else cctx.lineTo(x,y);
       }
       cctx.stroke();
       cctx.restore();
 
-      // draw main line
+      // main line
       cctx.save();
       cctx.strokeStyle = grad;
       cctx.lineWidth = 3.2;
@@ -135,13 +132,12 @@ function startWelcomeVoiceOverlay(audioEl){
       for (let i=0;i<data.length;i++){
         const x = i*step;
         const y = mid + ((data[i]-128)/128) * (mid*0.72) * (0.55 + amp);
-        if (i===0) cctx.moveTo(x,y);
-        else cctx.lineTo(x,y);
+        if (i===0) cctx.moveTo(x,y); else cctx.lineTo(x,y);
       }
       cctx.stroke();
       cctx.restore();
 
-      // subtle baseline
+      // baseline
       cctx.save();
       cctx.globalAlpha = 0.20;
       cctx.strokeStyle = 'rgba(255,255,255,0.65)';
@@ -155,6 +151,7 @@ function startWelcomeVoiceOverlay(audioEl){
 
     if (__welcomeViz.raf) cancelAnimationFrame(__welcomeViz.raf);
     draw();
+
   } catch {}
 }
 
@@ -167,6 +164,31 @@ function stopWelcomeVoiceOverlay(){
   } catch {}
 }
 
+// Avvia audio Welcome + overlay waveform (una volta per sessione)
+function playWelcomeAudioOnce(){
+  try {
+    if (sessionStorage.getItem('welcome_audio_played') === '1') return;
+
+    const a = document.getElementById('WelcomeAudio');
+    if (!a) return;
+
+    try { startWelcomeVoiceOverlay(a); } catch {}
+
+    const stop = () => { try { stopWelcomeVoiceOverlay(); } catch {} };
+    a.addEventListener('ended', stop, { once:true });
+    a.addEventListener('pause', stop, { once:true });
+    a.addEventListener('abort', stop, { once:true });
+    a.addEventListener('error', stop, { once:true });
+
+    a.currentTime = 0;
+    a.volume = 1;
+
+    const p = a.play();
+    if (p && typeof p.catch === 'function') p.catch(() => stop());
+
+    sessionStorage.setItem('welcome_audio_played', '1');
+  } catch {}
+}
 
 function _qs(id){ return document.getElementById(id); }
 
@@ -215,6 +237,7 @@ function initAuthGate(){
       _setAuthed();
       _hideAuthOverlay();
       try { selectMode('welcome'); } catch {}
+      try { playWelcomeAudioOnce(); } catch {}
       return;
     }
     if (err) err.textContent = 'Password non corretta.';

@@ -18,6 +18,21 @@ const hideEl = (el) => el && el.classList.add('hidden');
 const AUTH_PASSWORD = 'Abitare52!';
 const AUTH_SESSION_KEY = 'abitare_tools_auth_ok';
 
+// Welcome audio (post-login). Carica: ./assets/audio/welcome.mp3
+function playWelcomeAudioOnce(){
+  try {
+    if (sessionStorage.getItem('welcome_audio_played') === '1') return;
+    const a = document.getElementById('WelcomeAudio');
+    if (!a) return;
+    a.currentTime = 0;
+    a.volume = 1;
+    const p = a.play();
+    if (p && typeof p.catch === 'function') p.catch(()=>{});
+    sessionStorage.setItem('welcome_audio_played', '1');
+  } catch {}
+}
+
+
 function _qs(id){ return document.getElementById(id); }
 
 function _showAuthOverlay(){
@@ -64,8 +79,8 @@ function initAuthGate(){
       if (err) err.textContent = '';
       _setAuthed();
       _hideAuthOverlay();
-      // Mostra welcome dopo login
       try { selectMode('welcome'); } catch {}
+      try { playWelcomeAudioOnce(); } catch {}
       return;
     }
     if (err) err.textContent = 'Password non corretta.';
@@ -84,7 +99,6 @@ function initAuthGate(){
     if (e.key === 'Enter'){ e.preventDefault(); doCheck(); }
   });
 
-  // 2s preloader -> fade -> login overlay (se non autenticato)
   setTimeout(() => {
     _hidePreloader();
     setTimeout(() => {
@@ -98,7 +112,6 @@ function initAuthGate(){
   }, 2000);
 }
 
-// init auth gate
 if (!window.__ABITARE_AUTH_INIT){
   window.__ABITARE_AUTH_INIT = true;
   document.addEventListener('DOMContentLoaded', initAuthGate);

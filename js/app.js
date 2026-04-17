@@ -1492,14 +1492,81 @@ function makeIubendaSnippet(){
   if (!siteId || !cpIt) { alert('Compila siteId e cookiePolicyId (IT).'); return; }
   if (IubDualLang?.checked && !cpEn) { alert('Hai selezionato EN: compila cookiePolicyId (EN).'); return; }
 
-  const callback = `callback: {
-  onPreferenceExpressedOrNotNeeded: function (preference) {
-    window.dataLayer = window.dataLayer || [];
-    dataLayer.push({ event: "cookie_consent_update" });
-    if (!preference) { dataLayer.push({ event: "iubenda_preference_not_needed" }); return; }
-    if (preference.consent === true)  dataLayer.push({ event: "iubenda_consent_given" });
-    if (preference.consent === false) dataLayer.push({ event: "iubenda_consent_rejected" });
+  // Costruisce lo snippet usando ESATTAMENTE il template dell'agenzia (cambiano solo lang e id)
+  const buildSnippet = (lang, cookiePolicyId) => `
+<script type="text/javascript">
+    var _iub = _iub || [];
+    _iub.csConfiguration = {
+        "lang": "${lang}",
+        "siteId": ${siteId},
+        "cookiePolicyId": ${cookiePolicyId},
+        "banner": {
+            "position": "float-bottom-center",
+            "acceptButtonDisplay": true,
+            "customizeButtonDisplay": true
+        },
+        "callback": {
+                  onPreferenceExpressedOrNotNeeded: function (preference) {
+                    dataLayer.push({
+                      iubenda_ccpa_opted_out: _iub.cs.api.isCcpaOptedOut(),
+                    });
+                    var otherPreferences = _iub.cs.api.getPreferences();
+                    if (otherPreferences) {
+                      var usprPreferences = otherPreferences.uspr;
+                      if (usprPreferences) {
+                        for (var purposeName in usprPreferences) {
+                          if (usprPreferences[purposeName]) {
+                            dataLayer.push({
+                              event: 'iubenda_consent_given_purpose_' + purposeName,
+                            });
+                          }
+                        }
+                      }
+                    }
+                    if (!preference) {
+                      dataLayer.push({
+                        event: 'iubenda_preference_not_needed',
+                      });
+                    }
+                    else if (preference.consent === true) {
+                      dataLayer.push({
+                        event: 'iubenda_consent_given',
+                      });
+                    }
+                    else if (preference.consent === false) {
+                      dataLayer.push({
+                        event: 'iubenda_consent_rejected',
+                      });
+                    }
+                    else if (preference.purposes) {
+                      for (var purposeId in preference.purposes) {
+                        if (preference.purposes[purposeId]) {
+                          dataLayer.push({
+                            event: 'iubenda_consent_given_purpose_' + purposeId,
+                          });
+                        }
+                      }
+                    }
+                  }
+        }
+    };
+</script>
+${widgetScript}
+`.trim();
+
+  let snippet;
+  if (IubDualLang?.checked){
+    // Stessa logica "vecchia": UNICO output che contiene sia IT che EN (uno sotto l'altro)
+    snippet = [
+      buildSnippet('it', cpIt),
+      '',
+      buildSnippet('en', cpEn)
+    ].join('\n');
+  } else {
+    snippet = buildSnippet('it', cpIt);
   }
+
+  if (IubOut) IubOut.value = snippet;
 }}`;
 
   let snippet;

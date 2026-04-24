@@ -1469,43 +1469,20 @@ function normalizeWidgetScript(input){
   const raw = decodeHtmlEntities((input || '').trim());
   if (!raw) return '';
 
-  // Se incollano già <script> completo
+  // Se incollano già lo <script> completo, lo usiamo così
   if (/^<script\b/i.test(raw)){
     const idx = raw.toLowerCase().lastIndexOf('</script>');
     return idx !== -1 ? raw.slice(0, idx + 9) : raw;
   }
-  // Altrimenti URL puro
+
+  // Altrimenti è solo l'URL
   return `<script type="text/javascript" src="${raw}"></script>`;
-}
-
-function buildIubendaCallback(){
-  return `
-callback: {
-  onPreferenceExpressedOrNotNeeded: function(preference) {
-    window.dataLayer = window.dataLayer || [];
-    dataLayer.push({ event: 'cookie_consent_update' });
-
-    if (!preference) {
-      dataLayer.push({ event: 'iubenda_preference_not_needed' });
-      return;
-    }
-
-    if (preference.consent === true) {
-      dataLayer.push({ event: 'iubenda_consent_given' });
-    }
-
-    if (preference.consent === false) {
-      dataLayer.push({ event: 'iubenda_consent_rejected' });
-    }
-  }
-}
-`.trim();
 }
 
 function makeIubendaSnippet(){
   const siteId = (IubSiteId?.value || '').trim();
-  const cpIt = (IubCookieIt?.value || '').trim();
-  const cpEn = (IubCookieEn?.value || '').trim();
+  const cpIt   = (IubCookieIt?.value || '').trim();
+  const cpEn   = (IubCookieEn?.value || '').trim();
   const widgetScript = normalizeWidgetScript(IubWidgetUrl?.value);
 
   if (!siteId || !cpIt){
@@ -1517,43 +1494,77 @@ function makeIubendaSnippet(){
     return;
   }
 
-  const callbackBlock = buildIubendaCallback();
   let snippet = '';
 
   if (IubDualLang?.checked){
     snippet = `
 <script type="text/javascript">
-var _iub = _iub || [];
-_iub.csConfiguration = {
-  siteId: ${siteId},
-  cookiePolicyId: ${cpIt},
-  lang: "it",
-  ${callbackBlock}
-};
-</script>
-${widgetScript}
+(function () {
+  var lang = document.documentElement.lang === 'en' ? 'en' : 'it';
 
-<script type="text/javascript">
-var _iub = _iub || [];
-_iub.csConfiguration = {
-  siteId: ${siteId},
-  cookiePolicyId: ${cpEn},
-  lang: "en",
-  ${callbackBlock}
-};
+  var cookiePolicyId = (lang === 'en')
+    ? ${cpEn}
+    : ${cpIt};
+
+  window._iub = window._iub || [];
+  window._iub.csConfiguration = {
+    siteId: ${siteId},
+    cookiePolicyId: cookiePolicyId,
+    lang: lang,
+    callback: {
+      onPreferenceExpressedOrNotNeeded: function(preference) {
+        window.dataLayer = window.dataLayer || [];
+        dataLayer.push({ event: 'cookie_consent_update' });
+
+        if (!preference) {
+          dataLayer.push({ event: 'iubenda_preference_not_needed' });
+          return;
+        }
+
+        if (preference.consent === true) {
+          dataLayer.push({ event: 'iubenda_consent_given' });
+        }
+
+        if (preference.consent === false) {
+          dataLayer.push({ event: 'iubenda_consent_rejected' });
+        }
+      }
+    }
+  };
+})();
 </script>
 ${widgetScript}
 `.trim();
   } else {
     snippet = `
 <script type="text/javascript">
-var _iub = _iub || [];
-_iub.csConfiguration = {
-  siteId: ${siteId},
-  cookiePolicyId: ${cpIt},
-  lang: "it",
-  ${callbackBlock}
-};
+(function () {
+  window._iub = window._iub || [];
+  window._iub.csConfiguration = {
+    siteId: ${siteId},
+    cookiePolicyId: ${cpIt},
+    lang: "it",
+    callback: {
+      onPreferenceExpressedOrNotNeeded: function(preference) {
+        window.dataLayer = window.dataLayer || [];
+        dataLayer.push({ event: 'cookie_consent_update' });
+
+        if (!preference) {
+          dataLayer.push({ event: 'iubenda_preference_not_needed' });
+          return;
+        }
+
+        if (preference.consent === true) {
+          dataLayer.push({ event: 'iubenda_consent_given' });
+        }
+
+        if (preference.consent === false) {
+          dataLayer.push({ event: 'iubenda_consent_rejected' });
+        }
+      }
+    }
+  };
+})();
 </script>
 ${widgetScript}
 `.trim();

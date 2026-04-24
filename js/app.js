@@ -1475,7 +1475,70 @@ function makeIubendaSnippet(){
     return;
   }
 
-  const snippet = `
+  let snippet = '';
+
+  if (IubDualLang?.checked) {
+    // ✅ IT + EN automatico
+    snippet = `
+<script type="text/javascript">
+  var lang = document.documentElement.lang === 'en' ? 'en' : 'it';
+
+  var _iub = _iub || [];
+  _iub.csConfiguration = {
+    lang: lang,
+    siteId: ${siteId},
+    cookiePolicyId: (lang === 'en' ? ${cpEn} : ${cpIt}),
+    banner: {
+      position: "float-bottom-center",
+      acceptButtonDisplay: true,
+      customizeButtonDisplay: true
+    },
+    callback: {
+      onPreferenceExpressedOrNotNeeded: function (preference) {
+        window.dataLayer = window.dataLayer || [];
+        dataLayer.push({
+          iubenda_ccpa_opted_out: _iub.cs.api.isCcpaOptedOut()
+        });
+
+        var otherPreferences = _iub.cs.api.getPreferences();
+        if (otherPreferences) {
+          var usprPreferences = otherPreferences.uspr;
+          if (usprPreferences) {
+            for (var purposeName in usprPreferences) {
+              if (usprPreferences[purposeName]) {
+                dataLayer.push({
+                  event: 'iubenda_consent_given_purpose_' + purposeName
+                });
+              }
+            }
+          }
+        }
+
+        if (!preference) {
+          dataLayer.push({ event: 'iubenda_preference_not_needed' });
+        } else if (preference.consent === true) {
+          dataLayer.push({ event: 'iubenda_consent_given' });
+        } else if (preference.consent === false) {
+          dataLayer.push({ event: 'iubenda_consent_rejected' });
+        } else if (preference.purposes) {
+          for (var purposeId in preference.purposes) {
+            if (preference.purposes[purposeId]) {
+              dataLayer.push({
+                event: 'iubenda_consent_given_purpose_' + purposeId
+              });
+            }
+          }
+        }
+      }
+    }
+  };
+</script>
+<script type="text/javascript" src="${widgetJs}"></script>
+`.trim();
+
+  } else {
+    // ✅ SOLO IT
+    snippet = `
 <script type="text/javascript">
   var _iub = _iub || [];
   _iub.csConfiguration = {
@@ -1529,6 +1592,7 @@ function makeIubendaSnippet(){
 </script>
 <script type="text/javascript" src="${widgetJs}"></script>
 `.trim();
+  }
 
   IubOut.value = snippet;
 }

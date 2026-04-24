@@ -1456,34 +1456,11 @@ function iubSyncEnVisibility(){
 }
 IubDualLang?.addEventListener('change', iubSyncEnVisibility);
 
-function decodeHtmlEntities(str){
-  return (str || '')
-    .replace(/&lt;/g,'<')
-    .replace(/&gt;/g,'>')
-    .replace(/&quot;/g,'"')
-    .replace(/&#039;/g,"'")
-    .replace(/&amp;/g,'&');
-}
-
-function normalizeWidgetScript(input){
-  const raw = decodeHtmlEntities((input || '').trim());
-  if (!raw) return '';
-
-  // Se incollano già lo <script> completo, lo usiamo così
-  if (/^<script\b/i.test(raw)){
-    const idx = raw.toLowerCase().lastIndexOf('</script>');
-    return idx !== -1 ? raw.slice(0, idx + 9) : raw;
-  }
-
-  // Altrimenti è solo l'URL
-  return `<script type="text/javascript" src="${raw}"></script>`;
-}
-
 function makeIubendaSnippet(){
-  const siteId = (IubSiteId?.value || '').trim();
-  const cpIt   = (IubCookieIt?.value || '').trim();
-  const cpEn   = (IubCookieEn?.value || '').trim();
-  const widgetScript = normalizeWidgetScript(IubWidgetUrl?.value);
+  const siteId   = (IubSiteId?.value || '').trim();
+  const cpIt     = (IubCookieIt?.value || '').trim();
+  const cpEn     = (IubCookieEn?.value || '').trim();
+  const widgetJs = (IubWidgetUrl?.value || '').trim();
 
   if (!siteId || !cpIt){
     alert('Compila siteId e cookiePolicyId (IT).');
@@ -1493,92 +1470,80 @@ function makeIubendaSnippet(){
     alert('Hai selezionato EN: compila cookiePolicyId (EN).');
     return;
   }
-
-  let snippet = '';
-
-  if (IubDualLang?.checked){
-    snippet = `
-<script type="text/javascript">
-(function () {
-  var lang = document.documentElement.lang === 'en' ? 'en' : 'it';
-
-  var cookiePolicyId = (lang === 'en')
-    ? ${cpEn}
-    : ${cpIt};
-
-  window._iub = window._iub || [];
-  window._iub.csConfiguration = {
-    siteId: ${siteId},
-    cookiePolicyId: cookiePolicyId,
-    lang: lang,
-    callback: {
-      onPreferenceExpressedOrNotNeeded: function(preference) {
-        window.dataLayer = window.dataLayer || [];
-        dataLayer.push({ event: 'cookie_consent_update' });
-
-        if (!preference) {
-          dataLayer.push({ event: 'iubenda_preference_not_needed' });
-          return;
-        }
-
-        if (preference.consent === true) {
-          dataLayer.push({ event: 'iubenda_consent_given' });
-        }
-
-        if (preference.consent === false) {
-          dataLayer.push({ event: 'iubenda_consent_rejected' });
-        }
-      }
-    }
-  };
-})();
-</script>
-${widgetScript}
-`.trim();
-  } else {
-    snippet = `
-<script type="text/javascript">
-(function () {
-  window._iub = window._iub || [];
-  window._iub.csConfiguration = {
-    siteId: ${siteId},
-    cookiePolicyId: ${cpIt},
-    lang: "it",
-    callback: {
-      onPreferenceExpressedOrNotNeeded: function(preference) {
-        window.dataLayer = window.dataLayer || [];
-        dataLayer.push({ event: 'cookie_consent_update' });
-
-        if (!preference) {
-          dataLayer.push({ event: 'iubenda_preference_not_needed' });
-          return;
-        }
-
-        if (preference.consent === true) {
-          dataLayer.push({ event: 'iubenda_consent_given' });
-        }
-
-        if (preference.consent === false) {
-          dataLayer.push({ event: 'iubenda_consent_rejected' });
-        }
-      }
-    }
-  };
-})();
-</script>
-${widgetScript}
-`.trim();
+  if (!widgetJs){
+    alert('Inserisci il Widget URL di Iubenda.');
+    return;
   }
 
-  if (IubOut) IubOut.value = snippet;
+  const snippet = `
+<script type="text/javascript">
+  var _iub = _iub || [];
+  _iub.csConfiguration = {
+    lang: (document.documentElement.lang === 'en' ? 'en' : 'it'),
+    siteId: ${siteId},
+    cookiePolicyId: (document.documentElement.lang === 'en'
+      ? ${IubDualLang.checked ? cpEn : cpIt}
+      : ${cpIt}),
+    banner: {
+      position: "float-bottom-center",
+      acceptButtonDisplay: true,
+      customizeButtonDisplay: true
+    },
+    callback: {
+      onPreferenceExpressedOrNotNeeded: function (preference) {
+        window.dataLayer = window.dataLayer || [];
+        dataLayer.push({
+          iubenda_ccpa_opted_out: _iub.cs.api.isCcpaOptedOut()
+        });
+
+        var otherPreferences = _iub.cs.api.getPreferences();
+        if (otherPreferences) {
+          var usprPreferences = otherPreferences.uspr;
+          if (usprPreferences) {
+            for (var purposeName in usprPreferences) {
+              if (usprPreferences[purposeName]) {
+                dataLayer.push({
+                  event: 'iubenda_consent_given_purpose_' + purposeName
+                });
+              }
+            }
+          }
+        }
+
+        if (!preference) {
+          dataLayer.push({ event: 'iubenda_preference_not_needed' });
+        }
+        else if (preference.consent === true) {
+          dataLayer.push({ event: 'iubenda_consent_given' });
+        }
+        else if (preference.consent === false) {
+          dataLayer.push({ event: 'iubenda_consent_rejected' });
+        }
+        else if (preference.purposes) {
+          for (var purposeId in preference.purposes) {
+            if (preference.purposes[purposeId]) {
+              dataLayer.push({
+                event: 'iubenda_consent_given_purpose_' + purposeId
+              });
+            }
+          }
+        }
+      }
+    }
+  };
+</script>
+<script type="text/javascript" src="${widgetJs}"></script>
+`.trim();
+
+  IubOut.value = snippet;
 }
 
 IubCopyBtn?.addEventListener('click', async () => {
   try {
-    await navigator.clipboard.writeText(IubOut?.value || '');
+    await navigator.clipboard.writeText(IubOut.value);
     alert('Snippet copiato negli appunti.');
   } catch {
-    IubOut?.select();
+    IubOut.select();
     document.execCommand('copy');
     alert('Snippet copiato (fallback).');
   }

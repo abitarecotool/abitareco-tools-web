@@ -1479,11 +1479,9 @@ function makeIubendaSnippet(){
 <script type="text/javascript">
   var _iub = _iub || [];
   _iub.csConfiguration = {
-    lang: (document.documentElement.lang === 'en' ? 'en' : 'it'),
+    lang: "it",
     siteId: ${siteId},
-    cookiePolicyId: (document.documentElement.lang === 'en'
-      ? ${IubDualLang.checked ? cpEn : cpIt}
-      : ${cpIt}),
+    cookiePolicyId: ${cpIt},
     banner: {
       position: "float-bottom-center",
       acceptButtonDisplay: true,
@@ -1512,14 +1510,11 @@ function makeIubendaSnippet(){
 
         if (!preference) {
           dataLayer.push({ event: 'iubenda_preference_not_needed' });
-        }
-        else if (preference.consent === true) {
+        } else if (preference.consent === true) {
           dataLayer.push({ event: 'iubenda_consent_given' });
-        }
-        else if (preference.consent === false) {
+        } else if (preference.consent === false) {
           dataLayer.push({ event: 'iubenda_consent_rejected' });
-        }
-        else if (preference.purposes) {
+        } else if (preference.purposes) {
           for (var purposeId in preference.purposes) {
             if (preference.purposes[purposeId]) {
               dataLayer.push({

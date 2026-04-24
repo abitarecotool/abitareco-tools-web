@@ -1434,25 +1434,7 @@ function scheduleQrUrlUpdate(){
   el?.addEventListener('input', scheduleQrUrlUpdate);
   el?.addEventListener('change', scheduleQrUrlUpdate);
 });
-/* =========================================================
-Abitare Co. – Digital Content Tool (Web)
-app.js
-========================================================= */
-"use strict";
-
-/* ---------------------------- Helpers base ---------------------------- */
-const $ = (s) => document.querySelector(s);
-const $$ = (s) => Array.from(document.querySelectorAll(s));
-const showEl = (el) => el && el.classList.remove('hidden');
-const hideEl = (el) => el && el.classList.add('hidden');
-
-/* =====================================================================
-   TUTTO IL FILE RESTA IDENTICO FINO ALLA SEZIONE IUBENDA
-   (login, sidebar, tool, ecc. NON MODIFICATI)
-===================================================================== */
-
 /* ================================ IUBENDA ============================= */
-
 const IubSiteId = $('#IubSiteId');
 const IubCookieIt = $('#IubCookieIt');
 const IubCookieEn = $('#IubCookieEn');
@@ -1478,44 +1460,27 @@ function decodeHtmlEntities(str){
     .replace(/&lt;/g,'<')
     .replace(/&gt;/g,'>')
     .replace(/&quot;/g,'"')
-    .replace(/&#039;/g,"'")
+    .replace(/&#39;/g,"'")
     .replace(/&amp;/g,'&');
 }
 
 function normalizeWidgetScript(input){
   let raw = decodeHtmlEntities((input || '').trim());
-  if (!raw) return '';
+  if (!raw) return '<script type="text/javascript" src="//cdn.iubenda.com/cs/iubenda_cs.js"></script>';
 
-  if (/^<script\b/i.test(raw)){
-    const idx = raw.toLowerCase().lastIndexOf('</script>');
-    return idx !== -1 ? raw.slice(0, idx + 9) : raw;
+  // Se incollano già un tag <script ...></script>, lo usiamo così com'è
+  if (/^<script/i.test(raw)){
+    raw = raw.trim();
+    const low = raw.toLowerCase();
+    const idx = low.lastIndexOf('</script>');
+    if (idx !== -1){
+      return raw.slice(0, idx + 9).trim();
+    }
+    return raw + '</script>';
   }
 
+  // Altrimenti è un URL
   return `<script type="text/javascript" src="${raw}"></script>`;
-}
-
-function buildIubendaCallback(){
-return `
-callback: {
-  onPreferenceExpressedOrNotNeeded: function(preference) {
-    window.dataLayer = window.dataLayer || [];
-    dataLayer.push({ event: 'cookie_consent_update' });
-
-    if (!preference) {
-      dataLayer.push({ event: 'iubenda_preference_not_needed' });
-      return;
-    }
-
-    if (preference.consent === true) {
-      dataLayer.push({ event: 'iubenda_consent_given' });
-    }
-
-    if (preference.consent === false) {
-      dataLayer.push({ event: 'iubenda_consent_rejected' });
-    }
-  }
-}
-`.trim();
 }
 
 function makeIubendaSnippet(){
@@ -1524,53 +1489,51 @@ function makeIubendaSnippet(){
   const cpEn = (IubCookieEn?.value || '').trim();
   const widgetScript = normalizeWidgetScript(IubWidgetUrl?.value);
 
-  if (!siteId || !cpIt){
-    alert('Compila siteId e cookiePolicyId (IT).');
-    return;
+  if (!siteId || !cpIt) { alert('Compila siteId e cookiePolicyId (IT).'); return; }
+  if (IubDualLang?.checked && !cpEn) { alert('Hai selezionato EN: compila cookiePolicyId (EN).'); return; }
+
+  const callback = `callback: {
+  onPreferenceExpressedOrNotNeeded: function (preference) {
+    window.dataLayer = window.dataLayer || [];
+    dataLayer.push({ event: "cookie_consent_update" });
+    if (!preference) { dataLayer.push({ event: "iubenda_preference_not_needed" }); return; }
+    if (preference.consent === true)  dataLayer.push({ event: "iubenda_consent_given" });
+    if (preference.consent === false) dataLayer.push({ event: "iubenda_consent_rejected" });
   }
-  if (IubDualLang?.checked && !cpEn){
-    alert('Hai selezionato EN: compila cookiePolicyId (EN).');
-    return;
-  }
+}}`;
 
-  const callbackBlock = buildIubendaCallback();
-
-  let snippet = '';
-
+  let snippet;
   if (IubDualLang?.checked){
-snippet = `
+    snippet = `
 <script type="text/javascript">
-var _iub = _iub || [];
-_iub.csConfiguration = {
-  siteId: ${siteId},
-  cookiePolicyId: ${cpIt},
-  lang: "it",
-  ${callbackBlock}
-};
-</script>
-${widgetScript}
-
-<script type="text/javascript">
-var _iub = _iub || [];
-_iub.csConfiguration = {
-  siteId: ${siteId},
-  cookiePolicyId: ${cpEn},
-  lang: "en",
-  ${callbackBlock}
-};
+  window.dataLayer = window.dataLayer || [];
+  var _iub = _iub || [];
+  var pageLang = (document.documentElement.getAttribute("lang") || "").toLowerCase().split("-")[0];
+  if (!pageLang) pageLang = (location.pathname.startsWith("/en") ? "en" : "it");
+  var cookiePolicyByLang = { it: ${cpIt}, en: ${cpEn} };
+  if (!cookiePolicyByLang[pageLang]) pageLang = "it";
+  _iub.csConfiguration = {
+    siteId: ${siteId},
+    cookiePolicyId: cookiePolicyByLang[pageLang],
+    lang: pageLang,
+    storage: { useSiteId: true },
+    ${callback}
+  };
 </script>
 ${widgetScript}
 `.trim();
   } else {
-snippet = `
+    snippet = `
 <script type="text/javascript">
-var _iub = _iub || [];
-_iub.csConfiguration = {
-  siteId: ${siteId},
-  cookiePolicyId: ${cpIt},
-  lang: "it",
-  ${callbackBlock}
-};
+  window.dataLayer = window.dataLayer || [];
+  var _iub = _iub || [];
+  _iub.csConfiguration = {
+    siteId: ${siteId},
+    cookiePolicyId: ${cpIt},
+    lang: "it",
+    storage: { useSiteId: true },
+    ${callback}
+  };
 </script>
 ${widgetScript}
 `.trim();
@@ -1579,24 +1542,12 @@ ${widgetScript}
   if (IubOut) IubOut.value = snippet;
 }
 
-IubCopyBtn?.addEventListener('click', async () => {
-  try {
-    await navigator.clipboard.writeText(IubOut?.value || '');
-    alert('Snippet copiato negli appunti.');
-  } catch {
-    IubOut?.select();
-    document.execCommand('copy');
-    alert('Snippet copiato (fallback).');
-  }
+IubCopyBtn?.addEventListener('click', async ()=>{
+  try { await navigator.clipboard.writeText(IubOut?.value || ''); alert('Snippet copiato negli appunti.'); }
+  catch { IubOut?.select(); document.execCommand('copy'); alert('Snippet copiato (fallback).'); }
 });
 
 try { iubSyncEnVisibility(); } catch {}
-
-/* ========================= FINE IUBENDA ================================ */
-
-/* ---------------------------------------------------------------------
-   TUTTO IL RESTO DEL FILE SEGUE IDENTICO (dispatcher, PPT, ecc.)
---------------------------------------------------------------------- */
 
 /* -------------------------- Dispatcher globale ------------------------ */
 

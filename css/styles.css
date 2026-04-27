@@ -1066,3 +1066,33 @@ input[type="checkbox"] {
   color: var(--gray-500);
   font-weight: 600;
 }
+
+/* ============================================================
+   IMMAGINI – Crop manuale (single image only)
+   ============================================================ */
+
+.crop-frame{
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--gray-50);
+  border: 1.5px dashed var(--gray-300);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+  margin-top: 12px;
+}
+
+.crop-frame:active{
+  cursor: grabbing;
+}
+
+.crop-frame img{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  pointer-events: none;
+  max-width: none;
+}

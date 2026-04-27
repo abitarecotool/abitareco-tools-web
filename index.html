@@ -276,13 +276,24 @@
             <section id="ImageCropCard" class="card hidden">
               <h3>Ritaglio immagine</h3>
               <p class="muted">
-                Hai caricato una sola immagine. Trascina l’immagine per regolare
-                l’inquadratura.
+                Hai caricato una sola immagine. Trascina e ridimensiona
+                l’immagine per regolare l’inquadratura.
               </p>
 
-              <div class="crop-frame" id="CropFrame">
-                <img id="CropImg" alt="Preview ritaglio" />
+              <div id="CropFrame" class="crop-frame">
+                <img id="CropImg" alt="Anteprima ritaglio" />
               </div>
+
+              <label style="margin-top: 12px">Zoom immagine</label>
+              <input
+                type="range"
+                id="CropZoom"
+                min="0.5"
+                max="2"
+                step="0.01"
+                value="1"
+                class="input"
+              />
 
               <button
                 id="CropReset"

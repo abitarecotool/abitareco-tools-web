@@ -742,9 +742,11 @@ async function exportRename(){
   hideEl(ActionProgressWrap);
 }
 
-/* ============================= VIDEO: Slideshow ======================= */
+/* ================= VIDEO SLIDESHOW – STANDALONE EXPORT ================= */
 
 const VidCanvas = document.getElementById('VidCanvas');
+const ctx = VidCanvas.getContext('2d');
+
 const VidPlay = document.getElementById('VidPlay');
 const VidPause = document.getElementById('VidPause');
 const VidStop = document.getElementById('VidStop');
@@ -753,214 +755,182 @@ const VidTime = document.getElementById('VidTime');
 
 const DropAreaVideo = document.getElementById('DropAreaVideo');
 const TxtFolderVideo = document.getElementById('TxtFolderVideo');
-const VideoTimeline = document.getElementById('VideoTimeline');
+const Timeline = document.getElementById('VideoTimeline');
+const BtnProcedi = document.getElementById('BtnProcedi');
 
-let videoClips = [];
+let clips = [];
 let playing = false;
-let playStart = 0;
-let rafId = null;
+let startTime = 0;
+let raf;
 
-const FADE = 1.0;
-let lastSizeKey = '';
+const FADE = 1;
+const FPS = 30;
 
-function pickVideoSize() {
-  if (document.getElementById('VidFmtV')?.checked) return { W: 1080, H: 1920 };
-  if (document.getElementById('VidFmtS')?.checked) return { W: 1080, H: 1080 };
-  return { W: 1920, H: 1080 };
+/* ===== helpers ===== */
+
+function size() {
+  if (document.getElementById('VidFmtV').checked) return [1080, 1920];
+  if (document.getElementById('VidFmtS').checked) return [1080, 1080];
+  return [1920, 1080];
 }
 
-function ensureCanvasSize() {
-  const { W, H } = pickVideoSize();
-  const key = `${W}x${H}`;
-  if (key !== lastSizeKey) {
-    VidCanvas.width = W;
-    VidCanvas.height = H;
-    lastSizeKey = key;
-  }
-}
-
-function totalDuration() {
+function duration() {
   return Number(document.getElementById('VidDuration').value);
 }
 
-function drawCover(ctx, bmp, W, H) {
-  const ir = bmp.width / bmp.height;
-  const cr = W / H;
-  let dw, dh, dx, dy;
+function draw(bmp, alpha = 1) {
+  ctx.globalAlpha = alpha;
+  const [W, H] = size();
+  const r1 = bmp.width / bmp.height;
+  const r2 = W / H;
+  let w, h, x, y;
 
-  if (ir > cr) {
-    dh = H;
-    dw = dh * ir;
-    dx = (W - dw) / 2;
-    dy = 0;
+  if (r1 > r2) {
+    h = H;
+    w = h * r1;
+    x = (W - w) / 2;
+    y = 0;
   } else {
-    dw = W;
-    dh = dw / ir;
-    dx = 0;
-    dy = (H - dh) / 2;
+    w = W;
+    h = w / r1;
+    x = 0;
+    y = (H - h) / 2;
   }
-  ctx.drawImage(bmp, dx, dy, dw, dh);
+
+  ctx.drawImage(bmp, x, y, w, h);
+  ctx.globalAlpha = 1;
 }
 
-function renderAt(t) {
-  if (!videoClips.length) return;
-  ensureCanvasSize();
-  const ctx = VidCanvas.getContext('2d');
-  const { W, H } = pickVideoSize();
+function render(t) {
+  if (!clips.length) return;
+  const [W, H] = size();
+  VidCanvas.width = W;
+  VidCanvas.height = H;
   ctx.clearRect(0, 0, W, H);
 
-  const N = videoClips.length;
-  const still = (totalDuration() - (N - 1) * FADE) / N;
+  const still = (duration() - (clips.length - 1) * FADE) / clips.length;
   let acc = 0;
 
-  for (let i = 0; i < N; i++) {
-    const start = acc;
-    const seg = i < N - 1 ? still + FADE : still;
-
-    if (t <= start + seg) {
-      const local = t - start;
-      if (i < N - 1 && local > still) {
+  for (let i = 0; i < clips.length; i++) {
+    const end = acc + still + (i < clips.length - 1 ? FADE : 0);
+    if (t <= end) {
+      const local = t - acc;
+      if (local > still && i < clips.length - 1) {
         const a = (local - still) / FADE;
-        ctx.globalAlpha = 1;
-        drawCover(ctx, videoClips[i].bmp, W, H);
-        ctx.globalAlpha = a;
-        drawCover(ctx, videoClips[i + 1].bmp, W, H);
-        ctx.globalAlpha = 1;
+        draw(clips[i].bmp, 1);
+        draw(clips[i + 1].bmp, a);
       } else {
-        drawCover(ctx, videoClips[i].bmp, W, H);
+        draw(clips[i].bmp, 1);
       }
       break;
     }
-    acc += seg;
+    acc = end;
   }
 }
 
-function playLoop() {
+/* ===== playback ===== */
+
+function loop() {
   if (!playing) return;
-  const t = (performance.now() - playStart) / 1000;
-  if (t >= totalDuration()) return stop();
-  renderAt(t);
-  VidScrub.value = (t / totalDuration()) * 100;
-  VidTime.textContent = `00:${Math.floor(t).toString().padStart(2, '0')} / 00:${totalDuration()}`;
-  rafId = requestAnimationFrame(playLoop);
+  const t = (performance.now() - startTime) / 1000;
+  if (t > duration()) return stop();
+  render(t);
+  VidScrub.value = (t / duration()) * 100;
+  VidTime.textContent = `00:${Math.floor(t)} / 00:${duration()}`;
+  raf = requestAnimationFrame(loop);
 }
 
 function play() {
-  if (!videoClips.length) return;
   playing = true;
-  playStart = performance.now() - (VidScrub.value / 100) * totalDuration() * 1000;
-  playLoop();
+  startTime = performance.now() - (VidScrub.value / 100) * duration() * 1000;
+  loop();
 }
 
 function pause() {
   playing = false;
-  cancelAnimationFrame(rafId);
+  cancelAnimationFrame(raf);
 }
 
 function stop() {
   playing = false;
-  cancelAnimationFrame(rafId);
+  cancelAnimationFrame(raf);
   VidScrub.value = 0;
-  renderAt(0);
+  render(0);
 }
+
+/* ===== upload ===== */
+
+DropAreaVideo.onclick = () => {
+  const i = document.createElement('input');
+  i.type = 'file';
+  i.webkitdirectory = true;
+  i.multiple = true;
+
+  i.onchange = async () => {
+    clips = [];
+    for (const f of i.files) {
+      if (!f.type.startsWith('image')) continue;
+      const bmp = await createImageBitmap(f);
+      clips.push({ file: f, bmp });
+    }
+    TxtFolderVideo.textContent = `${clips.length} immagini caricate`;
+    buildTimeline();
+    render(0);
+  };
+  i.click();
+};
+
+/* ===== timeline ===== */
+
+function buildTimeline() {
+  Timeline.innerHTML = '';
+  clips.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'timeline-clip';
+    el.draggable = true;
+    el.innerHTML = `<img src="${URL.createObjectURL(c.file)}">`;
+    el.ondragstart = () => el.dataset.i = i;
+    el.ondragover = e => e.preventDefault();
+    el.ondrop = e => {
+      const from = el.dataset.i;
+      const to = i;
+      const m = clips.splice(from, 1)[0];
+      clips.splice(to, 0, m);
+      buildTimeline();
+    };
+    Timeline.appendChild(el);
+  });
+}
+
+/* ===== export MP4 ===== */
+
+BtnProcedi.onclick = async () => {
+  const stream = VidCanvas.captureStream(FPS);
+  const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+  const chunks = [];
+
+  rec.ondataavailable = e => chunks.push(e.data);
+  rec.start();
+
+  play();
+  await new Promise(r => setTimeout(r, duration() * 1000));
+  rec.stop();
+
+  rec.onstop = () => {
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${document.getElementById('VidTitle').value || 'video'}.webm`;
+    a.click();
+  };
+};
+
+/* ===== bind ===== */
 
 VidPlay.onclick = play;
 VidPause.onclick = pause;
 VidStop.onclick = stop;
-
-VidScrub.oninput = () => renderAt((VidScrub.value / 100) * totalDuration());
-
-DropAreaVideo.onclick = () => {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.webkitdirectory = true;
-  input.multiple = true;
-
-  input.onchange = async () => {
-    videoClips = [];
-    for (const file of Array.from(input.files).filter(f => f.type.startsWith('image'))) {
-      const bmpFull = await createImageBitmap(file);
-      const scale = Math.min(1, 1920 / bmpFull.width);
-      const bmp = scale < 1
-        ? await createImageBitmap(bmpFull, {
-            resizeWidth: bmpFull.width * scale,
-            resizeHeight: bmpFull.height * scale
-          })
-        : bmpFull;
-
-      videoClips.push({
-        file,
-        bmp,
-        thumb: `<img src="${URL.createObjectURL(file)}">`
-      });
-    }
-    TxtFolderVideo.textContent = `${videoClips.length} immagini caricate`;
-    buildTimeline();
-    renderAt(0);
-  };
-  input.click();
-};
-
-function buildTimeline() {
-  VideoTimeline.innerHTML = '';
-  videoClips.forEach((clip, i) => {
-    const el = document.createElement('div');
-    el.className = 'timeline-clip';
-    el.draggable = true;
-    el.innerHTML = `
-      ${clip.thumb}
-      <div class="name">${i + 1}. ${clip.file.name}</div>
-      <div class="tools"><button data-up>↑</button><button data-down>↓</button></div>
-    `;
-
-    el.addEventListener('dragstart', () => {
-      el.classList.add('active');
-      el.dataset.index = i;
-    });
-    el.addEventListener('dragend', () => el.classList.remove('active'));
-    el.addEventListener('dragover', e => e.preventDefault());
-    el.addEventListener('drop', () => {
-      const from = Number(document.querySelector('.timeline-clip.active')?.dataset.index);
-      if (from === i || isNaN(from)) return;
-      const moved = videoClips.splice(from, 1)[0];
-      videoClips.splice(i, 0, moved);
-      buildTimeline();
-    });
-
-    el.querySelector('[data-up]').onclick = () => {
-      if (i === 0) return;
-      [videoClips[i - 1], videoClips[i]] = [videoClips[i], videoClips[i - 1]];
-      buildTimeline();
-    };
-
-    el.querySelector('[data-down]').onclick = () => {
-      if (i === videoClips.length - 1) return;
-      [videoClips[i + 1], videoClips[i]] = [videoClips[i], videoClips[i + 1]];
-      buildTimeline();
-    };
-
-    VideoTimeline.appendChild(el);
-  });
-}
-
-// === Hook export su bottone "Esporta ora" ===
-if (BtnProcedi) {
-  BtnProcedi.addEventListener('click', async () => {
-    if (!videoClips.length) {
-      alert('Carica prima una cartella di immagini.');
-      return;
-    }
-
-    // ✅ sincronizza lo stato usato dall’export originale
-    pickedVideo = videoClips.map((clip, i) => ({
-      file: clip.file,
-      relPath: clip.file.name || `${i + 1}.jpg`
-    }));
-
-    // ✅ rilancia l’export originale del tool
-    await exportVideoSlideshow();
-  });
-}
+VidScrub.oninput = () => render((VidScrub.value / 100) * duration());
 
 /* ========================= WATERMARK (auto) =========================== */
 const DropAreaLogo = $('#DropAreaLogo');

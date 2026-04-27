@@ -742,7 +742,7 @@ async function exportRename(){
   hideEl(ActionProgressWrap);
 }
 
-/* ================= VIDEO SLIDESHOW – STANDALONE EXPORT ================= */
+/* ================= VIDEO SLIDESHOW – STABILE ================= */
 
 const VidCanvas = document.getElementById('VidCanvas');
 const ctx = VidCanvas.getContext('2d');
@@ -756,71 +756,75 @@ const VidTime = document.getElementById('VidTime');
 const DropAreaVideo = document.getElementById('DropAreaVideo');
 const TxtFolderVideo = document.getElementById('TxtFolderVideo');
 const Timeline = document.getElementById('VideoTimeline');
-const BtnProcedi = document.getElementById('BtnProcedi');
 
-let clips = [];
+let videoClips = [];
 let playing = false;
 let startTime = 0;
-let raf;
+let rafId = null;
 
 const FADE = 1;
 const FPS = 30;
 
-/* ===== helpers ===== */
+/* ================= Helpers ================= */
 
-function size() {
-  if (document.getElementById('VidFmtV').checked) return [1080, 1920];
-  if (document.getElementById('VidFmtS').checked) return [1080, 1080];
+function getSize() {
+  if (document.getElementById('VidFmtV')?.checked) return [1080, 1920];
+  if (document.getElementById('VidFmtS')?.checked) return [1080, 1080];
   return [1920, 1080];
 }
 
-function duration() {
-  return Number(document.getElementById('VidDuration').value);
+function getDuration() {
+  return Number(document.getElementById('VidDuration')?.value || 30);
 }
 
-function draw(bmp, alpha = 1) {
-  ctx.globalAlpha = alpha;
-  const [W, H] = size();
-  const r1 = bmp.width / bmp.height;
-  const r2 = W / H;
+function drawImage(bmp, alpha = 1) {
+  const [W, H] = getSize();
+  const rImg = bmp.width / bmp.height;
+  const rCanvas = W / H;
+
   let w, h, x, y;
 
-  if (r1 > r2) {
+  if (rImg > rCanvas) {
     h = H;
-    w = h * r1;
+    w = h * rImg;
     x = (W - w) / 2;
     y = 0;
   } else {
     w = W;
-    h = w / r1;
+    h = w / rImg;
     x = 0;
     y = (H - h) / 2;
   }
 
+  ctx.globalAlpha = alpha;
   ctx.drawImage(bmp, x, y, w, h);
   ctx.globalAlpha = 1;
 }
 
-function render(t) {
-  if (!clips.length) return;
-  const [W, H] = size();
+/* ================= Render ================= */
+
+function renderAt(t) {
+  if (!videoClips.length) return;
+
+  const [W, H] = getSize();
   VidCanvas.width = W;
   VidCanvas.height = H;
+
   ctx.clearRect(0, 0, W, H);
 
-  const still = (duration() - (clips.length - 1) * FADE) / clips.length;
+  const still = (getDuration() - (videoClips.length - 1) * FADE) / videoClips.length;
   let acc = 0;
 
-  for (let i = 0; i < clips.length; i++) {
-    const end = acc + still + (i < clips.length - 1 ? FADE : 0);
+  for (let i = 0; i < videoClips.length; i++) {
+    const end = acc + still + (i < videoClips.length - 1 ? FADE : 0);
     if (t <= end) {
       const local = t - acc;
-      if (local > still && i < clips.length - 1) {
+      if (local > still && i < videoClips.length - 1) {
         const a = (local - still) / FADE;
-        draw(clips[i].bmp, 1);
-        draw(clips[i + 1].bmp, a);
+        drawImage(videoClips[i].bmp, 1);
+        drawImage(videoClips[i + 1].bmp, a);
       } else {
-        draw(clips[i].bmp, 1);
+        drawImage(videoClips[i].bmp, 1);
       }
       break;
     }
@@ -828,109 +832,121 @@ function render(t) {
   }
 }
 
-/* ===== playback ===== */
+/* ================= Playback ================= */
 
 function loop() {
   if (!playing) return;
   const t = (performance.now() - startTime) / 1000;
-  if (t > duration()) return stop();
-  render(t);
-  VidScrub.value = (t / duration()) * 100;
-  VidTime.textContent = `00:${Math.floor(t)} / 00:${duration()}`;
-  raf = requestAnimationFrame(loop);
+  if (t >= getDuration()) return stop();
+  renderAt(t);
+  VidScrub.value = (t / getDuration()) * 100;
+  VidTime.textContent = `00:${Math.floor(t)} / 00:${getDuration()}`;
+  rafId = requestAnimationFrame(loop);
 }
 
 function play() {
+  if (!videoClips.length) return;
   playing = true;
-  startTime = performance.now() - (VidScrub.value / 100) * duration() * 1000;
+  startTime = performance.now() - (VidScrub.value / 100) * getDuration() * 1000;
   loop();
 }
 
 function pause() {
   playing = false;
-  cancelAnimationFrame(raf);
+  cancelAnimationFrame(rafId);
 }
 
 function stop() {
   playing = false;
-  cancelAnimationFrame(raf);
+  cancelAnimationFrame(rafId);
   VidScrub.value = 0;
-  render(0);
+  renderAt(0);
 }
 
-/* ===== upload ===== */
+/* ================= Upload ================= */
 
 DropAreaVideo.onclick = () => {
-  const i = document.createElement('input');
-  i.type = 'file';
-  i.webkitdirectory = true;
-  i.multiple = true;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.webkitdirectory = true;
+  input.multiple = true;
 
-  i.onchange = async () => {
-    clips = [];
-    for (const f of i.files) {
+  input.onchange = async () => {
+    videoClips = [];
+    for (const f of input.files) {
       if (!f.type.startsWith('image')) continue;
       const bmp = await createImageBitmap(f);
-      clips.push({ file: f, bmp });
+      videoClips.push({ file: f, bmp });
     }
-    TxtFolderVideo.textContent = `${clips.length} immagini caricate`;
+    TxtFolderVideo.textContent = `${videoClips.length} immagini caricate`;
     buildTimeline();
-    render(0);
+    renderAt(0);
   };
-  i.click();
+  input.click();
 };
 
-/* ===== timeline ===== */
+/* ================= Timeline ================= */
 
 function buildTimeline() {
   Timeline.innerHTML = '';
-  clips.forEach((c, i) => {
+  videoClips.forEach((clip, i) => {
     const el = document.createElement('div');
     el.className = 'timeline-clip';
     el.draggable = true;
-    el.innerHTML = `<img src="${URL.createObjectURL(c.file)}">`;
-    el.ondragstart = () => el.dataset.i = i;
+
+    el.innerHTML = `
+      <img src="${URL.createObjectURL(clip.file)}">
+    `;
+
+    el.ondragstart = () => el.dataset.index = i;
     el.ondragover = e => e.preventDefault();
-    el.ondrop = e => {
-      const from = el.dataset.i;
-      const to = i;
-      const m = clips.splice(from, 1)[0];
-      clips.splice(to, 0, m);
+    el.ondrop = () => {
+      const from = Number(el.dataset.index);
+      const moved = videoClips.splice(from, 1)[0];
+      videoClips.splice(i, 0, moved);
       buildTimeline();
     };
+
     Timeline.appendChild(el);
   });
 }
 
-/* ===== export MP4 ===== */
+/* ================= Export ================= */
 
-BtnProcedi.onclick = async () => {
+BtnProcedi.addEventListener('click', () => {
+  if (!videoClips.length) {
+    alert('Carica prima le immagini.');
+    return;
+  }
+
   const stream = VidCanvas.captureStream(FPS);
-  const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+  const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
   const chunks = [];
 
-  rec.ondataavailable = e => chunks.push(e.data);
-  rec.start();
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.start();
 
   play();
-  await new Promise(r => setTimeout(r, duration() * 1000));
-  rec.stop();
 
-  rec.onstop = () => {
+  setTimeout(() => {
+    recorder.stop();
+  }, getDuration() * 1000);
+
+  recorder.onstop = () => {
     const blob = new Blob(chunks, { type: 'video/webm' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `${document.getElementById('VidTitle').value || 'video'}.webm`;
     a.click();
   };
-};
+});
 
-/* ===== bind ===== */
+/* ================= Bind ================= */
 
 VidPlay.onclick = play;
 VidPause.onclick = pause;
 VidStop.onclick = stop;
-VidScrub.oninput = () => render((VidScrub.value / 100) * duration());
+VidScrub.oninput = () => renderAt((VidScrub.value / 100) * getDuration());
 
 /* ========================= WATERMARK (auto) =========================== */
 const DropAreaLogo = $('#DropAreaLogo');

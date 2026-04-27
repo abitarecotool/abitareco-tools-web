@@ -753,40 +753,41 @@ const VidTime = document.getElementById('VidTime');
 
 const DropAreaVideo = document.getElementById('DropAreaVideo');
 const TxtFolderVideo = document.getElementById('TxtFolderVideo');
-const BtnClearVideo = document.getElementById('BtnClearVideo');
 const VideoTimeline = document.getElementById('VideoTimeline');
 
-const VidTitle = document.getElementById('VidTitle');
-const VidDuration = document.getElementById('VidDuration');
-const VidFmtH = document.getElementById('VidFmtH');
-const VidFmtV = document.getElementById('VidFmtV');
-const VidFmtS = document.getElementById('VidFmtS');
-
 let videoClips = [];
-let playStartTime = 0;
 let playing = false;
+let playStart = 0;
 let rafId = null;
 
-const FADE_DURATION = 1.0;
-const FPS = 30;
-
-/* ---------- helpers ---------- */
+const FADE = 1.0;
+let lastSizeKey = '';
 
 function pickVideoSize() {
-  if (VidFmtV?.checked) return { W: 1080, H: 1920 };
-  if (VidFmtS?.checked) return { W: 1080, H: 1080 };
+  if (document.getElementById('VidFmtV')?.checked) return { W: 1080, H: 1920 };
+  if (document.getElementById('VidFmtS')?.checked) return { W: 1080, H: 1080 };
   return { W: 1920, H: 1080 };
 }
 
-async function loadBitmap(file) {
-  return await createImageBitmap(file, { imageOrientation: 'from-image' });
+function ensureCanvasSize() {
+  const { W, H } = pickVideoSize();
+  const key = `${W}x${H}`;
+  if (key !== lastSizeKey) {
+    VidCanvas.width = W;
+    VidCanvas.height = H;
+    lastSizeKey = key;
+  }
+}
+
+function totalDuration() {
+  return Number(document.getElementById('VidDuration').value);
 }
 
 function drawCover(ctx, bmp, W, H) {
   const ir = bmp.width / bmp.height;
   const cr = W / H;
-
   let dw, dh, dx, dy;
+
   if (ir > cr) {
     dh = H;
     dw = dh * ir;
@@ -798,28 +799,133 @@ function drawCover(ctx, bmp, W, H) {
     dx = 0;
     dy = (H - dh) / 2;
   }
-
   ctx.drawImage(bmp, dx, dy, dw, dh);
 }
 
-function totalDuration() {
-  return parseFloat(VidDuration.value);
+function renderAt(t) {
+  if (!videoClips.length) return;
+  ensureCanvasSize();
+  const ctx = VidCanvas.getContext('2d');
+  const { W, H } = pickVideoSize();
+  ctx.clearRect(0, 0, W, H);
+
+  const N = videoClips.length;
+  const still = (totalDuration() - (N - 1) * FADE) / N;
+  let acc = 0;
+
+  for (let i = 0; i < N; i++) {
+    const start = acc;
+    const seg = i < N - 1 ? still + FADE : still;
+
+    if (t <= start + seg) {
+      const local = t - start;
+      if (i < N - 1 && local > still) {
+        const a = (local - still) / FADE;
+        ctx.globalAlpha = 1;
+        drawCover(ctx, videoClips[i].bmp, W, H);
+        ctx.globalAlpha = a;
+        drawCover(ctx, videoClips[i + 1].bmp, W, H);
+        ctx.globalAlpha = 1;
+      } else {
+        drawCover(ctx, videoClips[i].bmp, W, H);
+      }
+      break;
+    }
+    acc += seg;
+  }
 }
+
+function playLoop() {
+  if (!playing) return;
+  const t = (performance.now() - playStart) / 1000;
+  if (t >= totalDuration()) return stop();
+  renderAt(t);
+  VidScrub.value = (t / totalDuration()) * 100;
+  VidTime.textContent = `00:${Math.floor(t).toString().padStart(2, '0')} / 00:${totalDuration()}`;
+  rafId = requestAnimationFrame(playLoop);
+}
+
+function play() {
+  if (!videoClips.length) return;
+  playing = true;
+  playStart = performance.now() - (VidScrub.value / 100) * totalDuration() * 1000;
+  playLoop();
+}
+
+function pause() {
+  playing = false;
+  cancelAnimationFrame(rafId);
+}
+
+function stop() {
+  playing = false;
+  cancelAnimationFrame(rafId);
+  VidScrub.value = 0;
+  renderAt(0);
+}
+
+VidPlay.onclick = play;
+VidPause.onclick = pause;
+VidStop.onclick = stop;
+
+VidScrub.oninput = () => renderAt((VidScrub.value / 100) * totalDuration());
+
+DropAreaVideo.onclick = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.webkitdirectory = true;
+  input.multiple = true;
+
+  input.onchange = async () => {
+    videoClips = [];
+    for (const file of Array.from(input.files).filter(f => f.type.startsWith('image'))) {
+      const bmpFull = await createImageBitmap(file);
+      const scale = Math.min(1, 1920 / bmpFull.width);
+      const bmp = scale < 1
+        ? await createImageBitmap(bmpFull, {
+            resizeWidth: bmpFull.width * scale,
+            resizeHeight: bmpFull.height * scale
+          })
+        : bmpFull;
+
+      videoClips.push({
+        file,
+        bmp,
+        thumb: `<img src="${URL.createObjectURL(file)}">`
+      });
+    }
+    TxtFolderVideo.textContent = `${videoClips.length} immagini caricate`;
+    buildTimeline();
+    renderAt(0);
+  };
+  input.click();
+};
 
 function buildTimeline() {
   VideoTimeline.innerHTML = '';
   videoClips.forEach((clip, i) => {
     const el = document.createElement('div');
     el.className = 'timeline-clip';
-
+    el.draggable = true;
     el.innerHTML = `
-      <img src="${clip.thumb}">
+      ${clip.thumb}
       <div class="name">${i + 1}. ${clip.file.name}</div>
-      <div class="tools">
-        <button data-up>↑</button>
-        <button data-down>↓</button>
-      </div>
+      <div class="tools"><button data-up>↑</button><button data-down>↓</button></div>
     `;
+
+    el.addEventListener('dragstart', () => {
+      el.classList.add('active');
+      el.dataset.index = i;
+    });
+    el.addEventListener('dragend', () => el.classList.remove('active'));
+    el.addEventListener('dragover', e => e.preventDefault());
+    el.addEventListener('drop', () => {
+      const from = Number(document.querySelector('.timeline-clip.active')?.dataset.index);
+      if (from === i || isNaN(from)) return;
+      const moved = videoClips.splice(from, 1)[0];
+      videoClips.splice(i, 0, moved);
+      buildTimeline();
+    });
 
     el.querySelector('[data-up]').onclick = () => {
       if (i === 0) return;
@@ -836,121 +942,6 @@ function buildTimeline() {
     VideoTimeline.appendChild(el);
   });
 }
-
-/* ---------- rendering ---------- */
-
-function renderAt(t) {
-  if (!videoClips.length) return;
-
-  const ctx = VidCanvas.getContext('2d');
-  const { W, H } = pickVideoSize();
-  VidCanvas.width = W;
-  VidCanvas.height = H;
-
-  ctx.clearRect(0, 0, W, H);
-
-  const N = videoClips.length;
-  const T = totalDuration();
-  const still = (T - (N - 1) * FADE_DURATION) / N;
-
-  let acc = 0;
-  for (let i = 0; i < N; i++) {
-    const start = acc;
-    const seg = i < N - 1 ? still + FADE_DURATION : still;
-
-    if (t <= start + seg || i === N - 1) {
-      const local = t - start;
-
-      if (i < N - 1 && local > still) {
-        const a = Math.min(1, (local - still) / FADE_DURATION);
-        ctx.globalAlpha = 1;
-        drawCover(ctx, videoClips[i].bmp, W, H);
-        ctx.globalAlpha = a;
-        drawCover(ctx, videoClips[i + 1].bmp, W, H);
-        ctx.globalAlpha = 1;
-      } else {
-        drawCover(ctx, videoClips[i].bmp, W, H);
-      }
-      break;
-    }
-    acc += seg;
-  }
-}
-
-/* ---------- playback ---------- */
-
-function playLoop() {
-  if (!playing) return;
-
-  const t = (performance.now() - playStartTime) / 1000;
-  if (t >= totalDuration()) {
-    stopPlayback();
-    return;
-  }
-
-  renderAt(t);
-  VidScrub.value = (t / totalDuration()) * 100;
-  VidTime.textContent = `00:${Math.floor(t).toString().padStart(2, '0')} / 00:${totalDuration()}`;
-  rafId = requestAnimationFrame(playLoop);
-}
-
-function startPlayback() {
-  if (!videoClips.length) return;
-  playing = true;
-  playStartTime = performance.now() - (VidScrub.value / 100) * totalDuration() * 1000;
-  playLoop();
-}
-
-function pausePlayback() {
-  playing = false;
-  cancelAnimationFrame(rafId);
-}
-
-function stopPlayback() {
-  playing = false;
-  cancelAnimationFrame(rafId);
-  VidScrub.value = 0;
-  renderAt(0);
-}
-
-/* ---------- UI binds ---------- */
-
-VidPlay?.addEventListener('click', startPlayback);
-VidPause?.addEventListener('click', pausePlayback);
-VidStop?.addEventListener('click', stopPlayback);
-
-VidScrub?.addEventListener('input', () => {
-  const t = (VidScrub.value / 100) * totalDuration();
-  renderAt(t);
-});
-
-/* ---------- upload ---------- */
-
-DropAreaVideo?.addEventListener('click', () => {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.multiple = true;
-  input.webkitdirectory = true;
-
-  input.onchange = async () => {
-    videoClips = [];
-    const files = Array.from(input.files)
-      .filter(f => /.(jpe?g|png|webp)$/i.test(f.name))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    for (const file of files) {
-      const bmp = await loadBitmap(file);
-      const thumb = URL.createObjectURL(file);
-      videoClips.push({ file, bmp, thumb });
-    }
-
-    TxtFolderVideo.textContent = `Selezionate ${videoClips.length} immagini`;
-    buildTimeline();
-    renderAt(0);
-  };
-
-  input.click();
-});
 
 /* ========================= WATERMARK (auto) =========================== */
 const DropAreaLogo = $('#DropAreaLogo');

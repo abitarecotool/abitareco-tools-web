@@ -326,57 +326,71 @@ SideMenu?.addEventListener('click', (e)=>{
 initSidebarIcons();
 selectMode('welcome');
 
-/* ========================= Drag & Drop: GENERALE ====================== */
 
-const DropArea      = $('#DropArea');
+/* ========================= Drag & Drop: IMMAGINI ====================== */
+const DropArea = $('#DropArea');
 const TxtFolderPath = $('#TxtFolderPath');
-const BtnClearPath  = $('#BtnClearPath');
+const BtnClearPath = $('#BtnClearPath');
 
 if (DropArea) {
   const prevent = (e)=>{ e.preventDefault(); e.stopPropagation(); };
   ['dragenter','dragover','dragleave','drop'].forEach(ev => DropArea.addEventListener(ev, prevent));
-  DropArea.addEventListener('dragenter', ()=> DropArea.classList.add('drag-over'));
-  DropArea.addEventListener('dragleave', ()=> DropArea.classList.remove('drag-over'));
+
+  DropArea.addEventListener('dragenter', () => DropArea.classList.add('drag-over'));
+  DropArea.addEventListener('dragleave', () => DropArea.classList.remove('drag-over'));
+
   DropArea.addEventListener('drop', async (e)=>{
     DropArea.classList.remove('drag-over');
     picked = await readDroppedDirectory(e.dataTransfer);
+
     TxtFolderPath.textContent = picked.length
       ? `Selezionati ${picked.length} file…`
       : 'Nessun file supportato.';
     BtnClearPath.classList.toggle('hidden', picked.length === 0);
+
+    handleCropUI();
   });
+
   DropArea.addEventListener('click', ()=>{
     const input = document.createElement('input');
-    input.type = 'file'; input.webkitdirectory = true; input.multiple = true;
+    input.type = 'file';
+    input.webkitdirectory = true;
+    input.multiple = true;
+
     input.onchange = ()=>{
-      const fl = input.files ? Array.from(input.files) : [];
+      const fl = Array.from(input.files || []);
       picked = fl
-        .filter(f => /\.(jpe?g|png|tif?f|webp|pdf)$/i.test(f.name))
+        .filter(f => /\.(jpe?g|png|webp|tif?f)$/i.test(f.name))
         .map(f => ({ file:f, relPath:f.webkitRelativePath || f.name }));
+
       TxtFolderPath.textContent = picked.length
         ? `Selezionati ${picked.length} file…`
         : 'Nessun file supportato.';
       BtnClearPath.classList.toggle('hidden', picked.length === 0);
+
+      handleCropUI();
     };
     input.click();
   });
+
   BtnClearPath?.addEventListener('click', (e)=>{
     e.stopPropagation();
     picked = [];
     TxtFolderPath.textContent = 'Trascina qui la cartella…';
     BtnClearPath.classList.add('hidden');
+    hideEl(ImageCropCard);
   });
 }
 
-// dopo aver popolato "picked"
-if (picked.length === 1 && picked[0].file.type.startsWith('image/')) {
-  if (ImageCropCard && CropImg) {
+/* --------- LOGICA SINGLE vs BATCH --------- */
+function handleCropUI(){
+  if (picked.length === 1 && picked[0].file.type.startsWith('image/')) {
     showEl(ImageCropCard);
     CropImg.src = URL.createObjectURL(picked[0].file);
     resetCrop();
+  } else {
+    hideEl(ImageCropCard);
   }
-} else {
-  if (ImageCropCard) hideEl(ImageCropCard);
 }
 
 /* ========================= Drag & Drop: RENAME ======================== */
@@ -421,27 +435,29 @@ if (DropAreaRename) {
 }
 
 /* ======================= Utility: lettura cartelle ==================== */
+
 async function readDroppedDirectory(dt){
-  const items = dt?.items ? Array.from(dt.items) : [];
+  const items = Array.from(dt.items || []);
   const out = [];
+
   async function traverse(entry, base=''){
     if (entry.isFile){
       const f = await new Promise(res => entry.file(res));
-      if (/\.(jpe?g|png|tif?f|webp|pdf)$/i.test(f.name)){
-        out.push({ file: f, relPath: base ? `${base}/${f.name}` : f.name });
+      if (/\.(jpe?g|png|webp|tif?f)$/i.test(f.name)){
+        out.push({ file:f, relPath: base ? `${base}/${f.name}` : f.name });
       }
     } else if (entry.isDirectory){
       const reader = entry.createReader();
       const entries = await new Promise(res => reader.readEntries(res));
-      for (const en of entries){ await traverse(en, base ? `${base}/${entry.name}` : entry.name); }
+      for (const en of entries){
+        await traverse(en, base ? `${base}/${entry.name}` : entry.name);
+      }
     }
   }
-  const hasEntries = items.length && typeof items[0].webkitGetAsEntry === 'function';
-  if (hasEntries){
-    for (const it of items){
-      const en = it.webkitGetAsEntry();
-      if (en) await traverse(en, '');
-    }
+
+  for (const it of items){
+    const en = it.webkitGetAsEntry?.();
+    if (en) await traverse(en);
   }
   return out;
 }
@@ -466,14 +482,15 @@ function canvasToBlob(canvas, mime, q=0.85){ return new Promise(res => canvas.to
 
 /* =============================== Immagini (Sito) ====================== */
 
-// ─────────────────────────────────────────
-// IMMAGINI – elementi crop (init sicuro)
-// ─────────────────────────────────────────
+/* --------- CROP MANUALE (SOLO SE 1 IMMAGINE) --------- */
+
+// elementi DOM (init sicuro)
 const ImageCropCard = document.getElementById('ImageCropCard');
 const CropFrame = document.getElementById('CropFrame');
 const CropImg = document.getElementById('CropImg');
 const CropReset = document.getElementById('CropReset');
 
+// stato crop
 let crop = {
   x: 0,
   y: 0,
@@ -485,15 +502,16 @@ let crop = {
 function resetCrop(){
   crop.x = 0;
   crop.y = 0;
-  applyCrop();
+  updateCrop();
 }
 
-function applyCrop(){
+function updateCrop(){
   if (!CropImg) return;
   CropImg.style.transform =
     `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px))`;
 }
 
+// drag
 CropFrame?.addEventListener('mousedown', (e)=>{
   crop.dragging = true;
   crop.startX = e.clientX;
@@ -506,7 +524,7 @@ window.addEventListener('mousemove', (e)=>{
   crop.y += e.clientY - crop.startY;
   crop.startX = e.clientX;
   crop.startY = e.clientY;
-  applyCrop();
+  updateCrop();
 });
 
 window.addEventListener('mouseup', ()=>{

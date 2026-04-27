@@ -1071,19 +1071,17 @@ input[type="checkbox"] {
    IMMAGINI – Crop manuale (single image only)
    ============================================================ */
 
-.crop-frame{
-  max-width: 520px;                /* ✅ anteprima più piccola */
+.crop-frame{-width: 520px;
   width: 100%;
   margin: 16px auto;
 
+  aspect-ratio: var(--crop-ratio, 16 / 9);
   background: var(--gray-50);
   border: 1.5px dashed var(--gray-300);
   border-radius: 12px;
   overflow: hidden;
   position: relative;
   cursor: grab;
-
-  aspect-ratio: var(--crop-ratio, 16 / 9); /* ✅ formato dinamico */
 }
 
 .crop-frame:active{

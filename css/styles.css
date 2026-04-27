@@ -1212,40 +1212,39 @@ input[type="checkbox"] {
   object-fit: contain;
 }
 
-/* ================== VIDEO SLIDESHOW (EDITOR) ================== */
+/* ===== VIDEO EDITOR ===== */
+
 .video-preview {
   margin-top: 18px;
+  background: #000;
   border-radius: 12px;
   overflow: hidden;
-  background: #000;
   max-height: 480px;
 }
 
 .video-preview canvas {
   width: 100%;
-  max-height: 480px;
+  height: auto;
   display: block;
-  background: #000;
 }
 
 .preview-controls {
   display: flex;
-  align-items: center;
   gap: 8px;
   padding: 10px;
-  background: var(--white);
-  border-top: 1px solid var(--gray-200);
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
 }
 
-.preview-controls input[type="range"] {
+.preview-controls input {
   flex: 1;
 }
 
 .timeline {
   margin-top: 16px;
   padding: 12px;
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
 }
 
@@ -1257,15 +1256,15 @@ input[type="checkbox"] {
 
 .timeline-clip {
   min-width: 140px;
-  background: var(--white);
-  border: 2px solid var(--gray-300);
+  background: #fff;
+  border: 2px solid #d1d5db;
   border-radius: 10px;
   padding: 6px;
   cursor: grab;
 }
 
 .timeline-clip.active {
-  border-color: var(--red);
+  border-color: #c4162b;
 }
 
 .timeline-clip img {
@@ -1273,25 +1272,4 @@ input[type="checkbox"] {
   height: 64px;
   object-fit: cover;
   border-radius: 6px;
-}
-
-.timeline-clip .name {
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.timeline-clip .tools {
-  display: flex;
-  gap: 4px;
-  justify-content: flex-end;
-}
-
-.timeline-clip .tools button {
-  background: var(--gray-200);
-  border: none;
-  border-radius: 6px;
-  padding: 2px 6px;
 }

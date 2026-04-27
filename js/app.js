@@ -943,6 +943,25 @@ function buildTimeline() {
   });
 }
 
+// === Hook export su bottone "Esporta ora" ===
+if (BtnProcedi) {
+  BtnProcedi.addEventListener('click', async () => {
+    if (!videoClips.length) {
+      alert('Carica prima una cartella di immagini.');
+      return;
+    }
+
+    // ✅ sincronizza lo stato usato dall’export originale
+    pickedVideo = videoClips.map((clip, i) => ({
+      file: clip.file,
+      relPath: clip.file.name || `${i + 1}.jpg`
+    }));
+
+    // ✅ rilancia l’export originale del tool
+    await exportVideoSlideshow();
+  });
+}
+
 /* ========================= WATERMARK (auto) =========================== */
 const DropAreaLogo = $('#DropAreaLogo');
 const TxtLogoName  = $('#TxtLogoName');

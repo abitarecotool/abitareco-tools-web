@@ -350,15 +350,11 @@
             </section>
 
             <!-- VIDEO SLIDESHOW -->
-
             <section id="VideoCard" class="card hidden">
               <h3>Creazione video slideshow</h3>
-
               <p class="muted" style="margin-bottom: 16px">
-                Carica le immagini, riordinale nella timeline e visualizza
-                l’anteprima prima dell’export.
+                Imposta nome, durata e formato. Poi clicca "Esporta ora".
               </p>
-
               <div class="form-group">
                 <label for="VidTitle">Nome video*</label>
                 <input
@@ -368,17 +364,15 @@
                   placeholder="es. abitareco-presentazione"
                 />
               </div>
-
               <div class="row" style="margin-bottom: 16px">
                 <div>
                   <label for="VidDuration">Durata</label>
-                  <select id="VidDuration" class="input">
+                  <select id="VidDuration" class="input" style="height: 41px">
                     <option value="15">15 secondi</option>
                     <option value="30" selected>30 secondi</option>
                     <option value="45">45 secondi</option>
                   </select>
                 </div>
-
                 <div>
                   <label>Formato</label>
                   <div
@@ -400,41 +394,32 @@
                   </div>
                 </div>
               </div>
-
               <div class="form-group">
                 <label>Carica cartella immagini*</label>
-                <div id="DropAreaVideo" class="drop">
+                <div
+                  id="DropAreaVideo"
+                  class="drop"
+                  tabindex="0"
+                  role="button"
+                  aria-label="Carica cartella per video"
+                >
                   <div class="drop-inner">
                     <span id="TxtFolderVideo" class="muted"
                       >Trascina qui la cartella o clicca per sfogliare…</span
                     >
+                    <button
+                      id="BtnClearVideo"
+                      class="btn-small hidden"
+                      type="button"
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
               </div>
-
-              <div class="video-preview">
-                <canvas id="VidCanvas"></canvas>
-
-                <div class="preview-controls">
-                  <button id="VidPlay" class="btn-outline">Play</button>
-                  <button id="VidPause" class="btn-outline">Pausa</button>
-                  <button id="VidStop" class="btn-outline">Stop</button>
-
-                  <input
-                    id="VidScrub"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value="0"
-                  />
-                  <span id="VidTime" class="muted">00:00 / 00:30</span>
-                </div>
-              </div>
-
-              <div class="timeline">
-                <div id="VideoTimeline" class="timeline-track"></div>
-              </div>
+              <canvas id="VidCanvas" width="1920" height="1080" hidden></canvas>
             </section>
+
             <!-- WATERMARK -->
             <section id="WatermarkCard" class="card hidden">
               <h3>Watermark</h3>

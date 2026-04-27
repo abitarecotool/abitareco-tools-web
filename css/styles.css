@@ -1072,15 +1072,18 @@ input[type="checkbox"] {
    ============================================================ */
 
 .crop-frame{
+  max-width: 520px;                /* ✅ anteprima più piccola */
   width: 100%;
-  aspect-ratio: 16 / 9;
+  margin: 16px auto;
+
   background: var(--gray-50);
   border: 1.5px dashed var(--gray-300);
   border-radius: 12px;
   overflow: hidden;
   position: relative;
   cursor: grab;
-  margin-top: 12px;
+
+  aspect-ratio: var(--crop-ratio, 16 / 9); /* ✅ formato dinamico */
 }
 
 .crop-frame:active{

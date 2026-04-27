@@ -327,6 +327,18 @@ initSidebarIcons();
 selectMode('welcome');
 
 /* ========================= Drag & Drop: GENERALE ====================== */
+
+// dopo aver popolato "picked"
+if (picked.length === 1 && picked[0].file.type.startsWith('image/')) {
+  if (ImageCropCard && CropImg) {
+    showEl(ImageCropCard);
+    CropImg.src = URL.createObjectURL(picked[0].file);
+    resetCrop();
+  }
+} else {
+  if (ImageCropCard) hideEl(ImageCropCard);
+}
+
 const DropArea      = $('#DropArea');
 const TxtFolderPath = $('#TxtFolderPath');
 const BtnClearPath  = $('#BtnClearPath');
@@ -365,15 +377,6 @@ if (DropArea) {
     TxtFolderPath.textContent = 'Trascina qui la cartella…';
     BtnClearPath.classList.add('hidden');
   });
-}
-
-// Mostra crop SOLO se c'è una immagine
-if (picked.length === 1 && picked[0].file.type.startsWith('image/')) {
-  showEl(ImageCropCard);
-  CropImg.src = URL.createObjectURL(picked[0].file);
-  resetCrop();
-} else {
-  hideEl(ImageCropCard);
 }
 
 /* ========================= Drag & Drop: RENAME ======================== */
@@ -462,6 +465,56 @@ async function loadImageBitmap(file){
 function canvasToBlob(canvas, mime, q=0.85){ return new Promise(res => canvas.toBlob(res, mime, q)); }
 
 /* =============================== Immagini (Sito) ====================== */
+
+// ─────────────────────────────────────────
+// IMMAGINI – elementi crop (init sicuro)
+// ─────────────────────────────────────────
+const ImageCropCard = document.getElementById('ImageCropCard');
+const CropFrame = document.getElementById('CropFrame');
+const CropImg = document.getElementById('CropImg');
+const CropReset = document.getElementById('CropReset');
+
+let crop = {
+  x: 0,
+  y: 0,
+  dragging: false,
+  startX: 0,
+  startY: 0
+};
+
+function resetCrop(){
+  crop.x = 0;
+  crop.y = 0;
+  applyCrop();
+}
+
+function applyCrop(){
+  if (!CropImg) return;
+  CropImg.style.transform =
+    `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px))`;
+}
+
+CropFrame?.addEventListener('mousedown', (e)=>{
+  crop.dragging = true;
+  crop.startX = e.clientX;
+  crop.startY = e.clientY;
+});
+
+window.addEventListener('mousemove', (e)=>{
+  if (!crop.dragging) return;
+  crop.x += e.clientX - crop.startX;
+  crop.y += e.clientY - crop.startY;
+  crop.startX = e.clientX;
+  crop.startY = e.clientY;
+  applyCrop();
+});
+
+window.addEventListener('mouseup', ()=>{
+  crop.dragging = false;
+});
+
+CropReset?.addEventListener('click', resetCrop);
+
 const TxtSlugIta = $('#TxtSlugIta');
 const TxtSlugEng = $('#TxtSlugEng');
 const Fmt1920 = $('#FmtSite1920');
@@ -586,56 +639,6 @@ async function exportImages(){
   URL.revokeObjectURL(a.href);
   hideEl(ActionProgressWrap);
 }
-
-// ─────────────────────────────────────────
-// Crop manuale – SOLO se c'è una immagine
-// ─────────────────────────────────────────
-
-const ImageCropCard = document.getElementById('ImageCropCard');
-const CropFrame = document.getElementById('CropFrame');
-const CropImg = document.getElementById('CropImg');
-const CropReset = document.getElementById('CropReset');
-
-let crop = {
-  x: 0,
-  y: 0,
-  dragging: false,
-  startX: 0,
-  startY: 0
-};
-
-function resetCrop(){
-  crop.x = 0;
-  crop.y = 0;
-  applyCrop();
-}
-
-function applyCrop(){
-  if (!CropImg) return;
-  CropImg.style.transform =
-    `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px))`;
-}
-
-CropFrame?.addEventListener('mousedown', (e)=>{
-  crop.dragging = true;
-  crop.startX = e.clientX;
-  crop.startY = e.clientY;
-});
-
-window.addEventListener('mousemove', (e)=>{
-  if (!crop.dragging) return;
-  crop.x += e.clientX - crop.startX;
-  crop.y += e.clientY - crop.startY;
-  crop.startX = e.clientX;
-  crop.startY = e.clientY;
-  applyCrop();
-});
-
-window.addEventListener('mouseup', ()=>{
-  crop.dragging = false;
-});
-
-CropReset?.addEventListener('click', resetCrop);
 
 /* ============================== DigitalTool =========================== */
 function makeCanvasFromRules(bmp){

@@ -350,6 +350,7 @@
             </section>
 
             <!-- VIDEO SLIDESHOW -->
+
             <section id="VideoCard" class="card hidden">
               <h3>Creazione video slideshow</h3>
 
@@ -358,7 +359,6 @@
                 l’anteprima prima dell’export.
               </p>
 
-              <!-- METADATA -->
               <div class="form-group">
                 <label for="VidTitle">Nome video*</label>
                 <input
@@ -401,25 +401,14 @@
                 </div>
               </div>
 
-              <!-- UPLOAD -->
               <div class="form-group">
                 <label>Carica cartella immagini*</label>
-                <div
-                  id="DropAreaVideo"
-                  class="drop"
-                  tabindex="0"
-                  role="button"
-                  aria-label="Carica cartella per video"
-                >
+                <div id="DropAreaVideo" class="drop" tabindex="0">
                   <div class="drop-inner">
-                    <span id="TxtFolderVideo" class="muted">
-                      Trascina qui la cartella o clicca per sfogliare…
-                    </span>
-                    <button
-                      id="BtnClearVideo"
-                      class="btn-small hidden"
-                      type="button"
+                    <span id="TxtFolderVideo" class="muted"
+                      >Trascina qui la cartella o clicca per sfogliare…</span
                     >
+                    <button id="BtnClearVideo" class="btn-small hidden">
                       ✕
                     </button>
                   </div>

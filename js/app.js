@@ -328,17 +328,6 @@ selectMode('welcome');
 
 /* ========================= Drag & Drop: GENERALE ====================== */
 
-// dopo aver popolato "picked"
-if (picked.length === 1 && picked[0].file.type.startsWith('image/')) {
-  if (ImageCropCard && CropImg) {
-    showEl(ImageCropCard);
-    CropImg.src = URL.createObjectURL(picked[0].file);
-    resetCrop();
-  }
-} else {
-  if (ImageCropCard) hideEl(ImageCropCard);
-}
-
 const DropArea      = $('#DropArea');
 const TxtFolderPath = $('#TxtFolderPath');
 const BtnClearPath  = $('#BtnClearPath');
@@ -377,6 +366,17 @@ if (DropArea) {
     TxtFolderPath.textContent = 'Trascina qui la cartella…';
     BtnClearPath.classList.add('hidden');
   });
+}
+
+// dopo aver popolato "picked"
+if (picked.length === 1 && picked[0].file.type.startsWith('image/')) {
+  if (ImageCropCard && CropImg) {
+    showEl(ImageCropCard);
+    CropImg.src = URL.createObjectURL(picked[0].file);
+    resetCrop();
+  }
+} else {
+  if (ImageCropCard) hideEl(ImageCropCard);
 }
 
 /* ========================= Drag & Drop: RENAME ======================== */

@@ -1068,14 +1068,20 @@ input[type="checkbox"] {
 }
 
 /* ============================================================
-   IMMAGINI – Crop manuale (single image only)
+   IMMAGINI – Crop manuale (single image only) – Preview compatta
    ============================================================ */
 
-.crop-frame{-width: 520px;
+.crop-frame{
   width: 100%;
-  margin: 16px auto;
 
+  /* ✅ preview più piccola e leggibile */
+  max-width: 560px;      /* cambia a 480px se la vuoi ancora più piccola */
+  max-height: 320px;     /* limita lo scroll anche su verticali */
+  margin: 12px auto;
+
+  /* ✅ formato dinamico dal JS (500×500 = quadrato, verticale = verticale) */
   aspect-ratio: var(--crop-ratio, 16 / 9);
+
   background: var(--gray-50);
   border: 1.5px dashed var(--gray-300);
   border-radius: 12px;

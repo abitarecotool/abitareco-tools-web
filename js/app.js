@@ -20,7 +20,7 @@ const AUTH_SESSION_KEY = 'abitare_tools_auth_ok';
 
 // ===== Welcome voice overlay (stile login) =====
 function showVoiceOverlay(){
-  const ov = document.getElementById('VoiceOverlay');
+  const ov = document.getElementById('VoicaeOverlay');
   if (!ov) return;
   ov.classList.add('show');
   ov.setAttribute('aria-hidden','false');
@@ -384,14 +384,17 @@ if (DropArea) {
 
 /* --------- LOGICA SINGLE vs BATCH --------- */
 function handleCropUI(){
-  if (picked.length === 1 && picked[0].file.type.startsWith('image/')) {
+  // Mostra crop SOLO se c'è una immagine
+  if (picked.length === 1 && picked[0].file && picked[0].file.type && picked[0].file.type.startsWith('image/')) {
     showEl(ImageCropCard);
-    CropImg.src = URL.createObjectURL(picked[0].file);
+    if (CropImg) CropImg.src = URL.createObjectURL(picked[0].file);
+    try { updateCropFrameRatio(); } catch {}
     resetCrop();
   } else {
     hideEl(ImageCropCard);
   }
 }
+
 
 /* ========================= Drag & Drop: RENAME ======================== */
 const DropAreaRename  = $('#DropAreaRename');
@@ -486,49 +489,68 @@ function canvasToBlob(canvas, mime, q=0.85){ return new Promise(res => canvas.to
 
 // elementi DOM (init sicuro)
 const ImageCropCard = document.getElementById('ImageCropCard');
-const CropFrame = document.getElementById('CropFrame');
-const CropImg = document.getElementById('CropImg');
-const CropReset = document.getElementById('CropReset');
+const CropFrame     = document.getElementById('CropFrame');
+const CropImg       = document.getElementById('CropImg');
+const CropReset     = document.getElementById('CropReset');
+const CropZoom      = document.getElementById('CropZoom');
 
-// stato crop
+// stato crop (pan + zoom)
 let crop = {
   x: 0,
   y: 0,
+  scale: 1,
   dragging: false,
   startX: 0,
-  startY: 0
+  startY: 0,
+  pointerId: null
 };
-
-function resetCrop(){
-  crop.x = 0;
-  crop.y = 0;
-  updateCrop();
-}
 
 function updateCrop(){
   if (!CropImg) return;
   CropImg.style.transform =
-    `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px))`;
+    `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px)) scale(${crop.scale})`;
 }
 
-// drag
-CropFrame?.addEventListener('mousedown', (e)=>{
+function resetCrop(){
+  crop.x = 0;
+  crop.y = 0;
+  crop.scale = 1;
+  if (CropZoom) CropZoom.value = '1';
+  updateCrop();
+}
+
+// Pointer events (mouse + touch)
+CropFrame?.addEventListener('pointerdown', (e) => {
   crop.dragging = true;
   crop.startX = e.clientX;
   crop.startY = e.clientY;
+  crop.pointerId = e.pointerId;
+  try { CropFrame.setPointerCapture(e.pointerId); } catch {}
 });
 
-window.addEventListener('mousemove', (e)=>{
+CropFrame?.addEventListener('pointermove', (e) => {
   if (!crop.dragging) return;
-  crop.x += e.clientX - crop.startX;
-  crop.y += e.clientY - crop.startY;
+  if (crop.pointerId != null && e.pointerId !== crop.pointerId) return;
+  crop.x += (e.clientX - crop.startX);
+  crop.y += (e.clientY - crop.startY);
   crop.startX = e.clientX;
   crop.startY = e.clientY;
   updateCrop();
 });
 
-window.addEventListener('mouseup', ()=>{
+function _endPointer(e){
+  if (crop.pointerId != null && e.pointerId !== crop.pointerId) return;
   crop.dragging = false;
+  try { CropFrame?.releasePointerCapture(crop.pointerId); } catch {}
+  crop.pointerId = null;
+}
+
+CropFrame?.addEventListener('pointerup', _endPointer);
+CropFrame?.addEventListener('pointercancel', _endPointer);
+
+CropZoom?.addEventListener('input', () => {
+  crop.scale = Math.max(0.2, Number(CropZoom.value) || 1);
+  updateCrop();
 });
 
 CropReset?.addEventListener('click', resetCrop);
@@ -555,6 +577,23 @@ function getSelectedFormat(){
   if (FmtShare.checked) return { w:1200, h:630 };
   return { w:1920, h:1080 };
 }
+function updateCropFrameRatio(){
+  if (!CropFrame) return;
+  const { w, h } = getSelectedFormat();
+  const W = Math.max(1, Number(w) || 1);
+  const H = Math.max(1, Number(h) || 1);
+  CropFrame.style.setProperty('--crop-ratio', `${W} / ${H}`);
+}
+
+// aggiorna cornice quando cambia il formato
+[Fmt1920, FmtShare, FmtCustom, CustomW, CustomH].forEach(el => {
+  el?.addEventListener('change', () => {
+    try { updateCropFrameRatio(); } catch {}
+  });
+  el?.addEventListener('input', () => {
+    try { updateCropFrameRatio(); } catch {}
+  });
+});
 
 async function loadFolderMap(){
   try {

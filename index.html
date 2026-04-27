@@ -372,7 +372,7 @@
               <div class="row" style="margin-bottom: 16px">
                 <div>
                   <label for="VidDuration">Durata</label>
-                  <select id="VidDuration" class="input" style="height: 41px">
+                  <select id="VidDuration" class="input">
                     <option value="15">15 secondi</option>
                     <option value="30" selected>30 secondi</option>
                     <option value="45">45 secondi</option>
@@ -403,32 +403,22 @@
 
               <div class="form-group">
                 <label>Carica cartella immagini*</label>
-                <div id="DropAreaVideo" class="drop" tabindex="0">
+                <div id="DropAreaVideo" class="drop">
                   <div class="drop-inner">
                     <span id="TxtFolderVideo" class="muted"
                       >Trascina qui la cartella o clicca per sfogliare…</span
                     >
-                    <button id="BtnClearVideo" class="btn-small hidden">
-                      ✕
-                    </button>
                   </div>
                 </div>
               </div>
 
-              <!-- PREVIEW -->
               <div class="video-preview">
-                <canvas id="VidCanvas" width="1920" height="1080"></canvas>
+                <canvas id="VidCanvas"></canvas>
 
                 <div class="preview-controls">
-                  <button id="VidPlay" class="btn-outline" type="button">
-                    Play
-                  </button>
-                  <button id="VidPause" class="btn-outline" type="button">
-                    Pausa
-                  </button>
-                  <button id="VidStop" class="btn-outline" type="button">
-                    Stop
-                  </button>
+                  <button id="VidPlay" class="btn-outline">Play</button>
+                  <button id="VidPause" class="btn-outline">Pausa</button>
+                  <button id="VidStop" class="btn-outline">Stop</button>
 
                   <input
                     id="VidScrub"
@@ -441,13 +431,10 @@
                 </div>
               </div>
 
-              <!-- TIMELINE -->
               <div class="timeline">
                 <div id="VideoTimeline" class="timeline-track"></div>
               </div>
-              <canvas id="VidCanvas" width="1920" height="1080" hidden></canvas>
             </section>
-
             <!-- WATERMARK -->
             <section id="WatermarkCard" class="card hidden">
               <h3>Watermark</h3>

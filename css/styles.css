@@ -1200,3 +1200,14 @@ input[type="checkbox"] {
 .timeline-clip .tools button:hover {
   background: var(--gray-300);
 }
+
+* === Limitazione altezza preview (UX editor) === */
+.video-preview {
+  max-height: 480px;
+}
+
+.video-preview canvas {
+  max-height: 480px;
+  width: 100%;
+  object-fit: contain;
+}

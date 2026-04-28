@@ -387,33 +387,9 @@ function handleCropUI(){
   // Mostra crop SOLO se c'è una immagine
   if (picked.length === 1 && picked[0].file && picked[0].file.type && picked[0].file.type.startsWith('image/')) {
     showEl(ImageCropCard);
-
-    const file = picked[0].file;
-    if (!CropImg) return;
-
-    // aggiorna ratio subito (cornice), poi al load ricalcola min/max zoom
+    if (CropImg) CropImg.src = URL.createObjectURL(picked[0].file);
     try { updateCropFrameRatio(); } catch {}
-
-    // evita leak di URL
-    try {
-      if (window.__ABITARE_CROP_URL) URL.revokeObjectURL(window.__ABITARE_CROP_URL);
-    } catch {}
-    const url = URL.createObjectURL(file);
-    window.__ABITARE_CROP_URL = url;
-
-    CropImg.onload = () => {
-      // doppio RAF per assicurare che la cornice abbia già il layout nuovo
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          try { refreshCropConstraints(); } catch {}
-          // default = cover (riempi)
-          crop.scale = crop.defaultScale || crop.scale || 1;
-          resetCrop();
-        });
-      });
-    };
-
-    CropImg.src = url;
+    resetCrop();
   } else {
     hideEl(ImageCropCard);
   }
@@ -523,16 +499,11 @@ let crop = {
   x: 0,
   y: 0,
   scale: 1,
-  minScale: 0.2,
-  maxScale: 3,
-  defaultScale: 1,
   dragging: false,
   startX: 0,
   startY: 0,
   pointerId: null
 };
-
-function clamp(v, a, b){ return Math.min(b, Math.max(a, v)); }
 
 function updateCrop(){
   if (!CropImg) return;
@@ -540,44 +511,11 @@ function updateCrop(){
     `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px)) scale(${crop.scale})`;
 }
 
-function refreshCropConstraints(){
-  if (!CropFrame || !CropImg) return;
-  const iw = CropImg.naturalWidth || 0;
-  const ih = CropImg.naturalHeight || 0;
-  if (!iw || !ih) return;
-
-  const rect = CropFrame.getBoundingClientRect();
-  const frameW = Math.max(1, rect.width);
-  const frameH = Math.max(1, rect.height);
-
-  // ✅ come Canva: minimo = "contain" (per poter vedere tutta l'immagine),
-  // default = "cover" (riempie la cornice senza buchi)
-  const contain = Math.min(frameW / iw, frameH / ih);
-  const cover   = Math.max(frameW / iw, frameH / ih);
-
-  crop.minScale = Math.max(0.01, contain);
-  crop.defaultScale = Math.max(crop.minScale, cover);
-  crop.maxScale = Math.max(crop.defaultScale * 3, crop.minScale * 3, crop.minScale + 0.01);
-
-  // clamp scala corrente
-  crop.scale = clamp(crop.scale || crop.defaultScale, crop.minScale, crop.maxScale);
-
-  if (CropZoom){
-    CropZoom.min = String(crop.minScale);
-    CropZoom.max = String(crop.maxScale);
-    const step = (crop.maxScale - crop.minScale) / 200;
-    CropZoom.step = String(step > 0 ? step : 0.01);
-    CropZoom.value = String(crop.scale);
-  }
-
-  updateCrop();
-}
-
 function resetCrop(){
   crop.x = 0;
   crop.y = 0;
-  crop.scale = crop.defaultScale || 1;
-  if (CropZoom) CropZoom.value = String(crop.scale);
+  crop.scale = 1;
+  if (CropZoom) CropZoom.value = '1';
   updateCrop();
 }
 
@@ -611,16 +549,11 @@ CropFrame?.addEventListener('pointerup', _endPointer);
 CropFrame?.addEventListener('pointercancel', _endPointer);
 
 CropZoom?.addEventListener('input', () => {
-  const v = Number(CropZoom.value) || crop.defaultScale || 1;
-  crop.scale = clamp(v, crop.minScale, crop.maxScale);
+  crop.scale = Math.max(0.2, Number(CropZoom.value) || 1);
   updateCrop();
 });
 
-CropReset?.addEventListener('click', () => {
-  // ricalcola vincoli e resetta
-  try { refreshCropConstraints(); } catch {}
-  resetCrop();
-});
+CropReset?.addEventListener('click', resetCrop);
 
 const TxtSlugIta = $('#TxtSlugIta');
 const TxtSlugEng = $('#TxtSlugEng');
@@ -631,7 +564,13 @@ const CustomRow=$('#CustomSizeRow');
 const CustomW = $('#CustomW');
 const CustomH = $('#CustomH');
 
-function toggleCustomRow(){ FmtCustom.checked ? showEl(CustomRow) : hideEl(CustomRow); }
+function toggleCustomRow(){
+  FmtCustom.checked ? showEl(CustomRow) : hideEl(CustomRow);
+  try { updateCropFrameRatio(); } catch {}
+  try {
+    if (ImageCropCard && !ImageCropCard.classList.contains('hidden')) refreshCropConstraints();
+  } catch {}
+}
 [Fmt1920, FmtShare, FmtCustom].forEach(r => {
   r?.addEventListener('change', toggleCustomRow);
   r?.addEventListener('click', toggleCustomRow);
@@ -649,31 +588,20 @@ function updateCropFrameRatio(){
   const { w, h } = getSelectedFormat();
   const W = Math.max(1, Number(w) || 1);
   const H = Math.max(1, Number(h) || 1);
-  CropFrame.style.setProperty('--crop-ratio', `${W} / ${H}`);
+  const ratio = `${W} / ${H}`;
+  // CSS var usata dalla .crop-frame
+  CropFrame.style.setProperty('--crop-ratio', ratio);
+  // fallback esplicito (alcuni layout aggiornano meglio così)
+  try { CropFrame.style.aspectRatio = ratio; } catch {}
 }
 
 // aggiorna cornice quando cambia il formato
 [Fmt1920, FmtShare, FmtCustom, CustomW, CustomH].forEach(el => {
   el?.addEventListener('change', () => {
     try { updateCropFrameRatio(); } catch {}
-    try {
-      if (ImageCropCard && !ImageCropCard.classList.contains('hidden')) {
-        // ricalcola min/max zoom quando cambi formato
-        refreshCropConstraints();
-        // mantieni la scala attuale, clampata
-        if (CropZoom) CropZoom.value = String(crop.scale);
-      }
-    } catch {}
   });
-
   el?.addEventListener('input', () => {
     try { updateCropFrameRatio(); } catch {}
-    try {
-      if (ImageCropCard && !ImageCropCard.classList.contains('hidden')) {
-        refreshCropConstraints();
-        if (CropZoom) CropZoom.value = String(crop.scale);
-      }
-    } catch {}
   });
 });
 

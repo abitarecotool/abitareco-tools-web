@@ -1072,11 +1072,11 @@ input[type="checkbox"] {
    ============================================================ */
 
 /* Frame preview compatto + ratio dinamico */
-.crop-frame{
-  width: 100%;
-  max-width: 560px;
-  max-height: 320px;
+
+  width: 520px;
+  max-width: 100%;
   margin: 12px auto;
+
 
   aspect-ratio: var(--crop-ratio, 16 / 9);
   background: var(--gray-50);
@@ -1099,14 +1099,7 @@ input[type="checkbox"] {
   max-width: none;
 }
 
-/* Slider zoom (brand) */
-#CropZoom.input{
-  height: 22px;       /* override .input height:41px */
-  padding: 0;
-  margin-bottom: 0;
-  border: none;
-  background: transparent;
-}
+/* Slider zoom – stile Abitare */
 
 #CropZoom{
   -webkit-appearance: none;
@@ -1115,8 +1108,8 @@ input[type="checkbox"] {
   height: 6px;
   border-radius: 999px;
   outline: none;
-  /* fill dinamico: JS imposta --fill */
-  background: linear-gradient(to right,
+  background: linear-gradient(
+    to right,
     var(--red) 0 var(--fill, 0%),
     var(--gray-200) var(--fill, 0%) 100%
   );
@@ -1124,10 +1117,9 @@ input[type="checkbox"] {
 
 #CropZoom::-webkit-slider-thumb{
   -webkit-appearance: none;
-  appearance: none;
   width: 16px;
   height: 16px;
-  border-radius: 999px;
+  border-radius: 50%;
   background: var(--red);
   border: 2px solid var(--white);
   box-shadow: 0 2px 10px rgba(0,0,0,.18);
@@ -1137,15 +1129,8 @@ input[type="checkbox"] {
 #CropZoom::-moz-range-thumb{
   width: 16px;
   height: 16px;
-  border-radius: 999px;
+  border-radius: 50%;
   background: var(--red);
   border: 2px solid var(--white);
-  box-shadow: 0 2px 10px rgba(0,0,0,.18);
   cursor: pointer;
-}
-
-#CropZoom::-moz-range-track{
-  height: 6px;
-  border-radius: 999px;
-  background: transparent;
 }

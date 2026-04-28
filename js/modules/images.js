@@ -1,3 +1,6 @@
+/* =============================== Immagini (Sito) ====================== */
+
+// --------- LOGICA SINGLE vs BATCH (crop solo in modalità Immagini) ---------
 function handleCropUI(){
   // Crop manuale SOLO nella modalità IMMAGINI
   if (currentMode !== 'images') {
@@ -6,23 +9,26 @@ function handleCropUI(){
   }
 
   // Mostra crop SOLO se c'è una immagine
-  if (picked.length === 1 && picked[0].file && picked[0].file.type && picked[0].file.type.startsWith('image/')) {
+  if (picked.length === 1 && picked[0]?.file && picked[0].file.type?.startsWith('image/')) {
     showEl(ImageCropCard);
 
     const file = picked[0].file;
     if (!CropImg) return;
 
+    // aggiorna cornice formato
     try { updateCropFrameRatio(); } catch {}
 
+    // evita leak URL
     try { if (window.__ABITARE_CROP_URL) URL.revokeObjectURL(window.__ABITARE_CROP_URL); } catch {}
     const url = URL.createObjectURL(file);
     window.__ABITARE_CROP_URL = url;
 
     CropImg.onload = () => {
+      // attendo layout (height/ratio) prima di calcolare scale
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           try { refreshCropConstraints(); } catch {}
-          resetCrop('cover');
+          try { resetCrop('cover'); } catch {}
         });
       });
     };
@@ -353,3 +359,10 @@ async function exportImages(){
   hideEl(ActionProgressWrap);
 }
 
+
+
+// --- init (split) ---
+(function initImagesAfterSplit(){
+  try { toggleCustomRow(); } catch {}
+  try { updateCropFrameRatio(); } catch {}
+})();

@@ -468,7 +468,13 @@ async function readDroppedDirectory(dt){
       }
     } else if (entry.isDirectory){
       const reader = entry.createReader();
-      const entries = await new Promise(res => reader.readEntries(res));
+      const entries = [];
+      // readEntries restituisce al massimo ~100 elementi per chiamata: loop finché vuoto
+      while (true){
+        const batch = await new Promise(res => reader.readEntries(res));
+        if (!batch || batch.length === 0) break;
+        entries.push(...batch);
+      }
       for (const en of entries){
         await traverse(en, base ? `${base}/${entry.name}` : entry.name);
       }

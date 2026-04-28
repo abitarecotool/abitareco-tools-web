@@ -391,20 +391,16 @@ function handleCropUI(){
     const file = picked[0].file;
     if (!CropImg) return;
 
-    // aggiorna cornice (ratio + height) subito
     try { updateCropFrameRatio(); } catch {}
 
-    // evita leak di URL
     try { if (window.__ABITARE_CROP_URL) URL.revokeObjectURL(window.__ABITARE_CROP_URL); } catch {}
     const url = URL.createObjectURL(file);
     window.__ABITARE_CROP_URL = url;
 
     CropImg.onload = () => {
-      // attendo che la cornice abbia applicato height/ratio
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           try { refreshCropConstraints(); } catch {}
-          // di default mostro cover (puoi zoom-out fino a contain)
           resetCrop('cover');
         });
       });
@@ -520,7 +516,7 @@ let crop = {
   x: 0,
   y: 0,
   scale: 1,
-  minScale: 0.05,
+  minScale: 0.01,
   maxScale: 4,
   coverScale: 1,
   containScale: 1,
@@ -547,16 +543,12 @@ function updateCrop(){
     `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px)) scale(${crop.scale})`;
 }
 
-// Calcola min/max zoom in base a immagine + cornice.
-// min = contain (posso vedere tutta l'immagine),
-// default = cover (riempio la cornice senza buchi)
 function refreshCropConstraints(){
   if (!CropFrame || !CropImg) return;
   const iw = CropImg.naturalWidth || 0;
   const ih = CropImg.naturalHeight || 0;
   if (!iw || !ih) return;
 
-  // dimensioni cornice in px (CSS)
   const rect = CropFrame.getBoundingClientRect();
   const frameW = Math.max(1, rect.width);
   const frameH = Math.max(1, rect.height);
@@ -570,7 +562,6 @@ function refreshCropConstraints(){
   crop.minScale = crop.containScale;
   crop.maxScale = Math.max(crop.coverScale * 3, crop.minScale * 3, crop.minScale + 0.01);
 
-  // set slider
   if (CropZoom){
     CropZoom.min = String(crop.minScale);
     CropZoom.max = String(crop.maxScale);
@@ -578,7 +569,6 @@ function refreshCropConstraints(){
     CropZoom.step = String(step > 0 ? step : 0.01);
   }
 
-  // se scala attuale è fuori range, clamp
   crop.scale = clamp(crop.scale || crop.coverScale, crop.minScale, crop.maxScale);
   if (CropZoom) CropZoom.value = String(crop.scale);
 
@@ -589,7 +579,6 @@ function refreshCropConstraints(){
 function resetCrop(mode = 'cover'){
   crop.x = 0;
   crop.y = 0;
-  // reset su cover (default) o contain (se vuoi vedere tutta la foto)
   crop.scale = (mode === 'contain') ? crop.containScale : crop.coverScale;
   crop.scale = clamp(crop.scale || 1, crop.minScale, crop.maxScale);
   if (CropZoom) CropZoom.value = String(crop.scale);
@@ -597,7 +586,6 @@ function resetCrop(mode = 'cover'){
   updateCrop();
 }
 
-// Pointer events (mouse + touch)
 CropFrame?.addEventListener('pointerdown', (e) => {
   crop.dragging = true;
   crop.startX = e.clientX;
@@ -634,7 +622,6 @@ CropZoom?.addEventListener('input', () => {
 });
 
 CropReset?.addEventListener('click', () => {
-  // ricalcola vincoli e resetta su cover
   try { refreshCropConstraints(); } catch {}
   resetCrop('cover');
 });
@@ -669,9 +656,6 @@ function updateCropFrameRatio(){
   const ratio = `${W} / ${H}`;
   CropFrame.style.setProperty('--crop-ratio', ratio);
   try { CropFrame.style.aspectRatio = ratio; } catch {}
-
-  // Forza anche l'altezza in px in base alla larghezza corrente della preview
-  // (evita casi in cui la preview resta orizzontale per vincoli CSS esterni)
   try {
     const fw = Math.max(1, CropFrame.clientWidth);
     CropFrame.style.height = Math.round(fw * (H / W)) + 'px';
@@ -685,7 +669,6 @@ function updateCropFrameRatio(){
     try {
       if (ImageCropCard && !ImageCropCard.classList.contains('hidden')) {
         refreshCropConstraints();
-        // clamp e aggiorna slider fill
         if (CropZoom) { CropZoom.value = String(crop.scale); updateZoomTrack(); }
       }
     } catch {}
@@ -728,6 +711,46 @@ function drawCoverToCanvas(bmp, W, H){
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(bmp, dx, dy, dw, dh);
   return c;
+}
+
+
+function drawCroppedToCanvas(bmp, W, H){
+  // Applica pan/zoom della UI al canvas di output
+  try {
+    const rect = CropFrame?.getBoundingClientRect?.();
+    if (!rect || !rect.width || !rect.height) return drawCoverToCanvas(bmp, W, H);
+
+    const frameW = rect.width;
+    const frameH = rect.height;
+
+    // mappo coordinate UI -> output
+    const sx = W / frameW;
+    const sy = H / frameH;
+
+    const scaleOut = crop.scale * sx;
+    const dxOut = crop.x * sx;
+    const dyOut = crop.y * sy;
+
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    const dw = bmp.width * scaleOut;
+    const dh = bmp.height * scaleOut;
+
+    const cx = (W / 2) + dxOut;
+    const cy = (H / 2) + dyOut;
+
+    const x = cx - (dw / 2);
+    const y = cy - (dh / 2);
+
+    ctx.drawImage(bmp, x, y, dw, dh);
+    return c;
+  } catch {
+    return drawCoverToCanvas(bmp, W, H);
+  }
 }
 
 async function exportImages(){
@@ -775,7 +798,8 @@ async function exportImages(){
       const outIta = `${baseIta}-${nn}`;
       const outEng = `${baseEng}-${nn}`;
       const bmp = await loadImageBitmap(rec.file);
-      const canvas = drawCoverToCanvas(bmp, W, H);
+      const useCrop = (picked.length === 1 && ImageCropCard && !ImageCropCard.classList.contains('hidden'));
+      const canvas = useCrop ? drawCroppedToCanvas(bmp, W, H) : drawCoverToCanvas(bmp, W, H);
       const webp = await canvasToBlob(canvas, 'image/webp', 0.85);
       const jpg  = await canvasToBlob(canvas, 'image/jpeg', 0.85);
       zip.file(`_EXPORT_SITO/ITA/WEBP/${outIta}.webp`, webp);

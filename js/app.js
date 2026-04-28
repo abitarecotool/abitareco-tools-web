@@ -360,7 +360,7 @@ if (DropArea) {
     input.onchange = ()=>{
       const fl = Array.from(input.files || []);
       picked = fl
-        .filter(f => /\\.\(jpe\?g\|png\|webp\|tif\?f\|pdf\)\$\/i.test(f.name))
+        .filter(f => /\.(jpe?g|png|webp|tif?f|pdf)$/i.test(f.name))
         .map(f => ({ file:f, relPath:f.webkitRelativePath || f.name }));
 
       TxtFolderPath.textContent = picked.length
@@ -463,7 +463,7 @@ async function readDroppedDirectory(dt){
   async function traverse(entry, base=''){
     if (entry.isFile){
       const f = await new Promise(res => entry.file(res));
-      if (/\\.\(jpe\?g\|png\|webp\|tif\?f\|pdf\)\$\/i.test(f.name)){
+      if (/\.(jpe?g|png|webp|tif?f|pdf)$/i.test(f.name)){
         out.push({ file:f, relPath: base ? `${base}/${f.name}` : f.name });
       }
     } else if (entry.isDirectory){
@@ -1909,4 +1909,4 @@ async function downloadFontsZip(){
   a.click();
   URL.revokeObjectURL(a.href);
 }
-$('#BtnFontsZip')?.addEventListener('click', downloadFontsZip);
+$('#BtnFontsZip')?.addEventListener('click', downloadFontsZip);// JavaScript Document

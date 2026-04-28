@@ -387,9 +387,30 @@ function handleCropUI(){
   // Mostra crop SOLO se c'è una immagine
   if (picked.length === 1 && picked[0].file && picked[0].file.type && picked[0].file.type.startsWith('image/')) {
     showEl(ImageCropCard);
-    if (CropImg) CropImg.src = URL.createObjectURL(picked[0].file);
+
+    const file = picked[0].file;
+    if (!CropImg) return;
+
+    // aggiorna cornice (ratio + height) subito
     try { updateCropFrameRatio(); } catch {}
-    resetCrop();
+
+    // evita leak di URL
+    try { if (window.__ABITARE_CROP_URL) URL.revokeObjectURL(window.__ABITARE_CROP_URL); } catch {}
+    const url = URL.createObjectURL(file);
+    window.__ABITARE_CROP_URL = url;
+
+    CropImg.onload = () => {
+      // attendo che la cornice abbia applicato height/ratio
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try { refreshCropConstraints(); } catch {}
+          // di default mostro cover (puoi zoom-out fino a contain)
+          resetCrop('cover');
+        });
+      });
+    };
+
+    CropImg.src = url;
   } else {
     hideEl(ImageCropCard);
   }
@@ -499,11 +520,26 @@ let crop = {
   x: 0,
   y: 0,
   scale: 1,
+  minScale: 0.05,
+  maxScale: 4,
+  coverScale: 1,
+  containScale: 1,
   dragging: false,
   startX: 0,
   startY: 0,
   pointerId: null
 };
+
+function clamp(v, a, b){ return Math.min(b, Math.max(a, v)); }
+
+function updateZoomTrack(){
+  if (!CropZoom) return;
+  const min = Number(CropZoom.min) || 0;
+  const max = Number(CropZoom.max) || 1;
+  const val = Number(CropZoom.value) || min;
+  const pct = (max > min) ? ((val - min) / (max - min)) * 100 : 0;
+  CropZoom.style.setProperty('--fill', pct + '%');
+}
 
 function updateCrop(){
   if (!CropImg) return;
@@ -511,11 +547,53 @@ function updateCrop(){
     `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px)) scale(${crop.scale})`;
 }
 
-function resetCrop(){
+// Calcola min/max zoom in base a immagine + cornice.
+// min = contain (posso vedere tutta l'immagine),
+// default = cover (riempio la cornice senza buchi)
+function refreshCropConstraints(){
+  if (!CropFrame || !CropImg) return;
+  const iw = CropImg.naturalWidth || 0;
+  const ih = CropImg.naturalHeight || 0;
+  if (!iw || !ih) return;
+
+  // dimensioni cornice in px (CSS)
+  const rect = CropFrame.getBoundingClientRect();
+  const frameW = Math.max(1, rect.width);
+  const frameH = Math.max(1, rect.height);
+
+  const contain = Math.min(frameW / iw, frameH / ih);
+  const cover   = Math.max(frameW / iw, frameH / ih);
+
+  crop.containScale = Math.max(0.01, contain);
+  crop.coverScale   = Math.max(crop.containScale, cover);
+
+  crop.minScale = crop.containScale;
+  crop.maxScale = Math.max(crop.coverScale * 3, crop.minScale * 3, crop.minScale + 0.01);
+
+  // set slider
+  if (CropZoom){
+    CropZoom.min = String(crop.minScale);
+    CropZoom.max = String(crop.maxScale);
+    const step = (crop.maxScale - crop.minScale) / 200;
+    CropZoom.step = String(step > 0 ? step : 0.01);
+  }
+
+  // se scala attuale è fuori range, clamp
+  crop.scale = clamp(crop.scale || crop.coverScale, crop.minScale, crop.maxScale);
+  if (CropZoom) CropZoom.value = String(crop.scale);
+
+  updateZoomTrack();
+  updateCrop();
+}
+
+function resetCrop(mode = 'cover'){
   crop.x = 0;
   crop.y = 0;
-  crop.scale = 1;
-  if (CropZoom) CropZoom.value = '1';
+  // reset su cover (default) o contain (se vuoi vedere tutta la foto)
+  crop.scale = (mode === 'contain') ? crop.containScale : crop.coverScale;
+  crop.scale = clamp(crop.scale || 1, crop.minScale, crop.maxScale);
+  if (CropZoom) CropZoom.value = String(crop.scale);
+  updateZoomTrack();
   updateCrop();
 }
 
@@ -549,11 +627,17 @@ CropFrame?.addEventListener('pointerup', _endPointer);
 CropFrame?.addEventListener('pointercancel', _endPointer);
 
 CropZoom?.addEventListener('input', () => {
-  crop.scale = Math.max(0.2, Number(CropZoom.value) || 1);
+  const v = Number(CropZoom.value);
+  crop.scale = clamp(v, crop.minScale, crop.maxScale);
+  updateZoomTrack();
   updateCrop();
 });
 
-CropReset?.addEventListener('click', resetCrop);
+CropReset?.addEventListener('click', () => {
+  // ricalcola vincoli e resetta su cover
+  try { refreshCropConstraints(); } catch {}
+  resetCrop('cover');
+});
 
 const TxtSlugIta = $('#TxtSlugIta');
 const TxtSlugEng = $('#TxtSlugEng');
@@ -564,13 +648,7 @@ const CustomRow=$('#CustomSizeRow');
 const CustomW = $('#CustomW');
 const CustomH = $('#CustomH');
 
-function toggleCustomRow(){
-  FmtCustom.checked ? showEl(CustomRow) : hideEl(CustomRow);
-  try { updateCropFrameRatio(); } catch {}
-  try {
-    if (ImageCropCard && !ImageCropCard.classList.contains('hidden')) refreshCropConstraints();
-  } catch {}
-}
+function toggleCustomRow(){ FmtCustom.checked ? showEl(CustomRow) : hideEl(CustomRow); }
 [Fmt1920, FmtShare, FmtCustom].forEach(r => {
   r?.addEventListener('change', toggleCustomRow);
   r?.addEventListener('click', toggleCustomRow);
@@ -589,20 +667,31 @@ function updateCropFrameRatio(){
   const W = Math.max(1, Number(w) || 1);
   const H = Math.max(1, Number(h) || 1);
   const ratio = `${W} / ${H}`;
-  // CSS var usata dalla .crop-frame
   CropFrame.style.setProperty('--crop-ratio', ratio);
-  // fallback esplicito (alcuni layout aggiornano meglio così)
   try { CropFrame.style.aspectRatio = ratio; } catch {}
+
+  // Forza anche l'altezza in px in base alla larghezza corrente della preview
+  // (evita casi in cui la preview resta orizzontale per vincoli CSS esterni)
+  try {
+    const fw = Math.max(1, CropFrame.clientWidth);
+    CropFrame.style.height = Math.round(fw * (H / W)) + 'px';
+  } catch {}
 }
 
 // aggiorna cornice quando cambia il formato
 [Fmt1920, FmtShare, FmtCustom, CustomW, CustomH].forEach(el => {
-  el?.addEventListener('change', () => {
+  const go = () => {
     try { updateCropFrameRatio(); } catch {}
-  });
-  el?.addEventListener('input', () => {
-    try { updateCropFrameRatio(); } catch {}
-  });
+    try {
+      if (ImageCropCard && !ImageCropCard.classList.contains('hidden')) {
+        refreshCropConstraints();
+        // clamp e aggiorna slider fill
+        if (CropZoom) { CropZoom.value = String(crop.scale); updateZoomTrack(); }
+      }
+    } catch {}
+  };
+  el?.addEventListener('change', go);
+  el?.addEventListener('input', go);
 });
 
 async function loadFolderMap(){

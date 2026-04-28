@@ -226,6 +226,81 @@ let pickedRename = [];  // Rename
 let pickedVideo = [];   // Video
 let currentMode = null;
 
+
+// ========================= RESET globale (post-export) =========================
+function resetAllUIAndState(){
+  // arrays
+  try { picked = []; } catch {}
+  try { pickedRename = []; } catch {}
+  try { pickedVideo = []; } catch {}
+  try { customLogoFile = null; } catch {}
+
+  // --- IMMAGINI ---
+  try { document.getElementById('TxtSlugIta').value = ''; } catch {}
+  try { document.getElementById('TxtSlugEng').value = ''; } catch {}
+  try { document.getElementById('FmtSite1920').checked = true; } catch {}
+  try { document.getElementById('FmtSiteShare').checked = false; } catch {}
+  try { document.getElementById('FmtSiteCustom').checked = false; } catch {}
+  try { document.getElementById('CustomW').value = 1920; } catch {}
+  try { document.getElementById('CustomH').value = 1080; } catch {}
+  try { toggleCustomRow(); } catch {}
+  try { hideEl(ImageCropCard); } catch {}
+
+  // drop immagini (shared)
+  try { document.getElementById('TxtFolderPath').textContent = 'Trascina qui la cartella o clicca per sfogliare…'; } catch {}
+  try { document.getElementById('BtnClearPath').classList.add('hidden'); } catch {}
+
+  // --- PDF → JPG usa lo stesso DropArea/picked: pulito sopra ---
+
+  // --- RENAME ---
+  try { document.getElementById('TxtRenameBase').value = ''; } catch {}
+  try { document.getElementById('TxtFolderRename').textContent = 'Trascina qui la cartella o clicca per sfogliare…'; } catch {}
+  try { document.getElementById('BtnClearRename').classList.add('hidden'); } catch {}
+
+  // --- VIDEO ---
+  try { document.getElementById('VidTitle').value = ''; } catch {}
+  try { document.getElementById('VidDuration').value = '30'; } catch {}
+  try { document.getElementById('VidFmtH').checked = true; } catch {}
+  try { document.getElementById('VidFmtV').checked = false; } catch {}
+  try { document.getElementById('VidFmtS').checked = false; } catch {}
+  try { document.getElementById('TxtFolderVideo').textContent = 'Trascina qui la cartella o clicca per sfogliare…'; } catch {}
+  try { document.getElementById('BtnClearVideo').classList.add('hidden'); } catch {}
+
+  // --- WATERMARK ---
+  try { document.getElementById('TxtLogoName').textContent = 'Trascina qui il logo o clicca per sfogliare… (PNG trasparente)'; } catch {}
+  try { document.getElementById('BtnClearLogo').classList.add('hidden'); } catch {}
+
+  // --- BIGLIETTO DA VISITA ---
+  try {
+    document.querySelectorAll('.brand-pill').forEach(p => p.classList.remove('active'));
+    const form = document.getElementById('BvForm');
+    if (form) form.classList.add('hidden');
+  } catch {}
+  ['BvFullName','BvJobTitle','BvPhone','BvEmail','BvRea'].forEach(id => {
+    try { const el = document.getElementById(id); if (el) el.value = ''; } catch {}
+  });
+  try { const cb = document.getElementById('BvHasRea'); if (cb) cb.checked = false; } catch {}
+  try { document.getElementById('BvReaWrap')?.classList.add('hidden'); } catch {}
+  try { document.getElementById('BvReaInput')?.classList.add('hidden'); } catch {}
+
+  // --- QR ---
+  ['QrBase','QrSource','QrMedium','QrCampaign','QrId','QrTerm','QrContent','QrGeneratedUrl'].forEach(id => {
+    try { const el = document.getElementById(id); if (el) el.value = ''; } catch {}
+  });
+
+  // --- IUBENDA ---
+  ['IubWidgetUrl','IubSiteId','IubCookieIt','IubCookieEn'].forEach(id => {
+    try { const el = document.getElementById(id); if (el) el.value = ''; } catch {}
+  });
+  try { const el = document.getElementById('IubDualLang'); if (el) el.checked = false; } catch {}
+  try { document.getElementById('IubCookieEnWrap')?.classList.add('hidden'); } catch {}
+  try { const out = document.getElementById('IubOut'); if (out) out.value = ''; } catch {}
+
+  // progress UI
+  try { hideEl(ActionProgressWrap); } catch {}
+  try { ActionProgress.value = 0; } catch {}
+  try { ActionProgressLabel.textContent = 'Elaborazione…'; } catch {}
+}
 /* ------------------------ Sidebar: icone & nav ------------------------ */
 function initSidebarIcons(){
   $$('#SideMenu li').forEach(li=>{
@@ -246,6 +321,8 @@ function activateMenuVisual(mode){
 function selectMode(mode){
   currentMode = mode;
   ALL_CARDS.forEach(hideEl);
+  // assicura che il crop non resti visibile fuori dalla modalità Immagini
+  try { hideEl(ImageCropCard); } catch {}
   // reset primary action button for each mode (QR overrides below)
   setPrimaryActionLabel(DEFAULT_PRIMARY_LABEL);
   if (BtnProcedi) BtnProcedi.disabled = false;
@@ -384,6 +461,12 @@ if (DropArea) {
 
 /* --------- LOGICA SINGLE vs BATCH --------- */
 function handleCropUI(){
+  // Crop manuale SOLO nella modalità IMMAGINI
+  if (currentMode !== 'images') {
+    try { hideEl(ImageCropCard); } catch {}
+    return;
+  }
+
   // Mostra crop SOLO se c'è una immagine
   if (picked.length === 1 && picked[0].file && picked[0].file.type && picked[0].file.type.startsWith('image/')) {
     showEl(ImageCropCard);
@@ -411,6 +494,7 @@ function handleCropUI(){
     hideEl(ImageCropCard);
   }
 }
+
 
 
 /* ========================= Drag & Drop: RENAME ======================== */
@@ -1863,22 +1947,31 @@ try { iubSyncEnVisibility(); } catch {}
 /* ============================== FINE IUBENDA =========================== */
 
 BtnProcedi?.addEventListener('click', async ()=>{
+  let ok = false;
   try {
     BtnProcedi.disabled = true;
 
-    if (currentMode === 'images')     { await exportImages(); return; }
-    if (currentMode === 'digitaltool'){ await exportDigitalTool(); return; }
-    if (currentMode === 'pdf2jpg')    { await exportPdfToJpg(); return; }
-    if (currentMode === 'rename')     { await exportRename(); return; }
-    if (currentMode === 'video')      { await exportVideoSlideshow(); return; }
-    if (currentMode === 'watermark')  { await exportWatermarkPortali(); return; }
-    if (currentMode === 'bv')         { await exportBusinessCard(); return; }
+    if (currentMode === 'images')      { await exportImages(); ok = true; return; }
+    if (currentMode === 'digitaltool') { await exportDigitalTool(); ok = true; return; }
+    if (currentMode === 'pdf2jpg')     { await exportPdfToJpg(); ok = true; return; }
+    if (currentMode === 'rename')      { await exportRename(); ok = true; return; }
+    if (currentMode === 'video')       { await exportVideoSlideshow(); ok = true; return; }
+    if (currentMode === 'watermark')   { await exportWatermarkPortali(); ok = true; return; }
+    if (currentMode === 'bv')          { await exportBusinessCard(); ok = true; return; }
 
-    if (currentMode === 'qr') { await makeQr(); return; }
-    if (currentMode === 'iubenda') { makeIubendaSnippet(); return; }
-    alert("Funzione non attiva.");
+    if (currentMode === 'qr')          { await makeQr(); ok = true; return; }
+    if (currentMode === 'iubenda')     { makeIubendaSnippet(); ok = true; return; }
+
+    alert('Funzione non attiva.');
+  } catch (err){
+    console.error(err);
+    alert('Errore: ' + (err?.message || err));
   } finally {
     BtnProcedi.disabled = false;
+    if (ok) {
+      // reset dopo export/generazione
+      try { resetAllUIAndState(); } catch {}
+    }
   }
 });
 

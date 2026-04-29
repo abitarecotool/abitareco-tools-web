@@ -1,0 +1,175 @@
+// js/core/auth.js
+(function(){
+  'use strict';
+
+  const USERS = {
+    'admin@abitareco.it':     { password: 'Abitare52!', role: 'admin' },
+    'marketing@abitareco.it': { password: 'Abitare52!', role: 'marketing' },
+    'tecnico@abitareco.it':   { password: 'Abitare52!', role: 'tecnico' }
+  };
+
+  const KEY = 'abitare_tools_auth_user';
+
+  function readStored(){
+    try {
+      const raw = sessionStorage.getItem(KEY) || localStorage.getItem(KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+
+  function storeUser(u, remember){
+    try {
+      (remember ? localStorage : sessionStorage).setItem(KEY, JSON.stringify(u));
+    } catch {}
+  }
+
+  function clearUser(){
+    try { sessionStorage.removeItem(KEY); } catch {}
+    try { localStorage.removeItem(KEY); } catch {}
+  }
+
+  function showOverlay(){
+    const ov = document.getElementById('AuthOverlay');
+    if (!ov) return;
+    ov.classList.add('show');
+    ov.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideOverlay(){
+    const ov = document.getElementById('AuthOverlay');
+    if (!ov) return;
+    ov.classList.remove('show');
+    ov.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+  }
+
+  function hidePreloader(){
+    const pl = document.getElementById('AuthPreloader');
+    if (!pl) return;
+    pl.classList.add('fade-out');
+    setTimeout(() => { pl.style.display = 'none'; }, 420);
+  }
+
+  function setError(msg){
+    const err = document.getElementById('AuthError');
+    if (err) err.textContent = msg || '';
+  }
+
+  function bindUserMenu(user){
+    const menu = document.getElementById('UserMenu');
+    const dd = document.getElementById('UserDropdown');
+    const btn = document.getElementById('BtnLogout');
+    const label = document.getElementById('UserLabel');
+    const avatar = document.querySelector('#UserMenu .user-avatar');
+
+    if (!menu || !dd || !btn || !label) return;
+
+    // label ruolo
+    try { label.textContent = (window.ROLE_LABELS && ROLE_LABELS[user.role]) ? ROLE_LABELS[user.role] : user.role; } catch {}
+    if (avatar){
+      const t = (label.textContent || 'U').trim();
+      avatar.textContent = (t[0] || 'U').toUpperCase();
+    }
+
+    menu.classList.remove('hidden');
+
+    const toggle = (e) => {
+      e && e.stopPropagation();
+      dd.classList.toggle('hidden');
+    };
+
+    if (!menu.__bound){
+      menu.__bound = true;
+      menu.addEventListener('click', toggle);
+      menu.addEventListener('keydown', (e)=>{ if (e.key === 'Enter' || e.key === ' ') toggle(e); });
+      document.addEventListener('click', ()=> dd.classList.add('hidden'));
+    }
+
+    btn.onclick = () => {
+      clearUser();
+      // reload per tornare allo stato pulito (e far comparire il login)
+      location.reload();
+    };
+  }
+
+  function initLogin(){
+    const emailEl = document.getElementById('AuthEmail');
+    const passEl  = document.getElementById('AuthPassword');
+    const remEl   = document.getElementById('AuthRemember');
+    const btn     = document.getElementById('AuthConfirm');
+
+    const doLogin = () => {
+      const email = (emailEl?.value || '').trim().toLowerCase();
+      const pass  = (passEl?.value || '').trim();
+      const remember = !!remEl?.checked;
+
+      if (!email || !pass){
+        setError('Compila Email e Password.');
+        return;
+      }
+
+      const u = USERS[email];
+      if (!u || u.password !== pass){
+        setError('Credenziali non valide.');
+        return;
+      }
+
+      setError('');
+      const user = { email, role: u.role };
+      storeUser(user, remember);
+      hideOverlay();
+
+      // applica permessi e UI utente
+      try { window.applyPermissions && window.applyPermissions(user); } catch {}
+      try { window.applyGuards && window.applyGuards(user); } catch {}
+      try { bindUserMenu(user); } catch {}
+
+      // porta al welcome
+      try { window.selectMode && selectMode('welcome'); } catch {}
+    };
+
+    if (btn && !btn.__bound){
+      btn.__bound = true;
+      btn.addEventListener('click', doLogin);
+    }
+
+    passEl?.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter'){ e.preventDefault(); doLogin(); }
+    });
+    emailEl?.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter'){ e.preventDefault(); doLogin(); }
+    });
+  }
+
+  function boot(){
+    initLogin();
+
+    // preloader 2s come prima
+    setTimeout(() => {
+      hidePreloader();
+
+      const user = readStored();
+      if (!user){
+        showOverlay();
+        try { document.getElementById('AuthEmail')?.focus(); } catch {}
+        return;
+      }
+
+      hideOverlay();
+      try { window.applyPermissions && window.applyPermissions(user); } catch {}
+      try { window.applyGuards && window.applyGuards(user); } catch {}
+      try { bindUserMenu(user); } catch {}
+
+      // se già loggato, vai su welcome
+      try { window.selectMode && selectMode('welcome'); } catch {}
+    }, 2000);
+  }
+
+  window.Auth = {
+    current: readStored,
+    logout: () => { clearUser(); location.reload(); }
+  };
+
+  document.addEventListener('DOMContentLoaded', boot);
+})();

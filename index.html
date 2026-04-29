@@ -21,7 +21,7 @@
 
     <!-- App styles -->
     <link rel="stylesheet" href="./css/styles.css" />
-  <link rel="stylesheet" href="./css/modules/images.css" />
+    <link rel="stylesheet" href="./css/modules/auth.css" />
   </head>
 
   <body>
@@ -49,26 +49,23 @@
         </div>
 
         <div style="text-align: left">
-          <label for="AuthPassword">Password *</label>
-          <input
-            id="AuthPassword"
-            class="input"
-            type="password"
-            placeholder="Password"
-            autocomplete="current-password"
-          />
-          <div id="AuthError"></div>
-        </div>
+  <label for="AuthEmail">Email *</label>
+  <input id="AuthEmail" class="input" type="email" placeholder="nome@abitareco.it" autocomplete="username" />
 
-        <div class="auth-actions">
-          <button id="AuthCancel" type="button" class="btn-outline">
-            Annulla
-          </button>
-          <button id="AuthConfirm" type="button" class="btn-primary">
-            Conferma
-          </button>
-        </div>
-      </div>
+  <label for="AuthPassword">Password *</label>
+  <input id="AuthPassword" class="input" type="password" placeholder="Password" autocomplete="current-password" />
+
+  <label class="auth-remember">
+    <input id="AuthRemember" type="checkbox" />
+    <span>Ricordami</span>
+  </label>
+
+  <div id="AuthError"></div>
+</div>
+
+<div class="auth-actions">
+  <button id="AuthConfirm" type="button" class="btn-primary">Accedi</button>
+</div>
     </div>
     <noscript>
       <div
@@ -170,20 +167,21 @@
           </li>
         </ul>
 
-        <!-- Sidebar bottom: Info / Riascolta -->
-        <div class="sidebar-bottom">
-          <button
-            id="BtnSidebarInfo"
-            class="sidebar-info-btn"
-            type="button"
-            title="Info / Riascolta"
-            aria-label="Info / Riascolta"
-          >
-            <span class="info-dot" aria-hidden="true">i</span>
-            <span class="info-label">Info</span>
-          </button>
-        </div>
-      </aside>
+        <!-- Sidebar bottom: User menu -->
+  <div class="sidebar-bottom">
+    <div id="UserMenu" class="user-menu hidden" role="button" tabindex="0" aria-label="Menu utente">
+      <div class="user-avatar" aria-hidden="true"></div>
+      <div class="user-meta">
+        <div class="user-name" id="UserLabel">Utente</div>
+      </div>
+      <div class="user-chevron" aria-hidden="true">▾</div>
+    </div>
+
+    <div id="UserDropdown" class="user-dropdown hidden" role="menu" aria-label="Azioni utente">
+      <button id="BtnLogout" type="button" class="user-logout">Esci dal tuo account</button>
+    </div>
+  </div>
+</aside>
 
       <!-- ═════════ MAIN ═════════ -->
       <main>
@@ -791,43 +789,6 @@
       </main>
     </div>
 
-    <!-- Welcome audio (post-login) -->
-    <audio id="WelcomeAudio" preload="auto">
-      <source src="./assets/audio/welcome.mp3" type="audio/mpeg" />
-    </audio>
-
-    <!-- VOICE OVERLAY (stile login) -->
-    <div id="VoiceOverlay" class="voice-overlay" aria-hidden="true">
-      <div
-        class="auth-modal voice-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Benvenuto"
-      >
-        <div class="auth-icon">
-          <img src="./assets/logo.ico" alt="" />
-        </div>
-
-        <div class="auth-title">Benvenuto</div>
-        <div class="auth-sub">
-          Welcome! Per iniziare, seleziona una modalità dal menu laterale.
-        </div>
-
-        <div class="speak-row" aria-hidden="true">
-          <span class="speak-dot"></span>
-          <span class="speak-dots"><i></i><i></i><i></i></span>
-          <span class="speak-txt">Il tool sta parlando…</span>
-        </div>
-
-        <div class="auth-actions" style="margin-top: 14px">
-          <button id="VoiceReplay" type="button" class="btn-outline">
-            Riascolta
-          </button>
-          <button id="VoiceClose" type="button" class="btn-primary">Ok</button>
-        </div>
-      </div>
-    </div>
-
     <!-- ═════════ LIBRARIES ═════════ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
@@ -840,24 +801,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- App logic -->
-  <!-- App scripts (split) -->
-  <script src="./js/core/helpers.js"></script>
-  <script src="./js/core/shell.js"></script>
-  <script src="./js/core/io.js"></script>
-  <script src="./js/core/shared.js"></script>
-
-  <script src="./js/modules/images.js"></script>
-  <script src="./js/modules/digitaltool.js"></script>
-  <script src="./js/modules/pdf2jpg.js"></script>
-  <script src="./js/modules/rename.js"></script>
-  <script src="./js/modules/video.js"></script>
-  <script src="./js/modules/watermark.js"></script>
-  <script src="./js/modules/bv.js"></script>
-  <script src="./js/modules/qr.js"></script>
-  <script src="./js/modules/iubenda.js"></script>
-  <script src="./js/modules/ppt.js"></script>
-
-  <script src="./js/core/actionbar.js"></script>
-  <script src="./js/app.js"></script>
-</body>
+    <script src="./js/app.js?v=20260407-sidebarinfo"></script>
+  </body>
 </html>

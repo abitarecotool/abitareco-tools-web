@@ -2,16 +2,19 @@
 (function(){
   'use strict';
 
-  // Utenti interni (login locale)
   const USERS = {
     'admin@abitareco.it':     { password: 'Abitare52!', role: 'admin' },
     'marketing@abitareco.it': { password: 'Abitare52!', role: 'marketing' },
     'tecnico@abitareco.it':   { password: 'Abitare52!', role: 'tecnico' }
   };
 
-  // Chiavi storage
   const KEY = 'abitare_tools_auth_user';
-  const FORCE_LOGIN_KEY = 'abitare_tools_force_login_once';
+  const FORCE_KEY = 'abitare_tools_force_login';
+
+  function clearUser(){
+    try { sessionStorage.removeItem(KEY); } catch {}
+    try { localStorage.removeItem(KEY); } catch {}
+  }
 
   function readStored(){
     try {
@@ -21,15 +24,7 @@
   }
 
   function storeUser(u, remember){
-    try {
-      (remember ? localStorage : sessionStorage).setItem(KEY, JSON.stringify(u));
-    } catch {}
-  }
-
-  function clearUser(){
-    // rimuove SEMPRE da entrambi, così il logout è definitivo anche se era attivo “Ricordami”
-    try { sessionStorage.removeItem(KEY); } catch {}
-    try { localStorage.removeItem(KEY); } catch {}
+    try { (remember ? localStorage : sessionStorage).setItem(KEY, JSON.stringify(u)); } catch {}
   }
 
   function showOverlay(){
@@ -73,7 +68,6 @@
 
     const roleLabel = (window.ROLE_LABELS && ROLE_LABELS[user.role]) ? ROLE_LABELS[user.role] : user.role;
     label.textContent = roleLabel;
-
     if (avatar){
       const t = (roleLabel || 'U').trim();
       avatar.textContent = (t[0] || 'U').toUpperCase();
@@ -81,10 +75,7 @@
 
     menu.classList.remove('hidden');
 
-    const toggle = (e) => {
-      e && e.stopPropagation();
-      dd.classList.toggle('hidden');
-    };
+    const toggle = (e) => { e && e.stopPropagation(); dd.classList.toggle('hidden'); };
 
     if (!menu.__bound){
       menu.__bound = true;
@@ -95,10 +86,13 @@
     }
 
     btn.onclick = () => {
-      // Logout: pulizia totale + forzo la comparsa del login al prossimo load (anche se ci fosse cache/stato)
-      try { sessionStorage.setItem(FORCE_LOGIN_KEY, '1'); } catch {}
+      // Logout definitivo: pulizia + forzo login anche se c'è “Ricordami”
+      try { localStorage.setItem(FORCE_KEY, '1'); } catch {}
       clearUser();
-      location.reload();
+      // aggiungo parametro per evitare cache/vecchi script
+      const url = new URL(location.href);
+      url.searchParams.set('logout','1');
+      location.href = url.toString();
     };
   }
 
@@ -113,27 +107,19 @@
       const pass  = (passEl?.value || '').trim();
       const remember = !!remEl?.checked;
 
-      if (!email || !pass){
-        setError('Compila Email e Password.');
-        return;
-      }
+      if (!email || !pass){ setError('Compila Email e Password.'); return; }
 
       const u = USERS[email];
-      if (!u || u.password !== pass){
-        setError('Credenziali non valide.');
-        return;
-      }
+      if (!u || u.password !== pass){ setError('Credenziali non valide.'); return; }
 
       setError('');
+      try { localStorage.removeItem(FORCE_KEY); } catch {}
       const user = { email, role: u.role };
       storeUser(user, remember);
       hideOverlay();
 
-      // Applica permessi/guard
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
-
-      // Porta a welcome
       try { window.selectMode && selectMode('welcome'); } catch {}
     };
 
@@ -147,21 +133,34 @@
   }
 
   function boot(){
+    // sanifica UI
+    document.body.classList.remove('auth-blur');
+
     initLogin();
 
-    // preloader ~2s
     setTimeout(() => {
       hidePreloader();
 
-      // Se arriva da logout forzo login anche se ci fosse stato salvato
-      let forceLogin = false;
-      try {
-        forceLogin = sessionStorage.getItem(FORCE_LOGIN_KEY) === '1';
-        if (forceLogin) sessionStorage.removeItem(FORCE_LOGIN_KEY);
-      } catch {}
+      // se logout=1 o FORCE_KEY=1 -> mostra login sempre
+      const url = new URL(location.href);
+      const forcedByUrl = url.searchParams.get('logout') === '1';
+      let forcedByKey = false;
+      try { forcedByKey = localStorage.getItem(FORCE_KEY) === '1'; } catch {}
 
-      const user = forceLogin ? null : readStored();
+      if (forcedByUrl || forcedByKey){
+        try { localStorage.removeItem(FORCE_KEY); } catch {}
+        clearUser();
+        // pulisco url
+        if (forcedByUrl){
+          url.searchParams.delete('logout');
+          history.replaceState({}, '', url.toString());
+        }
+        showOverlay();
+        try { document.getElementById('AuthEmail')?.focus(); } catch {}
+        return;
+      }
 
+      const user = readStored();
       if (!user){
         showOverlay();
         try { document.getElementById('AuthEmail')?.focus(); } catch {}
@@ -171,20 +170,11 @@
       hideOverlay();
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
-
       try { window.selectMode && selectMode('welcome'); } catch {}
-
     }, 2000);
   }
 
-  window.Auth = {
-    current: readStored,
-    logout: () => {
-      try { sessionStorage.setItem(FORCE_LOGIN_KEY, '1'); } catch {}
-      clearUser();
-      location.reload();
-    }
-  };
+  window.Auth = { current: readStored, logout: () => { try { localStorage.setItem(FORCE_KEY,'1'); } catch {}; clearUser(); location.href = new URL(location.href).toString(); } };
 
   document.addEventListener('DOMContentLoaded', boot);
 })();

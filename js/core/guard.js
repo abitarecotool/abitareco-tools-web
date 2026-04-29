@@ -22,7 +22,6 @@
     const menu = document.getElementById('SideMenu');
     if (!menu || menu.__guardBound) return;
     menu.__guardBound = true;
-
     menu.addEventListener('click', (e) => {
       const li = e.target.closest('li');
       if (!li) return;
@@ -39,7 +38,6 @@
     const btn = document.getElementById('BtnProcedi');
     if (!btn || btn.__guardBound) return;
     btn.__guardBound = true;
-
     btn.addEventListener('click', (e) => {
       const mode = window.currentMode;
       if (mode && !allowed.includes(mode)){
@@ -55,18 +53,5 @@
     hideUnauthorizedMenu(allowed);
     interceptSidebar(allowed);
     interceptAction(allowed);
-
-    try {
-      if (window.currentMode && window.currentMode !== 'welcome' && !allowed.includes(window.currentMode)){
-        window.selectMode && selectMode('welcome');
-      }
-    } catch {}
   };
-
-  document.addEventListener('DOMContentLoaded', () => {
-    try {
-      const user = window.Auth && Auth.current ? Auth.current() : null;
-      if (user) window.applyGuards(user);
-    } catch {}
-  });
 })();

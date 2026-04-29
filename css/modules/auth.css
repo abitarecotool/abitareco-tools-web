@@ -1,5 +1,19 @@
 /* css/modules/auth.css */
 
+/* Effetto “wow” nel login: blur + saturazione + leggera scala del contenuto sotto */
+body.auth-blur #AppRoot{
+  filter: blur(14px) saturate(1.2);
+  transform: scale(1.02);
+  transform-origin: center;
+}
+
+/* Overlay più "glass" */
+#AuthOverlay.show{
+  background: rgba(27, 41, 61, 0.58);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
 .auth-remember{
   display:flex;
   align-items:center;

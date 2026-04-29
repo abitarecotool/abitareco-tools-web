@@ -2,13 +2,16 @@
 (function(){
   'use strict';
 
+  // Utenti interni (login locale)
   const USERS = {
     'admin@abitareco.it':     { password: 'Abitare52!', role: 'admin' },
     'marketing@abitareco.it': { password: 'Abitare52!', role: 'marketing' },
     'tecnico@abitareco.it':   { password: 'Abitare52!', role: 'tecnico' }
   };
 
+  // Chiavi storage
   const KEY = 'abitare_tools_auth_user';
+  const FORCE_LOGIN_KEY = 'abitare_tools_force_login_once';
 
   function readStored(){
     try {
@@ -24,6 +27,7 @@
   }
 
   function clearUser(){
+    // rimuove SEMPRE da entrambi, così il logout è definitivo anche se era attivo “Ricordami”
     try { sessionStorage.removeItem(KEY); } catch {}
     try { localStorage.removeItem(KEY); } catch {}
   }
@@ -34,6 +38,7 @@
     ov.classList.add('show');
     ov.setAttribute('aria-hidden','false');
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('auth-blur');
   }
 
   function hideOverlay(){
@@ -42,6 +47,7 @@
     ov.classList.remove('show');
     ov.setAttribute('aria-hidden','true');
     document.body.style.overflow = '';
+    document.body.classList.remove('auth-blur');
   }
 
   function hidePreloader(){
@@ -85,9 +91,12 @@
       menu.addEventListener('click', toggle);
       menu.addEventListener('keydown', (e)=>{ if (e.key === 'Enter' || e.key === ' ') toggle(e); });
       document.addEventListener('click', ()=> dd.classList.add('hidden'));
+      document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') dd.classList.add('hidden'); });
     }
 
     btn.onclick = () => {
+      // Logout: pulizia totale + forzo la comparsa del login al prossimo load (anche se ci fosse cache/stato)
+      try { sessionStorage.setItem(FORCE_LOGIN_KEY, '1'); } catch {}
       clearUser();
       location.reload();
     };
@@ -120,9 +129,11 @@
       storeUser(user, remember);
       hideOverlay();
 
+      // Applica permessi/guard
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
 
+      // Porta a welcome
       try { window.selectMode && selectMode('welcome'); } catch {}
     };
 
@@ -138,10 +149,19 @@
   function boot(){
     initLogin();
 
+    // preloader ~2s
     setTimeout(() => {
       hidePreloader();
 
-      const user = readStored();
+      // Se arriva da logout forzo login anche se ci fosse stato salvato
+      let forceLogin = false;
+      try {
+        forceLogin = sessionStorage.getItem(FORCE_LOGIN_KEY) === '1';
+        if (forceLogin) sessionStorage.removeItem(FORCE_LOGIN_KEY);
+      } catch {}
+
+      const user = forceLogin ? null : readStored();
+
       if (!user){
         showOverlay();
         try { document.getElementById('AuthEmail')?.focus(); } catch {}
@@ -153,10 +173,18 @@
       try { bindUserMenu(user); } catch {}
 
       try { window.selectMode && selectMode('welcome'); } catch {}
+
     }, 2000);
   }
 
-  window.Auth = { current: readStored, logout: () => { clearUser(); location.reload(); } };
+  window.Auth = {
+    current: readStored,
+    logout: () => {
+      try { sessionStorage.setItem(FORCE_LOGIN_KEY, '1'); } catch {}
+      clearUser();
+      location.reload();
+    }
+  };
 
   document.addEventListener('DOMContentLoaded', boot);
 })();

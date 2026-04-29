@@ -3,7 +3,6 @@
 (function(){
   'use strict';
 
-  // Inizializza sempre dopo DOM ready (robustezza)
   function init(){
     const btn = document.getElementById('BvPreviewBtn');
     const hint = document.getElementById('BvPreviewHint');
@@ -19,12 +18,7 @@
     const hasRea   = document.getElementById('BvHasRea');
     const rea      = document.getElementById('BvRea');
 
-    if (!btn || !cFront || !cBack) {
-      // BV card non presente (es. permessi) → niente
-      return;
-    }
-
-    // evita binding multipli
+    if (!btn || !cFront || !cBack) return;
     if (btn.__bvPreviewBound) return;
     btn.__bvPreviewBound = true;
 
@@ -46,9 +40,7 @@
 
     async function fetchOrThrow(url){
       const res = await fetch(url, { cache:'no-store' });
-      if (!res.ok){
-        throw new Error(`File non trovato (${res.status}) → ${url}`);
-      }
+      if (!res.ok) throw new Error(`File non trovato (${res.status}) → ${url}`);
       return res;
     }
 
@@ -116,50 +108,40 @@
     function isValid(){
       const brand = getSelectedBrand();
       if (!brand) return false;
-
       const vName = (fullName?.value || '').trim();
       const vJob  = (jobTitle?.value || '').trim();
       const vPh   = (phone?.value || '').trim();
       const vEm   = (email?.value || '').trim();
       if (!vName || !vJob || !vPh || !vEm) return false;
-
       if (brand === 'abitareco' && hasRea?.checked){
         const vRea = (rea?.value || '').trim();
         if (!vRea) return false;
       }
-
       return true;
     }
 
+    function setHint(txt){ if (hint) hint.textContent = txt; }
+
     function updateBtn(){
       const ok = isValid();
-
-      // testo pulsante
       if (!previewGenerated) btn.textContent = 'Genera anteprima';
       else btn.textContent = previewDirty ? 'Aggiorna anteprima' : 'Anteprima aggiornata';
-
-      // stato
       btn.disabled = rendering || !ok;
 
-      if (hint){
-        if (!ok) hint.textContent = 'Compila i dati e seleziona un brand per generare l’anteprima.';
-        else if (!previewGenerated) hint.textContent = 'Pronto: genera l’anteprima (PDF identico all’export).';
-        else if (previewDirty) hint.textContent = 'Hai modificato dei campi: aggiorna l’anteprima per vedere il PDF finale.';
-        else hint.textContent = 'Anteprima aggiornata: corrisponde al PDF che verrà esportato.';
-      }
+      if (!ok) setHint('Compila i dati e seleziona un brand per generare l’anteprima.');
+      else if (!previewGenerated) setHint('Pronto: genera l’anteprima (PDF identico all’export).');
+      else if (previewDirty) setHint('Hai modificato dei campi: aggiorna l’anteprima per vedere il PDF finale.');
+      else setHint('Anteprima aggiornata: corrisponde al PDF che verrà esportato.');
     }
 
     async function buildPdfBytes(){
-      if (!window.PDFLib || !PDFLib.PDFDocument){
-        throw new Error('pdf-lib non disponibile. Controlla che lo script pdf-lib sia caricato.');
-      }
+      if (!window.PDFLib || !PDFLib.PDFDocument) throw new Error('pdf-lib non disponibile.');
 
       const brand = getSelectedBrand();
       const vName = (fullName?.value || '').trim();
       const vJob  = (jobTitle?.value || '').trim();
       const vPh   = (phone?.value || '').trim();
       const vEm   = (email?.value || '').trim();
-
       const wantsRea = (brand === 'abitareco') && !!hasRea?.checked;
       const vRea = wantsRea ? (rea?.value || '').trim() : '';
 
@@ -185,7 +167,6 @@
 
       const backTplUrl = (wantsRea && tpl.backRea) ? tpl.backRea : tpl.backNoRea;
 
-      // Back
       const backTplBytes = await (await fetchOrThrow(backTplUrl)).arrayBuffer();
       let backDoc = await PDFLib.PDFDocument.load(backTplBytes);
 
@@ -204,11 +185,9 @@
       try { form.flatten(); } catch {}
       const backFilledBytes = await backDoc.save();
 
-      // Front
       const frontBytes = new Uint8Array(await (await fetchOrThrow(tpl.front)).arrayBuffer());
       const frontDoc = await PDFLib.PDFDocument.load(frontBytes);
 
-      // Merge
       const finalDoc = await PDFLib.PDFDocument.create();
       const [frontPg] = await finalDoc.copyPages(frontDoc, [0]);
       finalDoc.addPage(frontPg);
@@ -220,18 +199,37 @@
       return await finalDoc.save();
     }
 
-    async function renderPdfToCanvas(pdfBytes, pageNum, canvas, scale=1.15){
+    // IMPORTANT FIX:
+    // Carichiamo PDF una sola volta e renderizziamo due pagine dallo stesso oggetto.
+    // In questo modo evitiamo il DataCloneError "ArrayBuffer is already detached".
+    async function renderTwoPages(pdfBytes, canvas1, canvas2){
       await ensurePdfJs();
-      const pdf = await window.pdfjsLib.getDocument({ data: pdfBytes }).promise;
-      const page = await pdf.getPage(pageNum);
 
-      const viewport = page.getViewport({ scale });
-      const ctx = canvas.getContext('2d');
-      canvas.width = Math.ceil(viewport.width);
-      canvas.height = Math.ceil(viewport.height);
+      // pdf.js usa worker e può "detached" il buffer se passato più volte.
+      // Facciamo una COPIA e creiamo un SOLO documento.
+      const data = (pdfBytes instanceof Uint8Array) ? pdfBytes.slice(0) : new Uint8Array(pdfBytes);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      await page.render({ canvasContext: ctx, viewport }).promise;
+      const pdf = await window.pdfjsLib.getDocument({ data }).promise;
+
+      const renderOne = async (pageNum, canvas) => {
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1.15 });
+        const ctx = canvas.getContext('2d');
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        await page.render({ canvasContext: ctx, viewport }).promise;
+      };
+
+      await renderOne(1, canvas1);
+      // se il pdf ha 2 pagine renderizziamo, altrimenti lasciamo vuoto
+      if (pdf.numPages >= 2) await renderOne(2, canvas2);
+      else {
+        const ctx = canvas2.getContext('2d');
+        ctx.clearRect(0,0,canvas2.width,canvas2.height);
+      }
+
+      try { pdf.cleanup && pdf.cleanup(); } catch {}
     }
 
     async function generatePreview(){
@@ -239,11 +237,11 @@
       rendering = true;
       btn.textContent = 'Generazione…';
       btn.disabled = true;
+      setHint('Generazione anteprima…');
+
       try {
-        if (hint) hint.textContent = 'Generazione anteprima…';
         const bytes = await buildPdfBytes();
-        await renderPdfToCanvas(bytes, 1, cFront, 1.15);
-        await renderPdfToCanvas(bytes, 2, cBack, 1.15);
+        await renderTwoPages(bytes, cFront, cBack);
         previewGenerated = true;
         previewDirty = false;
       } catch (e){
@@ -255,7 +253,6 @@
       }
     }
 
-    // Bind input listeners
     const markDirty = () => {
       if (previewGenerated) previewDirty = true;
       updateBtn();
@@ -269,13 +266,14 @@
       rea?.addEventListener(ev, markDirty);
       hasRea?.addEventListener(ev, markDirty);
     });
-
     pillsWrap?.addEventListener('click', () => setTimeout(markDirty, 0));
 
-    // Click
-    btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); generatePreview(); });
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      generatePreview();
+    });
 
-    // init state
     updateBtn();
   }
 

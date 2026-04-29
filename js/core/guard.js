@@ -23,7 +23,6 @@
     if (!menu || menu.__guardBound) return;
     menu.__guardBound = true;
 
-    // capture: blocca prima del listener normale
     menu.addEventListener('click', (e) => {
       const li = e.target.closest('li');
       if (!li) return;
@@ -51,14 +50,12 @@
     }, true);
   }
 
-  // Esposto per auth.js
   window.applyGuards = function(user){
     const allowed = allowedFor(user);
     hideUnauthorizedMenu(allowed);
     interceptSidebar(allowed);
     interceptAction(allowed);
 
-    // Se la modalità attuale non è consentita, torna a welcome
     try {
       if (window.currentMode && window.currentMode !== 'welcome' && !allowed.includes(window.currentMode)){
         window.selectMode && selectMode('welcome');
@@ -66,7 +63,6 @@
     } catch {}
   };
 
-  // Applica anche su DOMReady (se utente già loggato)
   document.addEventListener('DOMContentLoaded', () => {
     try {
       const user = window.Auth && Auth.current ? Auth.current() : null;

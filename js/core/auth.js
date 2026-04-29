@@ -65,10 +65,11 @@
 
     if (!menu || !dd || !btn || !label) return;
 
-    // label ruolo
-    try { label.textContent = (window.ROLE_LABELS && ROLE_LABELS[user.role]) ? ROLE_LABELS[user.role] : user.role; } catch {}
+    const roleLabel = (window.ROLE_LABELS && ROLE_LABELS[user.role]) ? ROLE_LABELS[user.role] : user.role;
+    label.textContent = roleLabel;
+
     if (avatar){
-      const t = (label.textContent || 'U').trim();
+      const t = (roleLabel || 'U').trim();
       avatar.textContent = (t[0] || 'U').toUpperCase();
     }
 
@@ -88,7 +89,6 @@
 
     btn.onclick = () => {
       clearUser();
-      // reload per tornare allo stato pulito (e far comparire il login)
       location.reload();
     };
   }
@@ -120,12 +120,9 @@
       storeUser(user, remember);
       hideOverlay();
 
-      // applica permessi e UI utente
-      try { window.applyPermissions && window.applyPermissions(user); } catch {}
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
 
-      // porta al welcome
       try { window.selectMode && selectMode('welcome'); } catch {}
     };
 
@@ -134,18 +131,13 @@
       btn.addEventListener('click', doLogin);
     }
 
-    passEl?.addEventListener('keydown', (e)=>{
-      if (e.key === 'Enter'){ e.preventDefault(); doLogin(); }
-    });
-    emailEl?.addEventListener('keydown', (e)=>{
-      if (e.key === 'Enter'){ e.preventDefault(); doLogin(); }
-    });
+    passEl?.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
+    emailEl?.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
   }
 
   function boot(){
     initLogin();
 
-    // preloader 2s come prima
     setTimeout(() => {
       hidePreloader();
 
@@ -157,19 +149,14 @@
       }
 
       hideOverlay();
-      try { window.applyPermissions && window.applyPermissions(user); } catch {}
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
 
-      // se già loggato, vai su welcome
       try { window.selectMode && selectMode('welcome'); } catch {}
     }, 2000);
   }
 
-  window.Auth = {
-    current: readStored,
-    logout: () => { clearUser(); location.reload(); }
-  };
+  window.Auth = { current: readStored, logout: () => { clearUser(); location.reload(); } };
 
   document.addEventListener('DOMContentLoaded', boot);
 })();

@@ -238,11 +238,11 @@
       btn.textContent = 'Generazione…';
       btn.disabled = true;
       setHint('Generazione anteprima…');
-      try { window.dispatchEvent(new CustomEvent('bvPreviewLoading', { detail: { loading: true } })); } catch {}
-      try {
+ try { window.dispatchEvent(new CustomEvent('bvPreviewLoading',{detail:{loading:true}})); } catch {}
+ try {
         const bytes = await buildPdfBytes();
         await renderTwoPages(bytes, cFront, cBack);
-        try { window.dispatchEvent(new CustomEvent('bvPreviewReady', { detail: { frontCanvas: cFront, backCanvas: cBack } })); } catch {}
+ try { window.dispatchEvent(new CustomEvent('bvPreviewReady',{detail:{frontCanvas:cFront,backCanvas:cBack}})); } catch {}
         previewGenerated = true;
         previewDirty = false;
       } catch (e){
@@ -250,8 +250,8 @@
         alert('Anteprima non riuscita: ' + (e?.message || e));
       } finally {
         rendering = false;
-        try { window.dispatchEvent(new CustomEvent('bvPreviewLoading', { detail: { loading: false } })); } catch {}
-        updateBtn();
+ try { window.dispatchEvent(new CustomEvent('bvPreviewLoading',{detail:{loading:false}})); } catch {}
+ updateBtn();
       }
     }
 

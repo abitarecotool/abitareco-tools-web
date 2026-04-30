@@ -1,1 +1,1 @@
-console.error('bv_3d.js missing');
+console.error('BV 3D file missing');

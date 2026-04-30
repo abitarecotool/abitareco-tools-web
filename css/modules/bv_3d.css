@@ -1,0 +1,107 @@
+/* css/modules/bv_3d.css */
+
+/* Nascondi la griglia 2D quando il 3D è attivo (fallback sempre presente) */
+body.bv-3d-enabled .bv-preview-grid{ display:none; }
+
+.bv3d-wrap{
+  margin-top: 12px;
+  border: 1px solid var(--gray-200);
+  background: linear-gradient(180deg, #ffffff, var(--gray-50));
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.bv3d-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.bv3d-left, .bv3d-right{ display:flex; align-items:center; gap: 8px; flex-wrap:wrap; }
+
+.bv3d-btn{
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
+}
+
+.bv3d-auto{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--gray-600);
+  user-select:none;
+}
+
+.bv3d-stage{
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 35%, #ffffff 0%, #f4f6fb 55%, #edf1f8 100%);
+  border: 1px solid var(--gray-200);
+  min-height: 320px;
+}
+
+#Bv3DCanvas{
+  width: 100%;
+  height: 420px;
+  display:block;
+}
+
+@media (max-width: 900px){
+  #Bv3DCanvas{ height: 360px; }
+}
+
+.bv3d-placeholder{
+  position:absolute;
+  inset: 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color: var(--gray-500);
+  font-weight: 700;
+  font-size: 13px;
+  pointer-events:none;
+}
+
+.bv3d-spinner{
+  position:absolute;
+  inset: 0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap: 10px;
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.bv3d-spin{
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 3px solid rgba(196,22,43,0.18);
+  border-top-color: rgba(196,22,43,0.95);
+  animation: bvspin 0.85s linear infinite;
+}
+
+.bv3d-spin-txt{
+  font-size: 12px;
+  color: var(--gray-600);
+  font-weight: 700;
+}
+
+@keyframes bvspin{
+  to { transform: rotate(360deg); }
+}
+
+.bv3d-hint{
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--gray-500);
+}

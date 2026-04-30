@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="./css/styles.css" />
     <link rel="stylesheet" href="./css/modules/images.css" />
  <link rel="stylesheet" href="./css/modules/bv.css" />
+ <link rel="stylesheet" href="./css/modules/bv_3d.css" />
     <link rel="stylesheet" href="./css/modules/auth.css" />
   </head>
 
@@ -317,7 +318,39 @@
       <button id="BvPreviewBtn" type="button" class="btn-primary" disabled>Genera anteprima</button>
     </div>
 
-    <div class="bv-preview-grid">
+    
+<!-- Mockup 3D (stile Pixartprinting) -->
+<div class="bv3d-wrap" id="Bv3DWrap" aria-label="Anteprima 3D biglietto" tabindex="0">
+  <div class="bv3d-toolbar">
+    <div class="bv3d-left">
+      <button id="Bv3DFront" type="button" class="btn-outline bv3d-btn">Fronte</button>
+      <button id="Bv3DBack" type="button" class="btn-outline bv3d-btn">Retro</button>
+    </div>
+    <div class="bv3d-right">
+      <button id="Bv3DZoomOut" type="button" class="btn-outline bv3d-btn" title="Zoom out">−</button>
+      <button id="Bv3DZoomIn" type="button" class="btn-outline bv3d-btn" title="Zoom in">+</button>
+      <button id="Bv3DReset" type="button" class="btn-outline bv3d-btn">Reset</button>
+      <label class="bv3d-auto">
+        <input id="Bv3DAuto" type="checkbox" />
+        <span>Auto</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="bv3d-stage">
+    <canvas id="Bv3DCanvas"></canvas>
+    <div id="Bv3DSpinner" class="bv3d-spinner hidden" aria-hidden="true">
+      <div class="bv3d-spin"></div>
+      <div class="bv3d-spin-txt">Generazione…</div>
+    </div>
+    <div id="Bv3DPlaceholder" class="bv3d-placeholder">Genera l’anteprima per vedere il mockup 3D.</div>
+  </div>
+
+  <div class="bv3d-hint">Trascina per ruotare · Rotellina/pinch per zoom · Usa “Fronte/Retro” per orientare</div>
+</div>
+
+<!-- Anteprima 2D (fallback) -->
+      <div class="bv-preview-grid">
       <div class="bv-preview-box">
         <div class="bv-preview-label">Fronte</div>
         <div class="bv-preview-canvaswrap"><canvas id="BvPreviewFront"></canvas></div>
@@ -488,6 +521,7 @@
     <script src="./js/modules/watermark.js"></script>
     <script src="./js/modules/bv.js"></script>
  <script src="./js/modules/bv_preview.js"></script>
+ <script src="./js/modules/bv_3d.js"></script>
     <script src="./js/modules/qr.js"></script>
     <script src="./js/modules/iubenda.js"></script>
     <script src="./js/modules/ppt.js"></script>

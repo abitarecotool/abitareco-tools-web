@@ -16,8 +16,8 @@
 
     <link rel="stylesheet" href="./css/styles.css" />
     <link rel="stylesheet" href="./css/modules/images.css" />
+ <link rel="stylesheet" href="./css/modules/cropzoom.css" />
  <link rel="stylesheet" href="./css/modules/bv.css" />
- <link rel="stylesheet" href="./css/modules/bv_3d.css?v=20260430081250" />
     <link rel="stylesheet" href="./css/modules/auth.css" />
   </head>
 
@@ -183,7 +183,12 @@
             </section>
 
             <!-- UPLOAD GENERALE -->
-            <section id="UploadCard" class="card hidden">
+            <section id="DTCard" class="card hidden">
+              <h3>Immagini per Digital Tool</h3>
+              <p class="muted" style="margin-top:6px;line-height:1.6">Ottimizza automaticamente le immagini per l'utilizzo digitale. Carica la cartella e clicca <b>Esporta ora</b>.</p>
+            </section>
+
+<section id="UploadCard" class="card hidden">
               <h3>Carica cartella*</h3>
               <div id="DropArea" class="drop" tabindex="0" role="button" aria-label="Carica cartella" title="Clicca per selezionare una cartella o trascinala qui">
                 <div class="drop-inner">
@@ -194,10 +199,7 @@
             </section>
 
             <!-- DIGITAL TOOL -->
-            <section id="DTCard" class="card hidden">
-              <h3>Immagini per Digital Tool</h3>
-              <p class="muted" style="margin-top:6px;line-height:1.6">Ottimizza automaticamente le immagini per l'utilizzo digitale. Carica la cartella e clicca <b>Esporta ora</b>.</p>
-            </section>
+            
 
             <!-- RENAME -->
             <section id="RenameCard" class="card hidden">
@@ -318,39 +320,7 @@
       <button id="BvPreviewBtn" type="button" class="btn-primary" disabled>Genera anteprima</button>
     </div>
 
-    
-<!-- Mockup 3D (stile Pixartprinting) -->
-<div class="bv3d-wrap" id="Bv3DWrap" aria-label="Anteprima 3D biglietto" tabindex="0">
-  <div class="bv3d-toolbar">
-    <div class="bv3d-left">
-      <button id="Bv3DFront" type="button" class="btn-outline bv3d-btn">Fronte</button>
-      <button id="Bv3DBack" type="button" class="btn-outline bv3d-btn">Retro</button>
-    </div>
-    <div class="bv3d-right">
-      <button id="Bv3DZoomOut" type="button" class="btn-outline bv3d-btn" title="Zoom out">−</button>
-      <button id="Bv3DZoomIn" type="button" class="btn-outline bv3d-btn" title="Zoom in">+</button>
-      <button id="Bv3DReset" type="button" class="btn-outline bv3d-btn">Reset</button>
-      <label class="bv3d-auto">
-        <input id="Bv3DAuto" type="checkbox" />
-        <span>Auto</span>
-      </label>
-    </div>
-  </div>
-
-  <div class="bv3d-stage">
-    <canvas id="Bv3DCanvas"></canvas>
-    <div id="Bv3DSpinner" class="bv3d-spinner hidden" aria-hidden="true">
-      <div class="bv3d-spin"></div>
-      <div class="bv3d-spin-txt">Generazione…</div>
-    </div>
-    <div id="Bv3DPlaceholder" class="bv3d-placeholder">Genera l’anteprima per vedere il mockup 3D.</div>
-  </div>
-
-  <div class="bv3d-hint">Trascina per ruotare · Rotellina/pinch per zoom · Usa “Fronte/Retro” per orientare</div>
-</div>
-
-<!-- Anteprima 2D (fallback) -->
-      <div class="bv-preview-grid">
+    <div class="bv-preview-grid">
       <div class="bv-preview-box">
         <div class="bv-preview-label">Fronte</div>
         <div class="bv-preview-canvaswrap"><canvas id="BvPreviewFront"></canvas></div>
@@ -457,7 +427,7 @@
 
 <!-- TEMPLATE PPT -->
 <section id="PptFontsCard" class="card hidden">
-  <h3>Template PPT · Font ufficiali</h3>
+  <h3>Font ufficiali</h3>
   <p class="form-section-sub">Per mantenere uno stile coerente scarica i font brand (Manrope + PPPangaia).</p>
   <button type="button" class="btn-primary" id="BtnFontsZip">Scarica font ufficiali</button>
 </section>
@@ -520,8 +490,7 @@
     <script src="./js/modules/video.js"></script>
     <script src="./js/modules/watermark.js"></script>
     <script src="./js/modules/bv.js"></script>
- <script src="./js/modules/bv_preview.js?v=20260430081250"></script>
- <script src="./js/modules/bv_3d.js?v=20260430081250"></script>
+ <script src="./js/modules/bv_preview.js"></script>
     <script src="./js/modules/qr.js"></script>
     <script src="./js/modules/iubenda.js"></script>
     <script src="./js/modules/ppt.js"></script>

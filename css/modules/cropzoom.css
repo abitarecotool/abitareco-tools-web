@@ -1,0 +1,53 @@
+/* css/modules/cropzoom.css */
+/* Zoom slider (Crop) – track più sottile, pallino invariato */
+
+#CropZoom{
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  background: transparent;
+  height: 26px;
+}
+
+/* WebKit */
+#CropZoom::-webkit-slider-runnable-track{
+  height: 6px;
+  border-radius: 999px;
+  background: var(--gray-200);
+}
+
+#CropZoom::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--red);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,.18);
+  margin-top: -5px; /* centra sul track da 6px */
+}
+
+#CropZoom:focus{ outline: none; }
+
+/* Firefox */
+#CropZoom::-moz-range-track{
+  height: 6px;
+  border-radius: 999px;
+  background: var(--gray-200);
+}
+
+#CropZoom::-moz-range-progress{
+  height: 6px;
+  border-radius: 999px;
+  background: var(--red);
+}
+
+#CropZoom::-moz-range-thumb{
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--red);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,.18);
+}

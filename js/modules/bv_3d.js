@@ -1,4 +1,5 @@
 /* js/modules/bv_3d.js */
+// Mockup 3D (solo BV) senza OrbitControls: controlli custom (drag rotate + wheel/pinch zoom)
 
 (function(){
   'use strict';
@@ -21,7 +22,7 @@
 
   if (!wrap || !canvas) return;
 
-  // Auto rotate OFF by default
+  // Auto-rotate OFF by default
   if (chkAuto) chkAuto.checked = false;
 
   function showSpinner(on){
@@ -43,56 +44,40 @@
     } catch { return false; }
   }
 
-  // ---- Robust script loader (avoid multiple instances / race conditions) ----
+  // Script loader (THREE only). OrbitControls rimosso per evitare 404/CSP e doppie istanze.
   function loadScriptOnce(src, id){
     return new Promise((resolve, reject) => {
-      // already loaded?
-      if (id && document.getElementById(id)) {
-        return resolve();
-      }
-      // already in DOM by src?
-      const existing = Array.from(document.scripts).find(s => s.src === src);
-      if (existing){
-        if (existing.dataset.loaded === '1') return resolve();
-        existing.addEventListener('load', () => resolve(), { once:true });
-        existing.addEventListener('error', () => reject(new Error('Script load error: ' + src)), { once:true });
-        return;
-      }
+      if (id && document.getElementById(id)) return resolve();
+      if (window.THREE) return resolve();
 
       const s = document.createElement('script');
       if (id) s.id = id;
       s.src = src;
       s.async = true;
-      s.dataset.loaded = '0';
-      s.onload = () => { s.dataset.loaded = '1'; resolve(); };
+      s.onload = () => resolve();
       s.onerror = () => reject(new Error('Script load error: ' + src));
       document.head.appendChild(s);
     });
   }
 
-  // Shared promise so we never load THREE twice
   async function ensureThree(){
     if (window.__BV3D_THREE_READY) return;
     if (window.__BV3D_THREE_PROMISE) return window.__BV3D_THREE_PROMISE;
 
     window.__BV3D_THREE_PROMISE = (async () => {
-      if (!hasWebGL()) {
+      if (!hasWebGL()){
         setPlaceholder('WebGL non disponibile. Anteprima 3D disattivata.', true);
         throw new Error('WebGL not available');
       }
 
-      // IMPORTANT: use one CDN consistently (unpkg) to avoid mismatched builds
-      const THREE_VER = '0.160.0';
-      const threeSrc = `https://unpkg.com/three@${THREE_VER}/build/three.min.js`;
-      const controlsSrc = `https://unpkg.com/three@${THREE_VER}/examples/js/controls/OrbitControls.js`;
+      // Se THREE già presente non ricarico
+      if (!window.THREE){
+        const THREE_VER = '0.160.0';
+        const threeSrc = `https://unpkg.com/three@${THREE_VER}/build/three.min.js`;
+        await loadScriptOnce(threeSrc, 'BV3D_THREE');
+      }
 
-      await loadScriptOnce(threeSrc, 'BV3D_THREE');
-      if (!window.THREE) throw new Error('THREE non disponibile dopo il load');
-
-      await loadScriptOnce(controlsSrc, 'BV3D_ORBIT');
-      // OrbitControls non-module attaches to THREE.OrbitControls
-      if (!window.THREE.OrbitControls) throw new Error('OrbitControls non disponibile');
-
+      if (!window.THREE) throw new Error('THREE non disponibile');
       window.__BV3D_THREE_READY = true;
     })();
 
@@ -104,35 +89,44 @@
   let renderer = null;
   let scene = null;
   let camera = null;
-  let controls = null;
   let card = null;
   let texFront = null;
   let texBack = null;
-  let targetAzimuth = null;
+
+  // custom controls state
+  let rotY = 0.45;     // azimuth (front/back)
+  let rotX = -0.35;    // tilt (table feel)
+  let targetRotY = null;
+
+  let distance = 2.2;  // zoom
+  const minDist = 1.1;
+  const maxDist = 3.6;
+
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  function clamp(v, a, b){ return Math.min(b, Math.max(a, v)); }
 
   function initScene(){
     THREE = window.THREE;
 
-    // Renderer
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
-    // Scene
     scene = new THREE.Scene();
 
-    // Camera (prodotto sul tavolo)
     const w = canvas.clientWidth || 800;
     const h = canvas.clientHeight || 420;
     camera = new THREE.PerspectiveCamera(35, w / h, 0.01, 50);
-    camera.position.set(0, 1.15, 2.2);
 
-    // Lights
+    // luci
     scene.add(new THREE.AmbientLight(0xffffff, 0.85));
     const dir = new THREE.DirectionalLight(0xffffff, 0.85);
     dir.position.set(3, 4, 2);
     scene.add(dir);
 
-    // Ground shadow
+    // ombra finta
     const shadowGeo = new THREE.PlaneGeometry(3, 2);
     const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.10 });
     const shadow = new THREE.Mesh(shadowGeo, shadowMat);
@@ -140,40 +134,21 @@
     shadow.position.y = -0.03;
     scene.add(shadow);
 
-    // Card geometry: thin box (front/back textures)
+    // card
     const cw = 1.6;
     const ch = 1.0;
     const ct = 0.02;
     const geo = new THREE.BoxGeometry(cw, ch, ct);
-
     const matNeutral = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0.0 });
     const mats = [matNeutral, matNeutral, matNeutral, matNeutral, matNeutral, matNeutral];
-
     card = new THREE.Mesh(geo, mats);
     card.position.y = 0.38;
     scene.add(card);
 
-    // Controls (drag rotate + wheel/pinch zoom)
-    controls = new THREE.OrbitControls(camera, canvas);
-    controls.enablePan = false;
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.rotateSpeed = 0.55;
-    controls.zoomSpeed = 0.9;
+    // abilita 3D mode (nasconde 2D fallback)
+    document.body.classList.add('bv-3d-enabled');
 
-    controls.minDistance = 1.1;
-    controls.maxDistance = 3.6;
-    controls.minPolarAngle = 0.75;
-    controls.maxPolarAngle = 1.35;
-
-    // Default tilt
-    try {
-      controls.setPolarAngle(1.06);
-      controls.setAzimuthalAngle(0.45);
-      controls.update();
-    } catch {}
-
-    // Size
+    // resize
     function resize(){
       if (!renderer || !camera) return;
       const w = canvas.clientWidth;
@@ -185,35 +160,89 @@
     resize();
     window.addEventListener('resize', resize);
 
-    // Enable 3D mode (hide 2D fallback)
-    document.body.classList.add('bv-3d-enabled');
+    // pointer drag
+    canvas.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+    });
 
-    // Animation
+    canvas.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+
+      rotY += dx * 0.005;
+      rotX += dy * 0.004;
+      rotX = clamp(rotX, -0.9, -0.15); // limite inclinazione
+      targetRotY = null;
+    });
+
+    function endDrag(e){
+      dragging = false;
+      try { canvas.releasePointerCapture(e.pointerId); } catch {}
+    }
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+
+    // wheel zoom
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = Math.sign(e.deltaY) * 0.18;
+      distance = clamp(distance + delta, minDist, maxDist);
+    }, { passive: false });
+
+    // toolbar
+    btnFront?.addEventListener('click', () => { targetRotY = 0; });
+    btnBack?.addEventListener('click',  () => { targetRotY = Math.PI; });
+
+    btnReset?.addEventListener('click', () => {
+      if (chkAuto) chkAuto.checked = false;
+      rotY = 0.45;
+      rotX = -0.35;
+      targetRotY = null;
+      distance = 2.2;
+    });
+
+    btnZoomIn?.addEventListener('click', () => { distance = clamp(distance - 0.18, minDist, maxDist); });
+    btnZoomOut?.addEventListener('click', () => { distance = clamp(distance + 0.18, minDist, maxDist); });
+
+    // anim
     const animate = () => {
       requestAnimationFrame(animate);
 
-      // Smooth snap to front/back
-      if (targetAzimuth != null && controls){
-        const cur = controls.getAzimuthalAngle();
-        let delta = targetAzimuth - cur;
-        delta = Math.atan2(Math.sin(delta), Math.cos(delta));
-        const step = delta * 0.12;
-        if (Math.abs(delta) < 0.001) targetAzimuth = null;
-        else {
-          try { controls.setAzimuthalAngle(cur + step); } catch {}
-        }
+      // auto-rotate
+      if (chkAuto && chkAuto.checked && !dragging){
+        rotY += 0.008;
       }
 
-      if (controls){
-        controls.autoRotate = !!(chkAuto && chkAuto.checked);
-        controls.autoRotateSpeed = 1.1;
-        controls.update();
+      // smooth snap
+      if (targetRotY != null){
+        let delta = targetRotY - rotY;
+        delta = Math.atan2(Math.sin(delta), Math.cos(delta));
+        rotY += delta * 0.12;
+        if (Math.abs(delta) < 0.001) targetRotY = null;
+      }
+
+      // apply
+      if (card){
+        card.rotation.y = rotY;
+        card.rotation.x = rotX;
+      }
+
+      // camera position (look at center)
+      if (camera){
+        camera.position.set(0, 1.15, distance);
+        camera.lookAt(0, 0.38, 0);
       }
 
       renderer.render(scene, camera);
     };
-    animate();
 
+    animate();
     setPlaceholder('Genera l’anteprima per vedere il mockup 3D.', true);
   }
 
@@ -251,33 +280,6 @@
     setPlaceholder('', false);
   }
 
-  // UI buttons
-  btnFront?.addEventListener('click', () => { if (controls) targetAzimuth = 0; });
-  btnBack?.addEventListener('click', () => { if (controls) targetAzimuth = Math.PI; });
-
-  btnReset?.addEventListener('click', () => {
-    if (!controls) return;
-    if (chkAuto) chkAuto.checked = false;
-    try {
-      controls.reset();
-      controls.setPolarAngle(1.06);
-      controls.setAzimuthalAngle(0.45);
-      controls.update();
-    } catch {}
-  });
-
-  function dolly(delta){
-    if (!controls) return;
-    const d = controls.getDistance();
-    const next = Math.min(controls.maxDistance, Math.max(controls.minDistance, d + delta));
-    const factor = next / d;
-    if (factor > 1) controls.dollyOut(factor);
-    else controls.dollyIn(1/factor);
-    controls.update();
-  }
-  btnZoomIn?.addEventListener('click', () => dolly(-0.18));
-  btnZoomOut?.addEventListener('click', () => dolly(0.18));
-
   // Listen events from bv_preview
   window.addEventListener('bvPreviewLoading', (e) => {
     showSpinner(!!e.detail?.loading);
@@ -291,13 +293,11 @@
       updateTextures(e.detail.frontCanvas, e.detail.backCanvas);
     } catch (err){
       console.error('[BV3D] init failed:', err);
-      // fallback: keep 2D visible
       document.body.classList.remove('bv-3d-enabled');
       setPlaceholder('Anteprima 3D non disponibile su questo dispositivo.', true);
     }
   });
 
-  // Preload three lazily (non blocca)
   document.addEventListener('DOMContentLoaded', () => {
     ensureThree().catch(()=>{});
   });

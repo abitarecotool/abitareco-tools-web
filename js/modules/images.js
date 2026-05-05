@@ -325,8 +325,8 @@
         const parts = relFolder.split('/').filter(Boolean);
         leaf = parts.length ? parts[parts.length-1] : '';
       }
-      const leafIta = leaf || 'hero';
-      const leafEng = folderMap[leafIta] || leafIta;
+      const leafIta = leaf || '';
+      const leafEng = leafIta ? (folderMap[leafIta] || leafIta) : '';
 
       const slugFolderIta = slugify(leafIta);
       const slugFolderEng = slugify(leafEng);
@@ -360,7 +360,9 @@
       }
     }
 
-    const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
+    const d = new Date();
+ const pad = (n)=>String(n).padStart(2,'0');
+ const stamp = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
     const blob = await zip.generateAsync({type:'blob'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);

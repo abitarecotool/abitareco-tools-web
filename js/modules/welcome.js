@@ -1,4 +1,5 @@
 /* js/modules/welcome.js */
+// Welcome (Photoshop light) + Help drawer (UI only)
 
 (function(){
   'use strict';
@@ -7,15 +8,52 @@
   const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 
   const cardWrap = document.getElementById('WelcomeCards');
-  const btnHelp = document.getElementById('WelcomeHelpBtn');
-  const overlay = document.getElementById('WelcomeHelpOverlay');
-  const drawer = document.getElementById('WelcomeHelpDrawer');
-  const btnClose = document.getElementById('WelcomeHelpClose');
-  const q = document.getElementById('WelcomeHelpQuery');
-  const chipsWrap = document.getElementById('WelcomeHelpChips');
-  const faqWrap = document.getElementById('WelcomeHelpFaq');
-
   if (!cardWrap) return;
+
+  // Ensure help drawer DOM exists even if index.html was cached/partial
+  function ensureHelpDom(){
+    let overlay = document.getElementById('WelcomeHelpOverlay');
+    let drawer = document.getElementById('WelcomeHelpDrawer');
+
+    if (!overlay){
+      overlay = document.createElement('div');
+      overlay.id = 'WelcomeHelpOverlay';
+      overlay.className = 'welcome-help-overlay hidden';
+      overlay.setAttribute('aria-hidden','true');
+      document.body.appendChild(overlay);
+    }
+
+    if (!drawer){
+      drawer = document.createElement('aside');
+      drawer.id = 'WelcomeHelpDrawer';
+      drawer.className = 'welcome-help-drawer hidden';
+      drawer.setAttribute('role','dialog');
+      drawer.setAttribute('aria-modal','true');
+      drawer.setAttribute('aria-labelledby','WelcomeHelpTitle');
+      drawer.setAttribute('aria-hidden','true');
+      drawer.innerHTML = `
+        <div class="welcome-help-top">
+          <button id="WelcomeHelpClose" type="button" class="welcome-help-close" aria-label="Chiudi">✕</button>
+        </div>
+        <div class="welcome-help-body">
+          <h3 id="WelcomeHelpTitle" class="welcome-help-title">Serve una mano?</h3>
+          <p class="welcome-help-sub">Risposte rapide e scorciatoie per usare il tool interno.</p>
+
+          <div class="welcome-help-search">
+            <input id="WelcomeHelpQuery" class="input" type="text" placeholder="Cerca (es. immagini, BV, export, font)" />
+          </div>
+
+          <div class="welcome-help-chips" id="WelcomeHelpChips" aria-label="Suggerimenti rapidi"></div>
+          <div id="WelcomeHelpFaq" class="welcome-help-faq" aria-label="FAQ"></div>
+
+          <div class="welcome-help-note">Nota: questo pannello è informativo (non è un chatbot). Se serve, contatta la Creative Unit.</div>
+        </div>
+      `;
+      document.body.appendChild(drawer);
+    }
+
+    return { overlay, drawer };
+  }
 
   // Build cards from sidebar menu (no duplicazioni)
   function buildCards(){
@@ -54,11 +92,7 @@
         </div>
       `;
 
-      const go = () => {
-        // Simula click sul menu (non tocchiamo le modalità)
-        try { li.click(); } catch {}
-      };
-
+      const go = () => { try { li.click(); } catch {} };
       card.addEventListener('click', go);
       card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
@@ -68,7 +102,7 @@
     });
   }
 
-  // Help drawer (solo UI/FAQ)
+  // Help content
   const chips = ['Immagini','BV 3D','Export','Font PPT','QR','Watermark'];
   const faq = [
     { q: 'Come esporto le immagini per il sito?', a: 'Vai su Immagini, inserisci Nome file ITA/ENG, seleziona formato e clicca “Esporta ora”.' },
@@ -79,7 +113,7 @@
     { q: 'Non vedo gli aggiornamenti dopo un commit', a: 'Esegui hard refresh (Ctrl+F5 / Cmd+Shift+R) o disattiva cache dal tab Network.' }
   ];
 
-  function renderChips(){
+  function renderChips(chipsWrap, q){
     if (!chipsWrap) return;
     chipsWrap.innerHTML = '';
     chips.forEach(t => {
@@ -88,13 +122,13 @@
       b.className = 'welcome-chip';
       b.textContent = t;
       b.addEventListener('click', () => {
-        if (q){ q.value = t; filterFaq(); q.focus(); }
+        if (q){ q.value = t; q.dispatchEvent(new Event('input')); q.focus(); }
       });
       chipsWrap.appendChild(b);
     });
   }
 
-  function renderFaq(list){
+  function renderFaq(faqWrap, list){
     if (!faqWrap) return;
     faqWrap.innerHTML = '';
     (list || []).forEach(item => {
@@ -108,47 +142,57 @@
     });
   }
 
-  function filterFaq(){
-    const term = (q?.value || '').trim().toLowerCase();
-    if (!term){ renderFaq(faq); return; }
-    const filtered = faq.filter(x => (x.q + ' ' + x.a).toLowerCase().includes(term));
-    renderFaq(filtered);
-  }
+  function mountHelp(){
+    const { overlay, drawer } = ensureHelpDom();
+    const btnHelp = document.getElementById('WelcomeHelpBtn');
+    const btnClose = document.getElementById('WelcomeHelpClose');
+    const q = document.getElementById('WelcomeHelpQuery');
+    const chipsWrap = document.getElementById('WelcomeHelpChips');
+    const faqWrap = document.getElementById('WelcomeHelpFaq');
 
-  function openHelp(){
-    overlay?.classList.remove('hidden');
-    drawer?.classList.remove('hidden');
-    overlay?.setAttribute('aria-hidden','false');
-    drawer?.setAttribute('aria-hidden','false');
-    setTimeout(() => q?.focus(), 0);
-  }
+    const filterFaq = () => {
+      const term = (q?.value || '').trim().toLowerCase();
+      if (!term){ renderFaq(faqWrap, faq); return; }
+      const filtered = faq.filter(x => (x.q + ' ' + x.a).toLowerCase().includes(term));
+      renderFaq(faqWrap, filtered);
+    };
 
-  function closeHelp(){
-    overlay?.classList.add('hidden');
-    drawer?.classList.add('hidden');
-    overlay?.setAttribute('aria-hidden','true');
-    drawer?.setAttribute('aria-hidden','true');
-  }
+    const openHelp = () => {
+      overlay.classList.remove('hidden');
+      drawer.classList.remove('hidden');
+      overlay.setAttribute('aria-hidden','false');
+      drawer.setAttribute('aria-hidden','false');
+      setTimeout(() => q?.focus(), 0);
+    };
 
-  btnHelp?.addEventListener('click', openHelp);
-  btnClose?.addEventListener('click', closeHelp);
-  overlay?.addEventListener('click', closeHelp);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && drawer && !drawer.classList.contains('hidden')) closeHelp();
-  });
-  q?.addEventListener('input', filterFaq);
+    const closeHelp = () => {
+      overlay.classList.add('hidden');
+      drawer.classList.add('hidden');
+      overlay.setAttribute('aria-hidden','true');
+      drawer.setAttribute('aria-hidden','true');
+    };
+
+    // Bind once
+    btnHelp?.addEventListener('click', openHelp);
+    btnClose?.addEventListener('click', closeHelp);
+    overlay.addEventListener('click', closeHelp);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !drawer.classList.contains('hidden')) closeHelp();
+    });
+
+    q?.addEventListener('input', filterFaq);
+
+    renderChips(chipsWrap, q);
+    renderFaq(faqWrap, faq);
+  }
 
   // Init
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', () => {
-      buildCards();
-      renderChips();
-      renderFaq(faq);
-    });
-  } else {
+  const init = () => {
     buildCards();
-    renderChips();
-    renderFaq(faq);
-  }
+    mountHelp();
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 
 })();

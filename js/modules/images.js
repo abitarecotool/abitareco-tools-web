@@ -160,49 +160,20 @@
     return { w:1920, h:1080 };
   }
 
+  function updateCropFrameRatio(){
+    if (!CropFrame) return;
+    const { w, h } = getSelectedFormat();
+    const W = Math.max(1, Number(w) || 1);
+    const H = Math.max(1, Number(h) || 1);
+    const ratio = `${W} / ${H}`;
+    CropFrame.style.setProperty('--crop-ratio', ratio);
+    try { CropFrame.style.aspectRatio = ratio; } catch {}
+    try {
+      const fw = Math.max(1, CropFrame.clientWidth);
+      CropFrame.style.height = Math.round(fw * (H / W)) + 'px';
+    } catch {}
+  }
 
-// Preset: "Sito Abitare Co." (prima opzione)
-function isSitePreset(){
-  return !!(Fmt1920 && Fmt1920.checked && !(FmtShare && FmtShare.checked) && !(FmtCustom && FmtCustom.checked));
-}
-
-// Modalità A
-// - Orizzontali: 1920×1080
-// - Verticali/Quadrate: altezza 1080, larghezza proporzionale (square => 1080×1080)
-function getSiteOutputSize(iw, ih){
-  if (!iw || !ih) return { w:1920, h:1080 };
-  if (iw > ih) return { w:1920, h:1080 };
-  const h = 1080;
-  const w = Math.max(1, Math.round(h * (iw / ih)));
-  return { w, h };
-}
-
-  
-function updateCropFrameRatio(){
-  if (!CropFrame) return;
-
-  let W = 1, H = 1;
-  const sel = getSelectedFormat();
-  W = Math.max(1, Number(sel.w) || 1);
-  H = Math.max(1, Number(sel.h) || 1);
-
-  // Se è selezionato "Sito Abitare Co." e c'è una sola immagine, adattiamo il ratio all'orientazione
-  try {
-    if (isSitePreset() && picked && picked.length === 1 && CropImg && CropImg.naturalWidth && CropImg.naturalHeight){
-      const o = getSiteOutputSize(CropImg.naturalWidth, CropImg.naturalHeight);
-      W = o.w;
-      H = o.h;
-    }
-  } catch {}
-
-  const ratio = `${W} / ${H}`;
-  CropFrame.style.setProperty('--crop-ratio', ratio);
-  try { CropFrame.style.aspectRatio = ratio; } catch {}
-  try {
-    const fw = Math.max(1, CropFrame.clientWidth);
-    CropFrame.style.height = Math.round(fw * (H / W)) + 'px';
-  } catch {}
-}
   // aggiorna cornice quando cambia il formato
   [Fmt1920, FmtShare, FmtCustom, CustomW, CustomH].forEach(el => {
     const go = () => {
@@ -225,7 +196,8 @@ function updateCropFrameRatio(){
       return;
     }
 
-    if (picked.length === 1 && picked[0]?.file && picked[0].file.type?.startsWith('image/')) {
+    const shouldCrop = (picked.length === 1 && picked[0]?.file && picked[0].file.type?.startsWith('image/') && !!FmtCustom?.checked);
+    if (shouldCrop) {
       showEl(ImageCropCard);
 
       const file = picked[0].file;
@@ -267,22 +239,6 @@ function updateCropFrameRatio(){
     ctx.drawImage(bmp, dx, dy, dw, dh);
     return c;
   }
-
-
-function drawContainToCanvas(bmp, W, H){
-  const c = document.createElement('canvas');
-  c.width = W; c.height = H;
-  const ctx = c.getContext('2d');
-  const scale = Math.min(W/bmp.width, H/bmp.height);
-  const dw = Math.round(bmp.width * scale);
-  const dh = Math.round(bmp.height * scale);
-  const dx = Math.round((W - dw) / 2);
-  const dy = Math.round((H - dh) / 2);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(bmp, dx, dy, dw, dh);
-  return c;
-}
 
   function drawCroppedToCanvas(bmp, W, H){
     try {
@@ -348,7 +304,7 @@ function drawContainToCanvas(bmp, W, H){
     const images = picked.filter(p => /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name));
     if (!images.length){ alert('Carica una cartella con immagini.'); return; }
 
-    const { w: baseW, h: baseH } = getSelectedFormat();
+    const { w:W, h:H } = getSelectedFormat();
     const folderMap = await loadFolderMap();
 
     const groups = new Map();
@@ -388,23 +344,10 @@ function drawContainToCanvas(bmp, W, H){
         const outIta = `${baseIta}-${nn}`;
         const outEng = `${baseEng}-${nn}`;
 
-        
-const bmp = await loadImageBitmap(rec.file);
+        const bmp = await loadImageBitmap(rec.file);
 
-// SMART_SITE_DIMENSIONS (Modalità A)
-// - Vale SOLO per "Sito Abitare Co." (prima opzione)
-// - Orizzontali: 1920×1080 (cover)
-// - Verticali/Quadrate: altezza 1080 e larghezza proporzionale (no crop)
-let W = baseW, H = baseH;
-const sitePreset = isSitePreset();
-if (sitePreset){
-  const o = getSiteOutputSize(bmp.width, bmp.height);
-  W = o.w;
-  H = o.h;
-}
-
-const useCrop = (currentMode === 'images' && images.length === 1 && ImageCropCard && !ImageCropCard.classList.contains('hidden'));
-        const canvas = useCrop ? drawCroppedToCanvas(bmp, W, H) : ((sitePreset && bmp.width <= bmp.height) ? drawContainToCanvas(bmp, W, H) : drawCoverToCanvas(bmp, W, H));
+        const useCrop = (currentMode === 'images' && images.length === 1 && ImageCropCard && !ImageCropCard.classList.contains('hidden'));
+        const canvas = useCrop ? drawCroppedToCanvas(bmp, W, H) : drawCoverToCanvas(bmp, W, H);
 
         const webp = await canvasToBlob(canvas, 'image/webp', 0.85);
         const jpg  = await canvasToBlob(canvas, 'image/jpeg', 0.85);
@@ -440,4 +383,10 @@ const useCrop = (currentMode === 'images' && images.length === 1 && ImageCropCar
   window.getSelectedFormat = getSelectedFormat;
   window.updateCropFrameRatio = updateCropFrameRatio;
   window.exportImages = exportImages;
+
+  /* refresh crop visibility when format changes */
+  [Fmt1920, FmtShare, FmtCustom].forEach(r => {
+    r?.addEventListener('change', () => { try { handleCropUI(); } catch {} });
+    r?.addEventListener('click',  () => { try { handleCropUI(); } catch {} });
+  });
 })();

@@ -1,4 +1,6 @@
 /* js/modules/welcome.js */
+// Welcome (Photoshop light) + Help drawer (UI only)
+// Non modifica alcuna modalità: costruisce card dalla sidebar e gestisce solo il drawer "Aiuto".
 
 (function(){
   'use strict';
@@ -19,27 +21,12 @@
     ppt: 'Template e font ufficiali.'
   };
 
-  function setActionbarVar(){
-    const ab = document.getElementById('ActionBar');
-    if (!ab) return;
-    const h = Math.max(56, ab.getBoundingClientRect().height || 0);
-    document.documentElement.style.setProperty('--welcome-actionbar-h', h + 'px');
-  }
-
-  function enterWelcome(){
-    document.body.classList.add('welcome-home');
-    setActionbarVar();
-  }
-
-  function leaveWelcome(){
-    document.body.classList.remove('welcome-home');
-  }
-
-  function isAllowedMenuItem(li){
-    if (!li) return false;
-    if (li.classList?.contains('hidden')) return false;
-    const style = window.getComputedStyle(li);
-    if (style.display === 'none' || style.visibility === 'hidden') return false;
+  function isVisible(el){
+    if (!el) return false;
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+    if (el.classList?.contains('hidden')) return false;
+    if (el.offsetParent === null && style.position !== 'fixed') return false;
     return true;
   }
 
@@ -47,7 +34,7 @@
     const wrap = document.getElementById('WelcomeCards');
     if (!wrap) return;
 
-    const items = $$('#SideMenu li[data-mode]').filter(isAllowedMenuItem);
+    const items = $$('#SideMenu li[data-mode]').filter(isVisible);
     wrap.innerHTML = '';
 
     items.forEach(li => {
@@ -68,11 +55,7 @@
         </div>
       `;
 
-      const go = () => {
-        leaveWelcome();
-        try { li.click(); } catch {}
-      };
-
+      const go = () => { try { li.click(); } catch {} };
       card.addEventListener('click', go);
       card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
@@ -82,7 +65,7 @@
     });
   }
 
-  // Help
+  // Help drawer
   const CHIPS = [
     { label:'Immagini', value:'immagini' },
     { label:'Export', value:'export' },
@@ -99,7 +82,8 @@
     { q: 'QR: come genero un QR con UTM?', a: 'Vai su Genera QR Code, compila i campi UTM e scarica il QR.' },
     { q: 'Immagini: preset Sito Abitare Co.', a: 'Orizzontali 1920×1080; verticali/quadrate H=1080 con larghezza proporzionale (no tagli).' },
     { q: 'Personalizzato: quando compare il crop manuale?', a: 'Il crop manuale è disponibile solo in “Personalizzato” quando carichi una sola immagine.' },
-    { q: 'Font PPT: come li scarico?', a: 'Vai su Template PPT → Font ufficiali → Scarica font ufficiali.' }
+    { q: 'Font PPT: come li scarico?', a: 'Vai su Template PPT → Font ufficiali → Scarica font ufficiali.' },
+    { q: 'Non vedo gli aggiornamenti dopo un commit', a: 'Esegui hard refresh (Ctrl+F5 / Cmd+Shift+R) o disattiva cache dal tab Network.' }
   ];
 
   function renderChips(){
@@ -126,6 +110,7 @@
     const faqWrap = document.getElementById('WelcomeHelpFaq');
     if (!faqWrap) return;
     faqWrap.innerHTML = '';
+
     (list || []).forEach(item => {
       const box = document.createElement('div');
       box.className = 'welcome-faq-item';
@@ -141,7 +126,8 @@
     const q = document.getElementById('WelcomeHelpQuery');
     const term = (q?.value || '').trim().toLowerCase();
     if (!term){ renderFaq(FAQ); return; }
-    renderFaq(FAQ.filter(x => (x.q + ' ' + x.a).toLowerCase().includes(term)));
+    const filtered = FAQ.filter(x => (x.q + ' ' + x.a).toLowerCase().includes(term));
+    renderFaq(filtered);
   }
 
   function bindHelp(){
@@ -176,34 +162,28 @@
     });
 
     q?.addEventListener('input', filterFaq);
+
+    // initial
     renderChips();
     renderFaq(FAQ);
   }
 
-  function bindSidebarLogo(){
-    const logo = document.getElementById('SidebarLogo');
-    if (!logo) return;
+  function observeRoles(){
+    const menu = document.getElementById('SideMenu');
+    if (!menu) return;
 
-    logo.style.cursor = 'pointer';
-    logo.addEventListener('click', () => {
-      const base = window.location.origin + window.location.pathname;
-      window.location.href = base + '?home=1';
+    const obs = new MutationObserver(() => {
+      // quando cambiano ruoli/visibilità, ricostruisci
+      buildCards();
     });
+
+    obs.observe(menu, { attributes:true, childList:true, subtree:true });
   }
 
   function init(){
-    enterWelcome();
     buildCards();
     bindHelp();
-    bindSidebarLogo();
-
-    $$('#SideMenu li[data-mode]').forEach(li => {
-      li.addEventListener('click', () => leaveWelcome());
-    });
-
-    window.addEventListener('resize', () => {
-      if (document.body.classList.contains('welcome-home')) setActionbarVar();
-    });
+    observeRoles();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

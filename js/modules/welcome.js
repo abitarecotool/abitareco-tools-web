@@ -1,5 +1,6 @@
 /* js/modules/welcome.js */
 // Welcome (Photoshop light) + Help drawer (UI only)
+// + Role-aware cards: mostra solo le modalità disponibili; quelle non disponibili vengono "disabilitate" (opacità bassa)
 
 (function(){
   'use strict';
@@ -55,48 +56,84 @@
     return { overlay, drawer };
   }
 
-  // Build cards from sidebar menu (no duplicazioni)
-  function buildCards(){
-    const items = $$('#SideMenu li[data-mode]');
-    const desc = {
-      images: 'Ottimizza per sito e share, naming e export.',
-      digitaltool: 'Immagini pronte per utilizzo digitale.',
-      pdf2jpg: 'Converti PDF in immagini in pochi click.',
-      rename: 'Rinomina file e cartelle in batch.',
-      video: 'Crea video da cartelle immagini.',
-      watermark: 'Applica watermark in modo rapido.',
-      bv: 'Genera BV con anteprima 3D.',
-      qr: 'Crea QR con parametri UTM.',
-      iubenda: 'Genera snippet pulito e copiabile.',
-      ppt: 'Template e font ufficiali.'
-    };
+  // Role-aware: elenco completo modalità (così possiamo anche mostrare quelle non disponibili)
+  const MODES = [
+    { mode:'images',      title:'Immagini',          icon:'./assets/icons/icon-sito.png' },
+    { mode:'digitaltool', title:'DigitalTool',       icon:'./assets/icons/icon-digital.png' },
+    { mode:'pdf2jpg',     title:'PDF → JPG',         icon:'./assets/icons/icon-pdf.png' },
+    { mode:'rename',      title:'Rename',            icon:'./assets/icons/icon-rename.png' },
+    { mode:'video',       title:'Video Slideshow',   icon:'./assets/icons/icon-video.png' },
+    { mode:'watermark',   title:'Watermark',         icon:'./assets/icons/icon-watermark.png' },
+    { mode:'bv',          title:'Biglietto da visita', icon:'./assets/icons/icon-bv.png' },
+    { mode:'qr',          title:'Genera QR Code',    icon:'./assets/icons/icon-qr.png' },
+    { mode:'iubenda',     title:'Iubenda',           icon:'./assets/icons/icon-iubenda.png' },
+    { mode:'ppt',         title:'Template PPT',      icon:'./assets/icons/icon-ppt.png' }
+  ];
 
+  const DESC = {
+    images: 'Ottimizza per sito e share, naming e export.',
+    digitaltool: 'Immagini pronte per utilizzo digitale.',
+    pdf2jpg: 'Converti PDF in immagini in pochi click.',
+    rename: 'Rinomina file e cartelle in batch.',
+    video: 'Crea video da cartelle immagini.',
+    watermark: 'Applica watermark in modo rapido.',
+    bv: 'Genera BV con anteprima 3D.',
+    qr: 'Crea QR con parametri UTM.',
+    iubenda: 'Genera snippet pulito e copiabile.',
+    ppt: 'Template e font ufficiali.'
+  };
+
+  // Determina se una voce menu è disponibile (presente e visibile)
+  function isMenuItemAvailable(li){
+    if (!li) return false;
+    // se viene nascosto via classi o display:none
+    const style = window.getComputedStyle(li);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+    // offsetParent null se display none (alcuni casi)
+    if (li.offsetParent === null && style.position !== 'fixed') return false;
+    // se esiste una classe hidden usata nel progetto
+    if (li.classList && li.classList.contains('hidden')) return false;
+    return true;
+  }
+
+  function buildCards(){
     cardWrap.innerHTML = '';
 
-    items.forEach(li => {
-      const mode = li.dataset.mode;
-      const icon = li.dataset.icon;
-      const title = (li.querySelector('.txt')?.textContent || mode).trim();
+    MODES.forEach(def => {
+      const li = document.querySelector(`#SideMenu li[data-mode="${def.mode}"]`);
+
+      // Preferisci title/icon dal menu se presenti (così restano sincronizzati)
+      const menuTitle = li?.querySelector('.txt')?.textContent?.trim();
+      const menuIcon = li?.dataset?.icon;
+
+      const title = menuTitle || def.title;
+      const icon = menuIcon || def.icon;
+      const available = isMenuItemAvailable(li);
 
       const card = document.createElement('div');
-      card.className = 'welcome-card';
+      card.className = 'welcome-card' + (available ? '' : ' disabled');
       card.setAttribute('role','button');
-      card.setAttribute('tabindex','0');
-      card.dataset.mode = mode;
+      card.setAttribute('tabindex', available ? '0' : '-1');
+      card.dataset.mode = def.mode;
 
       card.innerHTML = `
         <div class="welcome-icowrap"><img alt="" src="${icon}" /></div>
         <div>
           <h4>${title}</h4>
-          <p>${desc[mode] || 'Apri questa modalità.'}</p>
+          <p>${DESC[def.mode] || 'Apri questa modalità.'}</p>
         </div>
       `;
 
-      const go = () => { try { li.click(); } catch {} };
-      card.addEventListener('click', go);
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
-      });
+      if (available){
+        const go = () => { try { li.click(); } catch {} };
+        card.addEventListener('click', go);
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+        });
+      } else {
+        // disabilitata: feedback leggero
+        card.title = 'Non disponibile per questo profilo.';
+      }
 
       cardWrap.appendChild(card);
     });
@@ -172,7 +209,6 @@
       drawer.setAttribute('aria-hidden','true');
     };
 
-    // Bind once
     btnHelp?.addEventListener('click', openHelp);
     btnClose?.addEventListener('click', closeHelp);
     overlay.addEventListener('click', closeHelp);
@@ -181,7 +217,6 @@
     });
 
     q?.addEventListener('input', filterFaq);
-
     renderChips(chipsWrap, q);
     renderFaq(faqWrap, faq);
   }
@@ -190,6 +225,11 @@
   const init = () => {
     buildCards();
     mountHelp();
+
+    // Se l'utente cambia profilo, la sidebar viene aggiornata: ricostruisci le card
+    // (hook leggero, non invasivo)
+    const userMenu = document.getElementById('UserMenu');
+    userMenu?.addEventListener('click', () => setTimeout(buildCards, 50));
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

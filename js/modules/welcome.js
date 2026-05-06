@@ -1,5 +1,10 @@
 /* js/modules/welcome.js */
-// Welcome home screen logic only. Does NOT modify tool modules.
+// Welcome home screen logic only (UI). Non modifica alcuna modalità.
+// - Nasconde sidebar in Welcome (classe body.welcome-home gestita dal CSS)
+// - Popola le card leggendo la sidebar
+// - Drawer Aiuto: popola CHIPS + FAQ + ricerca (i bottoni Teams/Mail restano in index.html)
+// - Clic sul logo in sidebar: reload pulito su URL base (senza query)
+// - Rimuove il testo "Suggerimento..." perché la sidebar è nascosta in Welcome
 
 (function(){
   'use strict';
@@ -29,9 +34,12 @@
 
   function enterWelcome(){
     document.body.classList.add('welcome-home');
-    // remove any query/hash to keep url clean
+    // URL pulita
     try { history.replaceState(null, '', window.location.pathname); } catch {}
     setActionbarVar();
+    // Rimuove il suggerimento (sidebar nascosta)
+    const foot = document.querySelector('.welcome-foot');
+    if (foot) foot.remove();
   }
 
   function leaveWelcome(){
@@ -85,12 +93,78 @@
     });
   }
 
-  // Help drawer: only open/close (content is in index.html)
+  // Drawer Aiuto: chips + FAQ
+  const CHIPS = [
+    { label:'Immagini', value:'immagini' },
+    { label:'Export', value:'export' },
+    { label:'Watermark', value:'watermark' },
+    { label:'BV 3D', value:'bv 3d' },
+    { label:'QR', value:'qr' },
+    { label:'Font PPT', value:'ppt' }
+  ];
+
+  const FAQ = [
+    { q: 'Export: dove scarico lo ZIP?', a: 'Dopo “Esporta ora” il browser scarica un file ZIP. Se non parte, controlla blocchi popup/download.' },
+    { q: 'Watermark: come funziona?', a: 'Vai su Watermark, carica (opzionale) un logo PNG e clicca Esporta.' },
+    { q: 'BV 3D: non vedo l’anteprima', a: 'Compila i campi e clicca Genera anteprima. Il mockup BV 3D si aggiorna automaticamente.' },
+    { q: 'QR: come genero un QR con UTM?', a: 'Vai su Genera QR Code, compila i campi UTM e scarica il QR.' },
+    { q: 'Immagini: preset Sito Abitare Co.', a: 'Orizzontali 1920×1080; verticali/quadrate H=1080 con larghezza proporzionale (no tagli).' },
+    { q: 'Personalizzato: quando compare il crop manuale?', a: 'Il crop manuale è disponibile solo in “Personalizzato” quando carichi una sola immagine.' },
+    { q: 'Font PPT: come li scarico?', a: 'Vai su Template PPT → Font ufficiali → Scarica font ufficiali.' }
+  ];
+
+  function renderChips(){
+    const chipsWrap = document.getElementById('WelcomeHelpChips');
+    const q = document.getElementById('WelcomeHelpQuery');
+    if (!chipsWrap || !q) return;
+
+    chipsWrap.innerHTML = '';
+    CHIPS.forEach(c => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'welcome-chip';
+      b.textContent = c.label;
+      b.addEventListener('click', () => {
+        q.value = c.value;
+        q.dispatchEvent(new Event('input'));
+        q.focus();
+      });
+      chipsWrap.appendChild(b);
+    });
+  }
+
+  function renderFaq(list){
+    const faqWrap = document.getElementById('WelcomeHelpFaq');
+    if (!faqWrap) return;
+
+    faqWrap.innerHTML = '';
+    (list || []).forEach(item => {
+      const box = document.createElement('div');
+      box.className = 'welcome-faq-item';
+      box.innerHTML = `
+        <p class="welcome-faq-q">${item.q}</p>
+        <p class="welcome-faq-a">${item.a}</p>
+      `;
+      faqWrap.appendChild(box);
+    });
+  }
+
+  function filterFaq(){
+    const q = document.getElementById('WelcomeHelpQuery');
+    const term = (q?.value || '').trim().toLowerCase();
+    if (!term){
+      renderFaq(FAQ);
+      return;
+    }
+    renderFaq(FAQ.filter(x => (x.q + ' ' + x.a).toLowerCase().includes(term)));
+  }
+
   function bindHelp(){
     const btnHelp = document.getElementById('WelcomeHelpBtn');
     const btnClose = document.getElementById('WelcomeHelpClose');
     const overlay = document.getElementById('WelcomeHelpOverlay');
     const drawer = document.getElementById('WelcomeHelpDrawer');
+    const q = document.getElementById('WelcomeHelpQuery');
 
     if (!btnHelp || !overlay || !drawer) return;
 
@@ -99,7 +173,7 @@
       drawer.classList.remove('hidden');
       overlay.setAttribute('aria-hidden','false');
       drawer.setAttribute('aria-hidden','false');
-      setTimeout(() => document.getElementById('WelcomeHelpQuery')?.focus(), 0);
+      setTimeout(() => q?.focus(), 0);
     };
 
     const close = () => {
@@ -115,14 +189,19 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !drawer.classList.contains('hidden')) close();
     });
+
+    q?.addEventListener('input', filterFaq);
+
+    // Init contenuti drawer
+    renderChips();
+    renderFaq(FAQ);
   }
 
   function bindSidebarLogo(){
-    const logo = document.getElementById('SidebarLogo');
+    const logo = document.getElementById('SidebarLogo') || document.querySelector('.sidebar .logo');
     if (!logo) return;
     logo.style.cursor = 'pointer';
     logo.addEventListener('click', () => {
-      // Reload clean base URL
       window.location.href = window.location.origin + window.location.pathname;
     });
   }
@@ -133,7 +212,7 @@
     bindHelp();
     bindSidebarLogo();
 
-    // Clicking any sidebar item exits welcome
+    // Clic su voce menu => esci da Welcome
     $$('#SideMenu li[data-mode]').forEach(li => {
       li.addEventListener('click', () => leaveWelcome());
     });

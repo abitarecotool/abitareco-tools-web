@@ -20,7 +20,7 @@
  <link rel="stylesheet" href="./css/modules/bv.css" />
  <link rel="stylesheet" href="./css/modules/bv_3d.css" />
     <link rel="stylesheet" href="./css/modules/auth.css" />
- <link rel="stylesheet" href="./css/modules/welcome.css" />
+ <link rel="stylesheet" href="./css/modules/welcome.css?v=20260506v1" />
   </head>
 
   <body>
@@ -71,7 +71,7 @@
     <div id="AppRoot" class="app">
       <!-- ═════════ SIDEBAR ═════════ -->
       <aside class="sidebar">
-        <img class="logo" src="./assets/logo.png" alt="Abitare Co." />
+        <img id="SidebarLogo" class="logo" src="./assets/logo.png" alt="Abitare Co." />
 
         <ul id="SideMenu" class="menu">
           <li data-mode="images" data-icon="./assets/icons/icon-sito.png" data-icon-active="./assets/icons/icon-sito-selected.png">
@@ -137,7 +137,7 @@
           <div class="cards-scroll">
             <!-- WELCOME -->
             <section id="WelcomeCard" class="card">
-  <div class=\"welcome-brand\">
+  <div class=\"welcome-brand\" aria-hidden=\"true\">
     <img src=\"./assets/logo.png\" alt=\"Abitare Co.\" />
   </div>
   <div class="welcome-head">
@@ -526,7 +526,7 @@
 
     <script src="./js/core/helpers.js"></script>
     <script src="./js/core/shell.js"></script>
- <script src="./js/modules/welcome.js"></script>
+ <script src="./js/modules/welcome.js?v=20260506v1"></script>
     <script src="./js/core/io.js"></script>
     <script src="./js/core/shared.js"></script>
 
@@ -564,9 +564,9 @@
     <div id="WelcomeHelpFaq" class="welcome-help-faq" aria-label="FAQ"></div>
 
     <div class="welcome-help-actions">
-      <a id="WelcomeHelpMail" class="btn-outline" href="mailto:billy.dolor@abitareco.it?cc=mattia.nichettistanghellini@abitareco.it&subject=Assistenza%20%C2%B7%20Abitare%20Co.%20Digital%20Content%20Tool">Contatta l’assistenza</a>
+      <a class="btn-outline" href="https://teams.microsoft.com/l/chat/0/0?users=billy.dolor@abitareco.it,mattia.nichettistanghellini@abitareco.it&topicName=Assistenza%20tool%20%C2%B7%20Abitare%20Co.">Parla con noi</a>
+      <a class="btn-outline" href="mailto:billy.dolor@abitareco.it?cc=mattia.nichettistanghellini@abitareco.it&subject=Assistenza%20tool%20%C2%B7%20Abitare%20Co.">Contatta l’assistenza</a>
     </div>
-    <div class="welcome-help-note">L’assistenza apre una mail precompilata.</div>
   </div>
 </aside>
 </body>

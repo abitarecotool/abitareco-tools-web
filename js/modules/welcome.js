@@ -1,10 +1,9 @@
 /* js/modules/welcome.js */
 // Welcome home screen logic only (UI). Non modifica alcuna modalità.
 // - Nasconde sidebar in Welcome (classe body.welcome-home gestita dal CSS)
-// - Popola le card leggendo la sidebar
-// - Drawer Aiuto: popola CHIPS + FAQ + ricerca (i bottoni Teams/Mail restano in index.html)
-// - Clic sul logo in sidebar: reload pulito su URL base (senza query)
-// - Rimuove il testo "Suggerimento..." perché la sidebar è nascosta in Welcome
+// - Le card mostrano SOLO le modalità consentite (stesse visibili in sidebar per ruolo)
+// - Drawer Aiuto: CHIPS + FAQ + ricerca (i bottoni Teams/Mail restano in index.html)
+// - Clic sul logo sidebar: reload pulito su URL base (senza query)
 
 (function(){
   'use strict';
@@ -37,9 +36,6 @@
     // URL pulita
     try { history.replaceState(null, '', window.location.pathname); } catch {}
     setActionbarVar();
-    // Rimuove il suggerimento (sidebar nascosta)
-    const foot = document.querySelector('.welcome-foot');
-    if (foot) foot.remove();
   }
 
   function leaveWelcome(){
@@ -48,9 +44,9 @@
 
   function isAllowedMenuItem(li){
     if (!li) return false;
-    if (li.classList?.contains('hidden')) return false;
+    if (li.classList && li.classList.contains('hidden')) return false;
     const style = window.getComputedStyle(li);
-    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
     return true;
   }
 
@@ -93,7 +89,7 @@
     });
   }
 
-  // Drawer Aiuto: chips + FAQ
+  // Drawer Aiuto: CHIPS + FAQ
   const CHIPS = [
     { label:'Immagini', value:'immagini' },
     { label:'Export', value:'export' },
@@ -191,8 +187,6 @@
     });
 
     q?.addEventListener('input', filterFaq);
-
-    // Init contenuti drawer
     renderChips();
     renderFaq(FAQ);
   }
@@ -206,11 +200,33 @@
     });
   }
 
+  function observeMenuForRoleChanges(){
+    const menu = document.getElementById('SideMenu');
+    if (!menu || !window.MutationObserver) return;
+
+    let t = 0;
+    const debounce = () => {
+      window.clearTimeout(t);
+      t = window.setTimeout(() => {
+        // ricostruisci card quando il menu cambia (ruoli)
+        buildCards();
+      }, 50);
+    };
+
+    const obs = new MutationObserver(debounce);
+    obs.observe(menu, { attributes:true, childList:true, subtree:true });
+
+    // anche un rebuild "tardivo" (alcuni filtri ruolo arrivano dopo init)
+    window.setTimeout(buildCards, 200);
+    window.setTimeout(buildCards, 600);
+  }
+
   function init(){
     enterWelcome();
     buildCards();
     bindHelp();
     bindSidebarLogo();
+    observeMenuForRoleChanges();
 
     // Clic su voce menu => esci da Welcome
     $$('#SideMenu li[data-mode]').forEach(li => {

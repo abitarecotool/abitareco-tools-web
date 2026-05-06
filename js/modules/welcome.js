@@ -1,8 +1,4 @@
 /* js/modules/welcome.js */
-// Welcome (Photoshop light) + Help drawer (UI only)
-// UX: in Welcome nascondiamo la sidebar. Clic su card => mostra sidebar e apre modalità.
-// Clic sul logo sidebar => ritorna alla Welcome.
-// NON modifica alcuna modalità: simula click sulla sidebar.
 
 (function(){
   'use strict';
@@ -23,8 +19,21 @@
     ppt: 'Template e font ufficiali.'
   };
 
-  function enterWelcome(){ document.body.classList.add('welcome-home'); }
-  function leaveWelcome(){ document.body.classList.remove('welcome-home'); }
+  function setActionbarVar(){
+    const ab = document.getElementById('ActionBar');
+    if (!ab) return;
+    const h = Math.max(56, ab.getBoundingClientRect().height || 0);
+    document.documentElement.style.setProperty('--welcome-actionbar-h', h + 'px');
+  }
+
+  function enterWelcome(){
+    document.body.classList.add('welcome-home');
+    setActionbarVar();
+  }
+
+  function leaveWelcome(){
+    document.body.classList.remove('welcome-home');
+  }
 
   function isAllowedMenuItem(li){
     if (!li) return false;
@@ -48,8 +57,8 @@
 
       const card = document.createElement('div');
       card.className = 'welcome-card';
-      card.setAttribute('role', 'button');
-      card.setAttribute('tabindex', '0');
+      card.setAttribute('role','button');
+      card.setAttribute('tabindex','0');
 
       card.innerHTML = `
         <div class="welcome-icowrap"><img alt="" src="${icon}" /></div>
@@ -73,7 +82,7 @@
     });
   }
 
-  // HELP drawer: chips + filter
+  // Help
   const CHIPS = [
     { label:'Immagini', value:'immagini' },
     { label:'Export', value:'export' },
@@ -188,9 +197,12 @@
     bindHelp();
     bindSidebarLogo();
 
-    // se l'utente clicca una voce del menu, esce da welcome
     $$('#SideMenu li[data-mode]').forEach(li => {
       li.addEventListener('click', () => leaveWelcome());
+    });
+
+    window.addEventListener('resize', () => {
+      if (document.body.classList.contains('welcome-home')) setActionbarVar();
     });
   }
 

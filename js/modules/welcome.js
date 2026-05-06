@@ -1,6 +1,6 @@
 /* js/modules/welcome.js */
 // Welcome (Photoshop light) + Help drawer (UI only)
-// + Role-aware cards: mostra solo le modalità disponibili; quelle non disponibili vengono "disabilitate" (opacità bassa)
+// FIX: card list coerente con sidebar (per ruolo) + drawer stabile + chip che filtrano davvero + bottone assistenza mail.
 
 (function(){
   'use strict';
@@ -11,7 +11,16 @@
   const cardWrap = document.getElementById('WelcomeCards');
   if (!cardWrap) return;
 
-  // Ensure help drawer DOM exists even if index.html was cached/partial
+  function isVisible(el){
+    if (!el) return false;
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+    if (el.classList?.contains('hidden')) return false;
+    if (el.offsetParent === null && style.position !== 'fixed') return false;
+    return true;
+  }
+
+  // Ensure help drawer DOM exists (fallback)
   function ensureHelpDom(){
     let overlay = document.getElementById('WelcomeHelpOverlay');
     let drawer = document.getElementById('WelcomeHelpDrawer');
@@ -32,6 +41,22 @@
       drawer.setAttribute('aria-modal','true');
       drawer.setAttribute('aria-labelledby','WelcomeHelpTitle');
       drawer.setAttribute('aria-hidden','true');
+
+      // mailto support
+      const to = 'billy.dolor@abitareco.it';
+      const cc = 'mattia.nichettistanghellini@abitareco.it';
+      const subject = encodeURIComponent('Assistenza · Abitare Co. Digital Content Tool');
+      const body = encodeURIComponent('Ciao,
+
+Ho bisogno di assistenza su: 
+
+- Profilo: (Admin/Marketing/Tecnico)
+- Modalità: 
+- Dettagli: 
+
+Grazie.');
+      const mailto = `mailto:${to}?cc=${encodeURIComponent(cc)}&subject=${subject}&body=${body}`;
+
       drawer.innerHTML = `
         <div class="welcome-help-top">
           <button id="WelcomeHelpClose" type="button" class="welcome-help-close" aria-label="Chiudi">✕</button>
@@ -41,13 +66,16 @@
           <p class="welcome-help-sub">Risposte rapide e scorciatoie per usare il tool interno.</p>
 
           <div class="welcome-help-search">
-            <input id="WelcomeHelpQuery" class="input" type="text" placeholder="Cerca (es. immagini, BV, export, font)" />
+            <input id="WelcomeHelpQuery" class="input" type="text" placeholder="Cerca (es. immagini, export, watermark, BV 3D)" />
           </div>
 
           <div class="welcome-help-chips" id="WelcomeHelpChips" aria-label="Suggerimenti rapidi"></div>
           <div id="WelcomeHelpFaq" class="welcome-help-faq" aria-label="FAQ"></div>
 
-          <div class="welcome-help-note">Nota: questo pannello è informativo (non è un chatbot). Se serve, contatta la Creative Unit.</div>
+          <div class="welcome-help-actions">
+            <a class="btn-outline" href="${mailto}">Contatta l’assistenza</a>
+          </div>
+          <div class="welcome-help-note">L’assistenza apre una mail precompilata.</div>
         </div>
       `;
       document.body.appendChild(drawer);
@@ -56,20 +84,7 @@
     return { overlay, drawer };
   }
 
-  // Role-aware: elenco completo modalità (così possiamo anche mostrare quelle non disponibili)
-  const MODES = [
-    { mode:'images',      title:'Immagini',          icon:'./assets/icons/icon-sito.png' },
-    { mode:'digitaltool', title:'DigitalTool',       icon:'./assets/icons/icon-digital.png' },
-    { mode:'pdf2jpg',     title:'PDF → JPG',         icon:'./assets/icons/icon-pdf.png' },
-    { mode:'rename',      title:'Rename',            icon:'./assets/icons/icon-rename.png' },
-    { mode:'video',       title:'Video Slideshow',   icon:'./assets/icons/icon-video.png' },
-    { mode:'watermark',   title:'Watermark',         icon:'./assets/icons/icon-watermark.png' },
-    { mode:'bv',          title:'Biglietto da visita', icon:'./assets/icons/icon-bv.png' },
-    { mode:'qr',          title:'Genera QR Code',    icon:'./assets/icons/icon-qr.png' },
-    { mode:'iubenda',     title:'Iubenda',           icon:'./assets/icons/icon-iubenda.png' },
-    { mode:'ppt',         title:'Template PPT',      icon:'./assets/icons/icon-ppt.png' }
-  ];
-
+  // Card descriptions
   const DESC = {
     images: 'Ottimizza per sito e share, naming e export.',
     digitaltool: 'Immagini pronte per utilizzo digitale.',
@@ -83,70 +98,50 @@
     ppt: 'Template e font ufficiali.'
   };
 
-  // Determina se una voce menu è disponibile (presente e visibile)
-  function isMenuItemAvailable(li){
-    if (!li) return false;
-    // se viene nascosto via classi o display:none
-    const style = window.getComputedStyle(li);
-    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
-    // offsetParent null se display none (alcuni casi)
-    if (li.offsetParent === null && style.position !== 'fixed') return false;
-    // se esiste una classe hidden usata nel progetto
-    if (li.classList && li.classList.contains('hidden')) return false;
-    return true;
-  }
-
+  // Build cards ONLY from visible sidebar items (coerente con i ruoli)
   function buildCards(){
+    const items = $$('#SideMenu li[data-mode]').filter(isVisible);
     cardWrap.innerHTML = '';
 
-    MODES.forEach(def => {
-      const li = document.querySelector(`#SideMenu li[data-mode="${def.mode}"]`);
-
-      // Preferisci title/icon dal menu se presenti (così restano sincronizzati)
-      const menuTitle = li?.querySelector('.txt')?.textContent?.trim();
-      const menuIcon = li?.dataset?.icon;
-
-      const title = menuTitle || def.title;
-      const icon = menuIcon || def.icon;
-      const available = isMenuItemAvailable(li);
+    items.forEach(li => {
+      const mode = li.dataset.mode;
+      const icon = li.dataset.icon;
+      const title = (li.querySelector('.txt')?.textContent || mode).trim();
 
       const card = document.createElement('div');
-      card.className = 'welcome-card' + (available ? '' : ' disabled');
+      card.className = 'welcome-card';
       card.setAttribute('role','button');
-      card.setAttribute('tabindex', available ? '0' : '-1');
-      card.dataset.mode = def.mode;
+      card.setAttribute('tabindex','0');
+      card.dataset.mode = mode;
 
       card.innerHTML = `
         <div class="welcome-icowrap"><img alt="" src="${icon}" /></div>
         <div>
           <h4>${title}</h4>
-          <p>${DESC[def.mode] || 'Apri questa modalità.'}</p>
+          <p>${DESC[mode] || 'Apri questa modalità.'}</p>
         </div>
       `;
 
-      if (available){
-        const go = () => { try { li.click(); } catch {} };
-        card.addEventListener('click', go);
-        card.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
-        });
-      } else {
-        // disabilitata: feedback leggero
-        card.title = 'Non disponibile per questo profilo.';
-      }
+      const go = () => { try { li.click(); } catch {} };
+      card.addEventListener('click', go);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+      });
 
       cardWrap.appendChild(card);
     });
   }
 
-  // Help content
-  const chips = ['Immagini','BV 3D','Export','Font PPT','QR','Watermark'];
+  // Help drawer content
+  const chips = ['Immagini','Export','Watermark','BV 3D','QR','Font PPT'];
   const faq = [
-    { q: 'Come esporto le immagini per il sito?', a: 'Vai su Immagini, inserisci Nome file ITA/ENG, seleziona formato e clicca “Esporta ora”.' },
-    { q: 'Perché alcune immagini verticali non vengono tagliate?', a: 'Nel preset “Sito Abitare Co.” le verticali/quadrate mantengono altezza 1080 e larghezza proporzionale.' },
-    { q: 'Quando compare il crop manuale?', a: 'Il crop manuale è disponibile solo in “Personalizzato” quando carichi una sola immagine.' },
-    { q: 'Come scarico i font PPT?', a: 'Vai su Template PPT → Font ufficiali → Scarica font ufficiali.' },
-    { q: 'Biglietto da visita: come vedo anteprima 3D?', a: 'Compila i campi, clicca Genera anteprima: il mockup 3D si aggiorna automaticamente.' },
+    { q: 'Export: dove scarico lo ZIP?', a: 'Dopo “Esporta ora” il browser scarica un file ZIP. Se non parte, controlla blocchi popup/download.' },
+    { q: 'Watermark: come funziona?', a: 'Vai su Watermark, carica (opzionale) un logo PNG e clicca Esporta. Keyword: watermark.' },
+    { q: 'BV 3D: non vedo l’anteprima', a: 'Compila i campi e clicca Genera anteprima. Il mockup BV 3D si aggiorna automaticamente.' },
+    { q: 'QR: come genero un QR con UTM?', a: 'Vai su Genera QR Code, compila i campi UTM e scarica il QR.' },
+    { q: 'Immagini: preset Sito Abitare Co.', a: 'Orizzontali 1920×1080; verticali/quadrate H=1080 con larghezza proporzionale (no tagli).' },
+    { q: 'Personalizzato: quando compare il crop manuale?', a: 'Il crop manuale è disponibile solo in “Personalizzato” quando carichi una sola immagine.' },
+    { q: 'Font PPT: come li scarico?', a: 'Vai su Template PPT → Font ufficiali → Scarica font ufficiali.' },
     { q: 'Non vedo gli aggiornamenti dopo un commit', a: 'Esegui hard refresh (Ctrl+F5 / Cmd+Shift+R) o disattiva cache dal tab Network.' }
   ];
 
@@ -159,7 +154,12 @@
       b.className = 'welcome-chip';
       b.textContent = t;
       b.addEventListener('click', () => {
-        if (q){ q.value = t; q.dispatchEvent(new Event('input')); q.focus(); }
+        if (!q) return;
+        // mapping per termini italiani
+        const map = { 'BV 3D':'BV 3D', 'Export':'Export', 'Watermark':'Watermark', 'QR':'QR', 'Font PPT':'Font PPT', 'Immagini':'Immagini' };
+        q.value = map[t] || t;
+        q.dispatchEvent(new Event('input'));
+        q.focus();
       });
       chipsWrap.appendChild(b);
     });
@@ -209,6 +209,7 @@
       drawer.setAttribute('aria-hidden','true');
     };
 
+    // Bind once
     btnHelp?.addEventListener('click', openHelp);
     btnClose?.addEventListener('click', closeHelp);
     overlay.addEventListener('click', closeHelp);
@@ -217,19 +218,18 @@
     });
 
     q?.addEventListener('input', filterFaq);
+
     renderChips(chipsWrap, q);
     renderFaq(faqWrap, faq);
   }
 
-  // Init
   const init = () => {
     buildCards();
     mountHelp();
 
-    // Se l'utente cambia profilo, la sidebar viene aggiornata: ricostruisci le card
-    // (hook leggero, non invasivo)
+    // Rebuild cards after role change (dropdown)
     const userMenu = document.getElementById('UserMenu');
-    userMenu?.addEventListener('click', () => setTimeout(buildCards, 50));
+    userMenu?.addEventListener('click', () => setTimeout(buildCards, 80));
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

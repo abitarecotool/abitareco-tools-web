@@ -71,7 +71,7 @@
     <div id="AppRoot" class="app">
       <!-- ═════════ SIDEBAR ═════════ -->
       <aside class="sidebar">
-        <img class="logo" src="./assets/logo.png" alt="Abitare Co." />
+        <img id="SidebarLogo" class="logo" src="./assets/logo.png" alt="Abitare Co." />
 
         <ul id="SideMenu" class="menu">
           <li data-mode="images" data-icon="./assets/icons/icon-sito.png" data-icon-active="./assets/icons/icon-sito-selected.png">
@@ -137,6 +137,9 @@
           <div class="cards-scroll">
             <!-- WELCOME -->
             <section id="WelcomeCard" class="card">
+  <div class=\"welcome-brand\" aria-hidden=\"true\">
+    <img src=\"./assets/logo.png\" alt=\"Abitare Co.\" />
+  </div>
   <div class="welcome-head">
     <div>
       <h2 class="welcome-title">Cosa vuoi creare oggi?</h2>

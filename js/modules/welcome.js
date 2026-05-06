@@ -1,6 +1,8 @@
 /* js/modules/welcome.js */
 // Welcome (Photoshop light) + Help drawer (UI only)
-// Non modifica alcuna modalità: costruisce card dalla sidebar e gestisce solo il drawer "Aiuto".
+// + UX: in Welcome nascondiamo la sidebar. Clic su una card => mostra sidebar e apre modalità.
+// + Clic sul logo della sidebar => ritorna alla Welcome.
+// NON modifica alcuna modalità: simula click sulla sidebar.
 
 (function(){
   'use strict';
@@ -23,11 +25,19 @@
 
   function isVisible(el){
     if (!el) return false;
-    const style = window.getComputedStyle(el);
-    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+    // Non usare getComputedStyle qui: la sidebar in Welcome è compressa.
     if (el.classList?.contains('hidden')) return false;
-    if (el.offsetParent === null && style.position !== 'fixed') return false;
+    if (el.hasAttribute('hidden')) return false;
+    if (el.style && el.style.display === 'none') return false;
     return true;
+  }
+
+  function enterWelcome(){
+    document.body.classList.add('welcome-home');
+  }
+
+  function leaveWelcome(){
+    document.body.classList.remove('welcome-home');
   }
 
   function buildCards(){
@@ -55,7 +65,11 @@
         </div>
       `;
 
-      const go = () => { try { li.click(); } catch {} };
+      const go = () => {
+        leaveWelcome();
+        try { li.click(); } catch {}
+      };
+
       card.addEventListener('click', go);
       card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
@@ -162,28 +176,41 @@
     });
 
     q?.addEventListener('input', filterFaq);
-
-    // initial
     renderChips();
     renderFaq(FAQ);
   }
 
-  function observeRoles(){
+  function bindSidebarLogo(){
+    const logo = document.getElementById('SidebarLogo') || document.querySelector('.sidebar .logo');
+    if (!logo) return;
+
+    logo.style.cursor = 'pointer';
+    logo.addEventListener('click', () => {
+      // ritorno alla welcome: reload pulito (sicuro, non tocca modalità)
+      const url = window.location.origin + window.location.pathname;
+      window.location.href = url;
+    });
+  }
+
+  function observeRoleChanges(){
     const menu = document.getElementById('SideMenu');
     if (!menu) return;
-
-    const obs = new MutationObserver(() => {
-      // quando cambiano ruoli/visibilità, ricostruisci
-      buildCards();
-    });
-
+    const obs = new MutationObserver(() => buildCards());
     obs.observe(menu, { attributes:true, childList:true, subtree:true });
   }
 
   function init(){
+    // appena entri in app, sei in Welcome
+    enterWelcome();
     buildCards();
     bindHelp();
-    observeRoles();
+    bindSidebarLogo();
+    observeRoleChanges();
+
+    // Se l'utente clicca una voce del menu, esci dalla welcome
+    $$('#SideMenu li[data-mode]').forEach(li => {
+      li.addEventListener('click', () => leaveWelcome());
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

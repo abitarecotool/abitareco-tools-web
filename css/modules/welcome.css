@@ -2,26 +2,65 @@
 
 :root{ --welcome-actionbar-h: 72px; }
 
-/* Hide sidebar only on Welcome */
-body.welcome-home .sidebar{ width:0 !important; overflow:hidden !important; padding:0 !important; border:0 !important; }
+/* WELCOME HOME: hide sidebar */
+body.welcome-home .sidebar{
+  width: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
 
-/* Keep actionbar visible without scroll on Welcome */
-body.welcome-home #ActionBar{ position: fixed; left:0; right:0; bottom:0; z-index: 50; }
+/* Keep ActionBar visible (no scroll needed) */
+body.welcome-home #ActionBar{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+}
 
-body.welcome-home main{ height:100vh; overflow:hidden; padding-bottom: var(--welcome-actionbar-h); }
-body.welcome-home .cards-scroll{ min-height: calc(100vh - var(--welcome-actionbar-h)); display:grid; place-items:center; }
-body.welcome-home #WelcomeCard{ width: min(1040px, 92%); }
+/* Center content between top and ActionBar */
+body.welcome-home main{
+  height: 100vh;
+  overflow: hidden;
+  padding-bottom: var(--welcome-actionbar-h);
+}
 
-.welcome-brand{ display:flex; justify-content:center; margin: 6px 0 18px 0; }
-.welcome-brand img{ height:42px; width:auto; display:block; }
+body.welcome-home .cards-scroll{
+  min-height: calc(100vh - var(--welcome-actionbar-h));
+  display: grid;
+  place-items: center;
+}
 
+body.welcome-home #WelcomeCard{
+  width: min(1040px, 92%);
+}
+
+.welcome-brand{
+  display:flex;
+  justify-content:center;
+  margin: 6px 0 18px 0;
+}
+
+.welcome-brand img{
+  height: 42px;
+  width: auto;
+  display:block;
+}
+
+/* Header */
 .welcome-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
 .welcome-title{ margin:0; font-size:28px; line-height:1.2; }
 .welcome-sub{ margin:6px 0 0 0; color: var(--gray-500); font-size:14px; line-height:1.6; }
 .welcome-help{ height:38px; padding:0 14px; border-radius:10px; flex:0 0 auto; }
 
+/* Cards grid */
 .welcome-grid{ margin-top:18px; display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
-@media (max-width:900px){ .welcome-grid{ grid-template-columns:1fr; } .welcome-title{ font-size:24px; } .welcome-brand img{ height:34px; } }
+@media (max-width:900px){
+  .welcome-grid{ grid-template-columns:1fr; }
+  .welcome-title{ font-size:24px; }
+  .welcome-brand img{ height: 34px; }
+}
 
 .welcome-card{ border:1px solid var(--gray-200); background:#fff; border-radius:12px; padding:14px; display:flex; gap:12px; align-items:flex-start; cursor:pointer; transition:border-color .15s ease, box-shadow .15s ease; }
 .welcome-card:hover{ border-color: var(--gray-300); box-shadow: 0 8px 24px rgba(16,24,40,.06); }

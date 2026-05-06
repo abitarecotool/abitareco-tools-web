@@ -51,9 +51,15 @@ async function exportPdfToJpg(){
   const blob = await zip.generateAsync({type:'blob'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `EXPORT_PDF2JPG-${stamp}.zip`;
+  // Nome file ZIP (evita casi tipo "nome..zip")
+let outName = `EXPORT_PDF2JPG-${stamp}.zip`;
+outName = outName.trim();
+// Collassa sequenze di punti prima di zip (..zip, ...zip, ecc.)
+outName = outName.replace(/\.{2,}zip$/i, '.zip');
+// Se manca l'estensione, aggiungila
+if (!/\.zip$/i.test(outName)) outName += '.zip';
+a.download = outName;
   a.click();
   URL.revokeObjectURL(a.href);
   hideEl(ActionProgressWrap);
 }
-

@@ -29,10 +29,10 @@ function buildUtmUrl(){
   try {
     const u = new URL(base);
     const set = (k, el) => {
-      const v = (el?.value || '').trim();
-      if (v) u.searchParams.set(k, v);
-      else u.searchParams.delete(k);
-    };
+    const v = (el?.value || '').trim();
+    if (v) u.searchParams.set(k, v);
+    // se il campo è vuoto, non tocchiamo eventuali parametri già presenti
+  };
     set('utm_source', QrSource);
     set('utm_medium', QrMedium);
     set('utm_campaign', QrCampaign);
@@ -47,19 +47,13 @@ function buildUtmUrl(){
 
 function validateQrInputs(){
   const base = (QrBase?.value || '').trim();
-  const src = (QrSource?.value || '').trim();
-  const med = (QrMedium?.value || '').trim();
-  const camp = (QrCampaign?.value || '').trim();
-
   if (!base) return { ok:false, msg:'Compila Website URL.' };
   if (!isValidHttpUrl(base)) return { ok:false, msg:'Website URL deve iniziare con http:// o https://'};
-  if (!src) return { ok:false, msg:'Compila Campaign source (utm_source).'};
-  if (!med) return { ok:false, msg:'Compila Campaign medium (utm_medium).'};
-  if (!camp) return { ok:false, msg:'Compila Campaign name (utm_campaign).'};
 
   const built = buildUtmUrl();
-  if (!built || !isValidHttpUrl(built)) return { ok:false, msg:'URL generata non valida. Controlla i campi.' };
-  return { ok:true, url: built };
+  const finalUrl = (built && isValidHttpUrl(built)) ? built : base;
+  if (!finalUrl || !isValidHttpUrl(finalUrl)) return { ok:false, msg:'URL non valida. Controlla Website URL.' };
+  return { ok:true, url: finalUrl };
 }
 
 function hideQrUIExtras(){
@@ -98,10 +92,11 @@ function canvasToEmbeddedSvg(canvas){
 }
 
 function updateQrGeneratedUrl(){
-  const url = buildUtmUrl();
+  const base = (QrBase?.value || '').trim();
+  const built = buildUtmUrl();
+  const url = (built && isValidHttpUrl(built)) ? built : (isValidHttpUrl(base) ? base : '');
   if (QrGeneratedUrl) QrGeneratedUrl.value = url || '';
   if (QrCopyUrl) QrCopyUrl.disabled = !url;
-
   if (currentMode === 'qr' && BtnProcedi){
     const v = validateQrInputs();
     BtnProcedi.disabled = !v.ok;
@@ -157,7 +152,10 @@ async function makeQr(){
     const camp = slugify((QrCampaign?.value || 'qr')) || 'qr';
     const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
     const zipBlob = await zip.generateAsync({ type:'blob' });
-    safeDownloadBlob(zipBlob, `QR-${camp}-${stamp}.zip`);
+    let outName = `QR-${camp}-${stamp}.zip`;
+  outName = outName.trim().replace(/\.{2,}zip$/i, '.zip');
+  if (!/\.zip$/i.test(outName)) outName += '.zip';
+  safeDownloadBlob(zipBlob, outName);
   } catch (err){
     console.error(err);
     alert('Errore durante la generazione del QR: ' + (err?.message || err));

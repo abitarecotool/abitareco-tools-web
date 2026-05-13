@@ -380,7 +380,7 @@
 <!-- QR + UTM -->
 <section id="QrCard" class="card hidden">
   <h3>Genera QR Code</h3>
-  <p class="form-section-sub">Inserisci l’URL e i parametri UTM. L’URL generata si compila automaticamente.</p>
+  <p class="form-section-sub">Inserisci una URL completa (anche già con UTM) e genera il QR. Se devi aggiungere/tracciare UTM, compila i parametri: la URL generata si aggiorna automaticamente e il QR userà quella.</p>
 
   <div class="form-group">
     <label for="QrBase">Website URL *</label>
@@ -389,15 +389,15 @@
 
   <div class="row" style="gap: 12px">
     <div class="form-group">
-      <label for="QrSource">Campaign source *</label>
+      <label for="QrSource">Campaign source</label>
       <input id="QrSource" class="input" placeholder="utm_source" />
     </div>
     <div class="form-group">
-      <label for="QrMedium">Campaign medium *</label>
+      <label for="QrMedium">Campaign medium</label>
       <input id="QrMedium" class="input" placeholder="utm_medium" />
     </div>
     <div class="form-group">
-      <label for="QrCampaign">Campaign name *</label>
+      <label for="QrCampaign">Campaign name</label>
       <input id="QrCampaign" class="input" placeholder="utm_campaign" />
     </div>
   </div>
@@ -418,7 +418,7 @@
   </div>
 
   <div class="form-group">
-    <label for="QrGeneratedUrl">URL generata *</label>
+    <label for="QrGeneratedUrl">URL generata</label>
     <input id="QrGeneratedUrl" class="input" type="text" readonly placeholder="—" />
   </div>
 
@@ -537,7 +537,7 @@
     <script src="./js/modules/bv.js"></script>
  <script src="./js/modules/bv_preview.js"></script>
  <script src="./js/modules/bv_3d.js"></script>
-    <script src="./js/modules/qr.js"></script>
+    <script src="./js/modules/qr.js?v=20260513qr1"></script>
     <script src="./js/modules/iubenda.js"></script>
     <script src="./js/modules/ppt.js"></script>
 

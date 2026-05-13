@@ -3,10 +3,12 @@
   'use strict';
 
   const USERS = {
-    'admin@abitareco.it':     { password: 'Abitare52!', role: 'admin' },
-    'marketing@abitareco.it': { password: 'Abitare52!', role: 'marketing' },
-    'tecnico@abitareco.it':   { password: 'Abitare52!', role: 'tecnico' }
-  };
+  'admin@abitareco.it': { password: 'Abitare52!', role: 'admin' },
+  'marketing@abitareco.it': { password: 'Abitare52!', role: 'marketing' },
+  'tecnico@abitareco.it': { password: 'Abitare52!', role: 'tecnico' },
+  'info@riabitareco.it': { password: 'Abitare52!', role: 'riabitare', brand: { label: 'RiAbitare Co.', logo: './assets/logo-riabitareco.png' } },
+  'info@abitarecommercial.it': { password: 'Abitare52!', role: 'commercial', brand: { label: 'Abitare Commercial', logo: './assets/logo-commercial.png' } }
+};
 
   const KEY = 'abitare_tools_auth_user';
   const FORCE_KEY = 'abitare_tools_force_login';
@@ -96,7 +98,32 @@
     };
   }
 
-  function initLogin(){
+  
+
+function applyBrand(user){
+  try{
+    const defaultLogo = './assets/logo.png';
+    const logoPath = (user && user.brand && user.brand.logo) ? user.brand.logo : defaultLogo;
+    const label = (user && user.brand && user.brand.label) ? user.brand.label : 'Abitare Co.';
+
+    // Sidebar logo
+    const sideImg = document.getElementById('SidebarLogo');
+    if (sideImg){
+      sideImg.onerror = () => { sideImg.onerror = null; sideImg.src = defaultLogo; sideImg.alt = 'Abitare Co.'; };
+      sideImg.src = logoPath;
+      sideImg.alt = label;
+    }
+
+    // Welcome logo
+    const welcomeImg = document.querySelector('.welcome-brand img');
+    if (welcomeImg){
+      welcomeImg.onerror = () => { welcomeImg.onerror = null; welcomeImg.src = defaultLogo; welcomeImg.alt = 'Abitare Co.'; };
+      welcomeImg.src = logoPath;
+      welcomeImg.alt = label;
+    }
+  } catch {}
+}
+function initLogin(){
     const emailEl = document.getElementById('AuthEmail');
     const passEl  = document.getElementById('AuthPassword');
     const remEl   = document.getElementById('AuthRemember');
@@ -114,12 +141,13 @@
 
       setError('');
       try { localStorage.removeItem(FORCE_KEY); } catch {}
-      const user = { email, role: u.role };
+      const user = { email, role: u.role, brand: u.brand || null };
       storeUser(user, remember);
       hideOverlay();
 
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
+    try { applyBrand(user); } catch {}
       try { window.selectMode && selectMode('welcome'); } catch {}
     };
 
@@ -170,6 +198,7 @@
       hideOverlay();
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
+    try { applyBrand(user); } catch {}
       try { window.selectMode && selectMode('welcome'); } catch {}
     }, 2000);
   }

@@ -209,6 +209,7 @@
 
     const total = images.length;
     let done = 0;
+  let counter = 0;
 
     for (const rec of images){
       const bmp = await loadImageBitmap(rec.file);
@@ -237,9 +238,8 @@
       ctx.drawImage(overlays.testo, 0, 0, 1920, 1080);
 
       const outJpg = await canvasToBlob(c,'image/jpeg',0.92);
-
-      const base = rec.file.name.replace(/\.[^.]+$/,'');
-      zip.file(`_EXPORT_COMINGSOON/${base}.jpg`, outJpg);
+      const nn = String(++counter).padStart(2,'0');
+      zip.file(`_EXPORT_COMINGSOON/comingsoon-${nn}.jpg`, outJpg);
 
       ActionProgress.value = Math.round((++done/total)*100);
     }

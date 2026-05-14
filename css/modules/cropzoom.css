@@ -1,7 +1,7 @@
 /* css/modules/cropzoom.css */
 /* Zoom slider (Crop) – track più sottile, pallino invariato */
 
-#CropZoom{
+#CropZoom, #WmCropZoom{
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
@@ -10,13 +10,13 @@
 }
 
 /* WebKit */
-#CropZoom::-webkit-slider-runnable-track{
+#CropZoom::-webkit-slider-runnable-track, #WmCropZoom::-webkit-slider-runnable-track{
   height: 6px;
   border-radius: 999px;
   background: var(--gray-200);
 }
 
-#CropZoom::-webkit-slider-thumb{
+#CropZoom::-webkit-slider-thumb, #WmCropZoom::-webkit-slider-thumb{
   -webkit-appearance: none;
   appearance: none;
   width: 16px;
@@ -28,22 +28,22 @@
   margin-top: -5px; /* centra sul track da 6px */
 }
 
-#CropZoom:focus{ outline: none; }
+#CropZoom:focus, #WmCropZoom:focus{ outline: none; }
 
 /* Firefox */
-#CropZoom::-moz-range-track{
+#CropZoom::-moz-range-track, #WmCropZoom::-moz-range-track{
   height: 6px;
   border-radius: 999px;
   background: var(--gray-200);
 }
 
-#CropZoom::-moz-range-progress{
+#CropZoom::-moz-range-progress, #WmCropZoom::-moz-range-progress{
   height: 6px;
   border-radius: 999px;
   background: var(--red);
 }
 
-#CropZoom::-moz-range-thumb{
+#CropZoom::-moz-range-thumb, #WmCropZoom::-moz-range-thumb{
   width: 16px;
   height: 16px;
   border-radius: 999px;

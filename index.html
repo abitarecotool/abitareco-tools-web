@@ -274,7 +274,7 @@
             <section id="WatermarkCard" class="card hidden">
   <h3>Watermark</h3>
   <p class="muted" style="margin-top:6px;line-height:1.6">
-    Seleziona il preset e poi carica la cartella immagini (in alto). Infine clicca <b>Esporta ora</b>.
+    Seleziona il preset e poi carica la cartella immagini. Infine clicca <b>Esporta ora</b>.
   </p>
 
   <div class="brand-pills" id="WmPresetPills" style="margin-top:12px">
@@ -282,13 +282,22 @@
     <button type="button" class="brand-pill" data-wm-preset="comingsoon" id="WmPresetComingsoon">Coming soon sito</button>
   </div>
 
-  <!-- Coming soon: opzionale singola immagine (non cartella) -->
-  <div id="WmSingleWrap" class="hidden" style="margin-top:14px">
-    <label style="display:block; margin-bottom:8px">Oppure carica una singola immagine (solo Coming soon)</label>
-    <div id="WmSingleDrop" class="drop" tabindex="0" role="button" aria-label="Carica immagine singola Coming soon" title="Clicca per selezionare un'immagine o trascinala qui">
+  <!-- Upload Portali (solo quando selezionato Portali immobiliari) -->
+  <div id="WmPortaliUploadWrap" style="margin-top:14px">
+    <div id="WmPortaliDrop" class="drop" tabindex="0" role="button" aria-label="Carica cartella Portali" title="Clicca per selezionare una cartella o trascinala qui">
       <div class="drop-inner">
-        <span id="WmSingleName" class="muted">Trascina qui un'immagine o clicca per sfogliare…</span>
-        <button id="WmSingleClear" class="btn-small hidden" title="Rimuovi immagine" type="button">✕</button>
+        <span id="WmPortaliName" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
+        <button id="WmPortaliClear" class="btn-small hidden" title="Rimuovi" type="button">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Coming soon (solo quando selezionato Coming soon sito) -->
+  <div id="WmComingsoonUploadWrap" class="hidden" style="margin-top:14px">
+    <div id="WmComingsoonDrop" class="drop" tabindex="0" role="button" aria-label="Carica cartella o immagine Coming soon" title="Clicca per selezionare file o trascina qui una cartella/immagine">
+      <div class="drop-inner">
+        <span id="WmComingsoonName" class="muted">Trascina qui la cartella/singola immagine o clicca per sfogliare…</span>
+        <button id="WmComingsoonClear" class="btn-small hidden" title="Rimuovi" type="button">✕</button>
       </div>
     </div>
 
@@ -301,14 +310,6 @@
       <input type="range" id="WmCropZoom" class="input" />
       <button id="WmCropReset" type="button" class="btn-outline" style="margin-top:12px">Ripristina</button>
     </div>
-  </div>
-
-  <div id="WmComingsoonAssetsHint" class="hidden" style="margin-top:14px">
-    <p class="muted" style="line-height:1.6">
-      Coming soon usa questi file in <code>assets/comingsoon/</code>:
-      <br>• <code>velina.png</code> (PNG trasparente 1920×1080)
-      <br>• <code>testo.png</code> (PNG trasparente 1920×1080)
-    </p>
   </div>
 </section>
 
@@ -558,7 +559,7 @@
     <script src="./js/modules/pdf2jpg.js"></script>
     <script src="./js/modules/rename.js"></script>
     <script src="./js/modules/video.js"></script>
-    <script src="./js/modules/watermark.js"></script>
+    <script src="./js/modules/watermark.js?v=20260514wm2"></script>
     <script src="./js/modules/bv.js"></script>
  <script src="./js/modules/bv_preview.js"></script>
  <script src="./js/modules/bv_3d.js"></script>

@@ -1,38 +1,45 @@
 /* ========================= WATERMARK (presets) ========================= */
 // Preset 1: Portali immobiliari
 //  - Usa SOLO assets/logo-watermark.png (nessun logo opzionale)
-//  - Stessa logica attuale (immagini + PDF)
+//  - Immagini + PDF (come prima)
 // Preset 2: Coming soon sito
-//  - Immagini -> 1920x1080 (cover)
-//  - Sfocatura (blur) raggio 5px
-//  - Overlay di 2 PNG (velina + testo) 1920x1080
-//  - Supporta anche singola immagine (senza cartella) + crop manuale
+//  - Upload dedicato (cartella oppure singola immagine)
+//  - Output: 1920×1080 (cover o crop), blur 5px, overlay velina+testo
 // Nota: questo modulo NON tocca altri moduli.
 
 (function(){
   'use strict';
 
-  // Preset UI
+  // ----- UI -----
   const pills = document.getElementById('WmPresetPills');
-  const singleWrap = document.getElementById('WmSingleWrap');
-  const assetsHint = document.getElementById('WmComingsoonAssetsHint');
+  const portaliWrap = document.getElementById('WmPortaliUploadWrap');
+  const comingWrap  = document.getElementById('WmComingsoonUploadWrap');
 
-  const singleDrop = document.getElementById('WmSingleDrop');
-  const singleName = document.getElementById('WmSingleName');
-  const singleClear = document.getElementById('WmSingleClear');
+  const portaliDrop = document.getElementById('WmPortaliDrop');
+  const portaliName = document.getElementById('WmPortaliName');
+  const portaliClear= document.getElementById('WmPortaliClear');
 
-  const cropWrap = document.getElementById('WmCropWrap');
+  const comingDrop  = document.getElementById('WmComingsoonDrop');
+  const comingName  = document.getElementById('WmComingsoonName');
+  const comingClear = document.getElementById('WmComingsoonClear');
+
+  const cropWrap  = document.getElementById('WmCropWrap');
   const cropFrame = document.getElementById('WmCropFrame');
-  const cropImg = document.getElementById('WmCropImg');
-  const cropZoom = document.getElementById('WmCropZoom');
+  const cropImg   = document.getElementById('WmCropImg');
+  const cropZoom  = document.getElementById('WmCropZoom');
   const cropReset = document.getElementById('WmCropReset');
 
-  let wmPreset = 'portali';
-  let singleFile = null;
-  let singleUrl = '';
+  // Global UploadCard (lo nascondiamo solo mentre sei in Watermark)
+  const globalUploadCard = document.getElementById('UploadCard');
+  let hidGlobalUpload = false;
 
-  // Stato crop (pan + zoom) per Coming soon
-  let crop = {
+  // ----- State -----
+  let wmPreset = 'portali';
+  let wmPicked = []; // [{file, relPath}]
+  let cropSrcUrl = '';
+
+  // Crop state (pan+zoom)
+  const crop = {
     x: 0, y: 0, scale: 1,
     minScale: 0.01, maxScale: 4,
     coverScale: 1, containScale: 1,
@@ -42,6 +49,208 @@
 
   function clamp(v,a,b){ return Math.min(b, Math.max(a,v)); }
 
+  function setModeVisibility(){
+    // nascondi UploadCard globale solo quando sei in modalità watermark
+    try {
+      if (!globalUploadCard) return;
+      if (window.currentMode === 'watermark'){
+        if (!hidGlobalUpload){
+          globalUploadCard.classList.add('hidden');
+          hidGlobalUpload = true;
+        }
+      } else {
+        if (hidGlobalUpload){
+          globalUploadCard.classList.remove('hidden');
+          hidGlobalUpload = false;
+        }
+      }
+    } catch {}
+  }
+
+  // Poll leggero per intercettare cambio modalità senza toccare altri moduli
+  setInterval(setModeVisibility, 300);
+
+  function setPreset(p){
+    wmPreset = p || 'portali';
+
+    // pill active
+    if (pills){
+      pills.querySelectorAll('[data-wm-preset]').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-wm-preset') === wmPreset);
+      });
+    }
+
+    // show/hide wrappers
+    if (portaliWrap) portaliWrap.classList.toggle('hidden', wmPreset !== 'portali');
+    if (comingWrap)  comingWrap.classList.toggle('hidden', wmPreset !== 'comingsoon');
+
+    // reset selection + crop when switching preset
+    clearSelection();
+  }
+
+  function clearSelection(){
+    wmPicked = [];
+    window.picked = [];
+
+    if (portaliName) portaliName.textContent = 'Trascina qui la cartella o clicca per sfogliare…';
+    portaliClear?.classList.add('hidden');
+
+    if (comingName) comingName.textContent = 'Trascina qui la cartella/singola immagine o clicca per sfogliare…';
+    comingClear?.classList.add('hidden');
+
+    hideCropUI();
+
+    // prova a far aggiornare eventuale UI export
+    try { window.ActionProgressWrap && window.hideEl && hideEl(ActionProgressWrap); } catch {}
+  }
+
+  if (pills){
+    pills.addEventListener('click', (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest('[data-wm-preset]') : null;
+      if (!btn) return;
+      setPreset(btn.getAttribute('data-wm-preset'));
+    });
+  }
+  // default
+  setPreset('portali');
+
+  // ----- Helpers: file picking (folder + dragdrop) -----
+
+  function toRec(file, relPath){
+    return { file, relPath: relPath || file.name };
+  }
+
+  function setPicked(list){
+    wmPicked = list || [];
+    window.picked = wmPicked; // compatibilità con export
+
+    const n = wmPicked.length;
+    if (wmPreset === 'portali'){
+      if (portaliName) portaliName.textContent = n ? `${n} file selezionati` : 'Trascina qui la cartella o clicca per sfogliare…';
+      portaliClear?.classList.toggle('hidden', !n);
+    } else {
+      if (comingName) comingName.textContent = n ? `${n} file selezionati` : 'Trascina qui la cartella/singola immagine o clicca per sfogliare…';
+      comingClear?.classList.toggle('hidden', !n);
+
+      // crop UI solo se 1 immagine
+      const imgs = wmPicked.filter(r => /\.(jpe?g|png|tif?f|webp)$/i.test(r.file.name) && (r.file.type || '').startsWith('image/'));
+      if (imgs.length === 1 && wmPicked.length === 1){
+        showCropUI(imgs[0].file);
+      } else {
+        hideCropUI();
+      }
+    }
+  }
+
+  async function readEntry(entry, pathPrefix, out){
+    return new Promise((resolve) => {
+      try {
+        if (entry.isFile){
+          entry.file((file) => {
+            out.push(toRec(file, (pathPrefix || '') + file.name));
+            resolve();
+          }, () => resolve());
+        } else if (entry.isDirectory){
+          const reader = entry.createReader();
+          const readBatch = () => {
+            reader.readEntries(async (entries) => {
+              if (!entries || !entries.length) return resolve();
+              for (const e of entries){
+                await readEntry(e, (pathPrefix || '') + entry.name + '/', out);
+              }
+              readBatch();
+            }, () => resolve());
+          };
+          readBatch();
+        } else {
+          resolve();
+        }
+      } catch {
+        resolve();
+      }
+    });
+  }
+
+  async function getDroppedFiles(e){
+    const out = [];
+    const items = e.dataTransfer && e.dataTransfer.items ? Array.from(e.dataTransfer.items) : [];
+    const hasEntryAPI = items.some(it => it.webkitGetAsEntry);
+
+    if (hasEntryAPI){
+      for (const it of items){
+        const entry = it.webkitGetAsEntry ? it.webkitGetAsEntry() : null;
+        if (entry) await readEntry(entry, '', out);
+      }
+      if (out.length) return out;
+    }
+
+    // fallback
+    const files = e.dataTransfer && e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+    return files.map(f => toRec(f, f.name));
+  }
+
+  function openFolderPicker(callback){
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.multiple = true;
+    inp.webkitdirectory = true;
+    inp.directory = true;
+    inp.onchange = () => {
+      const files = Array.from(inp.files || []);
+      const list = files.map(f => toRec(f, f.webkitRelativePath || f.name));
+      callback(list);
+    };
+    inp.click();
+  }
+
+  function openFilesPicker(callback){
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.multiple = true;
+    inp.accept = 'image/*,application/pdf';
+    inp.onchange = () => {
+      const files = Array.from(inp.files || []);
+      const list = files.map(f => toRec(f, f.name));
+      callback(list);
+    };
+    inp.click();
+  }
+
+  function bindDropArea(dropEl, onPick, clickMode){
+    if (!dropEl) return;
+    const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+    ['dragenter','dragover','dragleave','drop'].forEach(ev => dropEl.addEventListener(ev, stop));
+    dropEl.addEventListener('dragenter', () => dropEl.classList.add('drag-over'));
+    dropEl.addEventListener('dragleave', () => dropEl.classList.remove('drag-over'));
+    dropEl.addEventListener('drop', async (e) => {
+      dropEl.classList.remove('drag-over');
+      const list = await getDroppedFiles(e);
+      onPick(list);
+    });
+    dropEl.addEventListener('click', () => {
+      if (clickMode === 'folder') openFolderPicker(onPick);
+      else openFilesPicker(onPick);
+    });
+  }
+
+  bindDropArea(portaliDrop, (list) => {
+    // portali: accettiamo folder (click) o drag drop
+    const filtered = (list || []).filter(r => /\.(jpe?g|png|tif?f|webp|pdf)$/i.test(r.file.name));
+    setPicked(filtered);
+  }, 'folder');
+
+  bindDropArea(comingDrop, (list) => {
+    // comingsoon: accetta sia cartella (drag) sia file (click)
+    const filtered = (list || []).filter(r => /\.(jpe?g|png|tif?f|webp)$/i.test(r.file.name));
+    // se l'utente ha trascinato una cartella, arrivano più file
+    // se è singola immagine, arriva 1 file
+    setPicked(filtered);
+  }, 'files');
+
+  portaliClear?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); clearSelection(); });
+  comingClear?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); clearSelection(); });
+
+  // ----- Crop UI -----
   function updateZoomTrack(){
     if (!cropZoom) return;
     const min = Number(cropZoom.min) || 0;
@@ -66,8 +275,8 @@
     const frameW = Math.max(1, rect.width);
     const frameH = Math.max(1, rect.height);
 
-    const contain = Math.min(frameW / iw, frameH / ih);
-    const cover = Math.max(frameW / iw, frameH / ih);
+    const contain = Math.min(frameW/iw, frameH/ih);
+    const cover = Math.max(frameW/iw, frameH/ih);
 
     crop.containScale = Math.max(0.01, contain);
     crop.coverScale = Math.max(crop.containScale, cover);
@@ -79,10 +288,11 @@
       cropZoom.max = String(crop.maxScale);
       const step = (crop.maxScale - crop.minScale) / 200;
       cropZoom.step = String(step > 0 ? step : 0.01);
-      crop.scale = clamp(crop.scale || crop.coverScale, crop.minScale, crop.maxScale);
-      cropZoom.value = String(crop.scale);
-      updateZoomTrack();
     }
+
+    crop.scale = clamp(crop.scale || crop.coverScale, crop.minScale, crop.maxScale);
+    if (cropZoom) cropZoom.value = String(crop.scale);
+    updateZoomTrack();
     updateCropTransform();
   }
 
@@ -99,109 +309,31 @@
     if (!cropWrap || !cropImg) return;
     cropWrap.classList.remove('hidden');
 
-    // imposta ratio 16:9 se supportato dal css
     try {
       cropFrame?.style?.setProperty('--crop-ratio', '1920 / 1080');
       cropFrame.style.aspectRatio = '1920 / 1080';
     } catch {}
 
-    try {
-      if (singleUrl) URL.revokeObjectURL(singleUrl);
-    } catch {}
-    singleUrl = URL.createObjectURL(file);
+    try { if (cropSrcUrl) URL.revokeObjectURL(cropSrcUrl); } catch {}
+    cropSrcUrl = URL.createObjectURL(file);
 
     cropImg.onload = () => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          try { refreshCropConstraints(); } catch {}
-          try { resetCrop(); } catch {}
+          refreshCropConstraints();
+          resetCrop();
         });
       });
     };
-    cropImg.src = singleUrl;
+    cropImg.src = cropSrcUrl;
   }
 
   function hideCropUI(){
     cropWrap?.classList.add('hidden');
-    try { if (singleUrl) URL.revokeObjectURL(singleUrl); } catch {}
-    singleUrl = '';
+    try { if (cropSrcUrl) URL.revokeObjectURL(cropSrcUrl); } catch {}
+    cropSrcUrl = '';
   }
 
-  function setPreset(p){
-    wmPreset = p || 'portali';
-
-    // attiva pill
-    if (pills){
-      pills.querySelectorAll('[data-wm-preset]').forEach(b => {
-        b.classList.toggle('active', b.getAttribute('data-wm-preset') === wmPreset);
-      });
-    }
-
-    // Comingsoon UI
-    if (singleWrap && assetsHint){
-      const on = (wmPreset === 'comingsoon');
-      singleWrap.classList.toggle('hidden', !on);
-      assetsHint.classList.toggle('hidden', !on);
-      if (!on){
-        // reset stato
-        singleFile = null;
-        if (singleName) singleName.textContent = "Trascina qui un'immagine o clicca per sfogliare…";
-        singleClear?.classList.add('hidden');
-        hideCropUI();
-      }
-    }
-  }
-
-  if (pills){
-    pills.addEventListener('click', (e) => {
-      const btn = e.target && e.target.closest ? e.target.closest('[data-wm-preset]') : null;
-      if (!btn) return;
-      setPreset(btn.getAttribute('data-wm-preset'));
-    });
-    setPreset('portali');
-  }
-
-  // Single image input (Coming soon)
-  function setSingleFile(f){
-    singleFile = f;
-    if (singleName) singleName.textContent = f ? f.name : "Trascina qui un'immagine o clicca per sfogliare…";
-    if (singleClear){
-      singleClear.classList.toggle('hidden', !f);
-    }
-    if (f) showCropUI(f);
-    else hideCropUI();
-  }
-
-  if (singleDrop){
-    const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
-    ['dragenter','dragover','dragleave','drop'].forEach(ev => singleDrop.addEventListener(ev, stop));
-    singleDrop.addEventListener('dragenter', () => singleDrop.classList.add('drag-over'));
-    singleDrop.addEventListener('dragleave', () => singleDrop.classList.remove('drag-over'));
-    singleDrop.addEventListener('drop', (e) => {
-      singleDrop.classList.remove('drag-over');
-      const f = e.dataTransfer?.files?.[0];
-      if (!f) return;
-      if (!f.type || !f.type.startsWith('image/')){ alert('Carica un file immagine.'); return; }
-      setSingleFile(f);
-    });
-    singleDrop.addEventListener('click', () => {
-      const inp = document.createElement('input');
-      inp.type = 'file';
-      inp.accept = 'image/*';
-      inp.onchange = () => {
-        const f = inp.files?.[0];
-        if (!f) return;
-        setSingleFile(f);
-      };
-      inp.click();
-    });
-  }
-  singleClear?.addEventListener('click', (e) => {
-    e.preventDefault(); e.stopPropagation();
-    setSingleFile(null);
-  });
-
-  // Crop events
   cropFrame?.addEventListener('pointerdown', (e) => {
     crop.dragging = true;
     crop.startX = e.clientX;
@@ -209,6 +341,7 @@
     crop.pointerId = e.pointerId;
     try { cropFrame.setPointerCapture(e.pointerId); } catch {}
   });
+
   cropFrame?.addEventListener('pointermove', (e) => {
     if (!crop.dragging) return;
     if (crop.pointerId != null && e.pointerId !== crop.pointerId) return;
@@ -218,12 +351,14 @@
     crop.startY = e.clientY;
     updateCropTransform();
   });
+
   function endPointer(e){
     if (crop.pointerId != null && e.pointerId !== crop.pointerId) return;
     crop.dragging = false;
     try { cropFrame?.releasePointerCapture(crop.pointerId); } catch {}
     crop.pointerId = null;
   }
+
   cropFrame?.addEventListener('pointerup', endPointer);
   cropFrame?.addEventListener('pointercancel', endPointer);
 
@@ -233,31 +368,13 @@
     updateZoomTrack();
     updateCropTransform();
   });
+
   cropReset?.addEventListener('click', () => {
-    try { refreshCropConstraints(); } catch {}
+    refreshCropConstraints();
     resetCrop();
   });
 
-  // Se l'utente carica una cartella con 1 immagine in Coming soon, abilita crop anche lì.
-  let lastSig = '';
-  function pollPicked(){
-    if (wmPreset !== 'comingsoon') return;
-    if (singleFile) return; // se c'è single file, usiamo quello
-
-    const imgs = (window.picked || []).filter(p => /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name));
-    const sig = imgs.map(x => x.file.name).join('|');
-    if (sig === lastSig) return;
-    lastSig = sig;
-
-    if (imgs.length === 1 && imgs[0]?.file && imgs[0].file.type?.startsWith('image/')){
-      // mostra crop con questa immagine
-      showCropUI(imgs[0].file);
-    } else {
-      hideCropUI();
-    }
-  }
-  setInterval(pollPicked, 400);
-
+  // ----- Export helpers -----
   async function loadFixedWatermarkLogo(){
     const url = './assets/logo-watermark.png';
     try {
@@ -300,28 +417,7 @@
     return c;
   }
 
-  function drawLogoCenter(canvas, logoBmp){
-    if (!logoBmp) return;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    const maxSide = Math.min(W, H) * 0.35;
-    const lr = logoBmp.width / logoBmp.height;
-    const lw = lr >= 1 ? maxSide : Math.round(maxSide * lr);
-    const lh = lr >= 1 ? Math.round(lw / lr) : maxSide;
-    const x = Math.round((W - lw)/2);
-    const y = Math.round((H - lh)/2);
-    ctx.drawImage(logoBmp, x, y, lw, lh);
-  }
-
-  function normalizeZipName(name){
-    let out = (name || '').toString().trim();
-    out = out.replace(/\.{2,}zip$/i, '.zip');
-    if (!/\.zip$/i.test(out)) out += '.zip';
-    return out;
-  }
-
   function drawCroppedToCanvas(bmp, W, H){
-    // Replica concettuale del crop di Immagini: usa dimensioni del frame e stato crop
     try {
       const rect = cropFrame?.getBoundingClientRect?.();
       if (!rect || !rect.width || !rect.height) return drawCoverToCanvas(bmp, W, H);
@@ -354,9 +450,29 @@
     }
   }
 
+  function drawLogoCenter(canvas, logoBmp){
+    if (!logoBmp) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const maxSide = Math.min(W, H) * 0.35;
+    const lr = logoBmp.width / logoBmp.height;
+    const lw = lr >= 1 ? maxSide : Math.round(maxSide * lr);
+    const lh = lr >= 1 ? Math.round(lw / lr) : maxSide;
+    const x = Math.round((W - lw)/2);
+    const y = Math.round((H - lh)/2);
+    ctx.drawImage(logoBmp, x, y, lw, lh);
+  }
+
+  function normalizeZipName(name){
+    let out = (name || '').toString().trim();
+    out = out.replace(/\.{2,}zip$/i, '.zip');
+    if (!/\.zip$/i.test(out)) out += '.zip';
+    return out;
+  }
+
   async function exportPortali(){
-    const images = (window.picked || []).filter(p => /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name));
-    const pdfs = (window.picked || []).filter(p => /\.pdf$/i.test(p.file.name));
+    const images = (wmPicked || []).filter(r => /\.(jpe?g|png|tif?f|webp)$/i.test(r.file.name));
+    const pdfs   = (wmPicked || []).filter(r => /\.pdf$/i.test(r.file.name));
     if (!images.length && !pdfs.length){ alert('Carica immagini o PDF.'); return; }
 
     const logo = await loadFixedWatermarkLogo();
@@ -426,12 +542,9 @@
   }
 
   async function exportComingsoon(){
-    // Se c'è singleFile, usiamo quello. Altrimenti usiamo le immagini della cartella.
-    const pickedImages = (window.picked || []).filter(p => /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name));
-    const images = singleFile ? [{ file: singleFile }] : pickedImages;
-
+    const images = (wmPicked || []).filter(r => /\.(jpe?g|png|tif?f|webp)$/i.test(r.file.name));
     if (!images.length){
-      alert('Carica una cartella con immagini (in alto) oppure una singola immagine (qui sotto).');
+      alert('Carica la cartella/singola immagine nella sezione Coming soon.');
       return;
     }
 
@@ -453,24 +566,22 @@
 
     for (const rec of images){
       const bmp = await loadImageBitmap(rec.file);
-
       const W = 1920, H = 1080;
+
+      // base canvas: crop solo se 1 immagine e crop visibile
+      const useCrop = (total === 1 && cropWrap && !cropWrap.classList.contains('hidden'));
+      const baseCanvas = useCrop ? drawCroppedToCanvas(bmp, W, H) : drawCoverToCanvas(bmp, W, H);
+
       const c = document.createElement('canvas');
       c.width = W; c.height = H;
       const ctx = c.getContext('2d');
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      // Se abbiamo 1 immagine e il crop è visibile, usiamo il crop manuale
-      const useCrop = (total === 1 && cropWrap && !cropWrap.classList.contains('hidden'));
-      const baseCanvas = useCrop ? drawCroppedToCanvas(bmp, W, H) : drawCoverToCanvas(bmp, W, H);
-
-      // blur background
       ctx.filter = 'blur(5px)';
       ctx.drawImage(baseCanvas, 0, 0, W, H);
       ctx.filter = 'none';
 
-      // overlay
       ctx.drawImage(overlays.velina, 0, 0, W, H);
       ctx.drawImage(overlays.testo, 0, 0, W, H);
 

@@ -47,6 +47,10 @@
   function showCards(mode){ (MODE_CARDS[mode] || []).forEach(id => showEl(document.getElementById(id))); }
 
   window.selectMode = function(mode){
+  try {
+    if (mode && mode !== 'welcome') sessionStorage.setItem('abitare_tools_last_mode', String(mode));
+  } catch {}
+
     window.currentMode = mode;
     hideAllCards();
 
@@ -78,12 +82,9 @@
 
   document.addEventListener('DOMContentLoaded', () => {
   initSidebarIcons();
-  // Modalità iniziale:
-  // - Se l'utente ha una last mode in sessione (refresh), resta lì.
-  // - Se l'utente ha forzato Home (logo), vai in Welcome.
-  // - Altrimenti (prima apertura / nuova tab) Welcome.
   try {
     const force = sessionStorage.getItem('abitare_tools_force_welcome') === '1';
+    if (force) sessionStorage.removeItem('abitare_tools_force_welcome');
     const last = sessionStorage.getItem('abitare_tools_last_mode');
     if (!force && last && MODE_CARDS[last]){
       window.selectMode(last);

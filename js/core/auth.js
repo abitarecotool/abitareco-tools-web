@@ -14,11 +14,22 @@
   const FORCE_KEY = 'abitare_tools_force_login';
 
   function clearUser(){
-    try { sessionStorage.removeItem(KEY); } catch {}
-    try { localStorage.removeItem(KEY); } catch {}
-  }
-
-  function readStored(){
+  // rimuove utente salvato (anche eventuali vecchie chiavi)
+  const keysToNuke = [KEY, 'abitare_tools_auth_user', 'abitare_tools_auth'];
+  const nuke = (store) => {
+    try {
+      keysToNuke.forEach(k => { try { store.removeItem(k); } catch {} });
+      // fallback: rimuovi qualsiasi chiave legacy che contenga "abitare_tools_auth"
+      for (let i = store.length - 1; i >= 0; i--){
+        const k = store.key(i);
+        if (k && k.toLowerCase().includes('abitare_tools_auth')){ try { store.removeItem(k); } catch {} }
+      }
+    } catch {}
+  };
+  try { nuke(sessionStorage); } catch {}
+  try { nuke(localStorage); } catch {}
+}
+function readStored(){
     try {
       const raw = sessionStorage.getItem(KEY) || localStorage.getItem(KEY);
       return raw ? JSON.parse(raw) : null;
@@ -45,9 +56,19 @@
     ov.setAttribute('aria-hidden','true');
     document.body.style.overflow = '';
     document.body.classList.remove('auth-blur');
+  syncAuthBlur();
   }
 
-  function hidePreloader(){
+  function hidePreloader
+function syncAuthBlur(){
+  try {
+    const ov = document.getElementById('AuthOverlay');
+    const on = !!(ov && ov.classList.contains('show') && ov.getAttribute('aria-hidden') === 'false');
+    document.body.classList.toggle('auth-blur', on);
+    if (!on) document.body.style.overflow = '';
+  } catch {}
+}
+function hidePreloader(){
     const pl = document.getElementById('AuthPreloader');
     if (!pl) return;
     pl.classList.add('fade-out');
@@ -94,13 +115,12 @@
       // aggiungo parametro per evitare cache/vecchi script
       const url = new URL(location.href);
       url.searchParams.set('logout','1');
-
-// pulisco eventuale "ultima modalità" (sessione) così dopo logout si torna alla Welcome
+      // pulisco eventuale last mode (sessione) e forzo Welcome al prossimo accesso
 try { sessionStorage.removeItem('abitare_tools_last_mode'); } catch {}
-try { sessionStorage.removeItem('abitare_tools_force_welcome'); } catch {}
-// sicurezza: rimuovo blur prima del redirect (evita stati appiccicati)
+try { sessionStorage.setItem('abitare_tools_force_welcome','1'); } catch {}
+// sicurezza: rimuovo blur prima del redirect
 try { document.body.classList.remove('auth-blur'); } catch {}
-    location.href = url.toString();
+location.href = url.toString();
     };
   }
 
@@ -150,13 +170,13 @@ function initLogin(){
       const user = { email, role: u.role, brand: u.brand || null };
       storeUser(user, remember);
       hideOverlay();
-    try { document.body.classList.remove('auth-blur'); } catch {}
+    syncAuthBlur();
 
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
     try { applyBrand(user); } catch {}
-      try { window.selectMode && selectMode('welcome'); } catch {}
-    };
+      try { sessionStorage.setItem('abitare_tools_force_welcome','1'); } catch {}
+};
 
     if (btn && !btn.__bound){
       btn.__bound = true;
@@ -191,6 +211,7 @@ function initLogin(){
           history.replaceState({}, '', url.toString());
         }
         showOverlay();
+  syncAuthBlur();
         try { document.getElementById('AuthEmail')?.focus(); } catch {}
         return;
       }
@@ -198,25 +219,27 @@ function initLogin(){
       const user = readStored();
       if (!user){
         showOverlay();
+  syncAuthBlur();
         try { document.getElementById('AuthEmail')?.focus(); } catch {}
         return;
       }
 
       hideOverlay();
+    syncAuthBlur();
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
     try { applyBrand(user); } catch {}
-      try {
-  // Non forzare Welcome su refresh: la gestione è in welcome.js (sessionStorage last mode)
-  // Mostra Welcome solo se l'utente ha forzato Home (logo) o se non esiste una last mode.
-  const force = sessionStorage.getItem('abitare_tools_force_welcome') === '1';
-  const last = sessionStorage.getItem('abitare_tools_last_mode');
-  if (force || !last) { window.selectMode && selectMode('welcome'); }
-} catch {}
-    }, 2000);
+}, 2000);
   }
 
-  window.Auth = { current: readStored, logout: () => { try { localStorage.setItem(FORCE_KEY,'1'); } catch {}; clearUser(); location.href = new URL(location.href).toString(); } };
+  window.Auth = { current: readStored, logout: () => {
+    try { localStorage.setItem(FORCE_KEY,'1'); } catch {}
+    try { sessionStorage.removeItem('abitare_tools_last_mode'); } catch {}
+    try { sessionStorage.setItem('abitare_tools_force_welcome','1'); } catch {}
+    try { document.body.classList.remove('auth-blur'); } catch {}
+    clearUser();
+    location.href = new URL(location.href).toString();
+  } };
 
   document.addEventListener('DOMContentLoaded', boot);
 })();

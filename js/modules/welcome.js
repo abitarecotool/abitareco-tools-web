@@ -291,6 +291,14 @@
     bindSidebarLogo();
     observeMenuForRoleChanges();
 
+    // store last mode on sidebar click (extra safety)
+    $$('#SideMenu li[data-mode]').forEach(li => {
+      li.addEventListener('click', () => {
+        const m = li.dataset.mode;
+        if (m && m !== 'welcome') { try { sessionStorage.setItem(LAST_MODE_KEY, m); } catch {} }
+      });
+    });
+
     // Se il core non chiama selectMode all'avvio, ripristina noi dopo che la UI è pronta.
     // Aspettiamo un attimo per lasciare applicare i guard/ruoli.
     setTimeout(() => {

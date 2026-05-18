@@ -77,7 +77,19 @@
   });
 
   document.addEventListener('DOMContentLoaded', () => {
-    initSidebarIcons();
-    window.selectMode('welcome');
-  });
+  initSidebarIcons();
+  // Modalità iniziale:
+  // - Se l'utente ha una last mode in sessione (refresh), resta lì.
+  // - Se l'utente ha forzato Home (logo), vai in Welcome.
+  // - Altrimenti (prima apertura / nuova tab) Welcome.
+  try {
+    const force = sessionStorage.getItem('abitare_tools_force_welcome') === '1';
+    const last = sessionStorage.getItem('abitare_tools_last_mode');
+    if (!force && last && MODE_CARDS[last]){
+      window.selectMode(last);
+      return;
+    }
+  } catch {}
+  window.selectMode('welcome');
+});
 })();

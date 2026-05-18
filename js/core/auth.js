@@ -94,7 +94,13 @@
       // aggiungo parametro per evitare cache/vecchi script
       const url = new URL(location.href);
       url.searchParams.set('logout','1');
-      location.href = url.toString();
+
+// pulisco eventuale "ultima modalità" (sessione) così dopo logout si torna alla Welcome
+try { sessionStorage.removeItem('abitare_tools_last_mode'); } catch {}
+try { sessionStorage.removeItem('abitare_tools_force_welcome'); } catch {}
+// sicurezza: rimuovo blur prima del redirect (evita stati appiccicati)
+try { document.body.classList.remove('auth-blur'); } catch {}
+    location.href = url.toString();
     };
   }
 
@@ -144,6 +150,7 @@ function initLogin(){
       const user = { email, role: u.role, brand: u.brand || null };
       storeUser(user, remember);
       hideOverlay();
+    try { document.body.classList.remove('auth-blur'); } catch {}
 
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
@@ -199,7 +206,13 @@ function initLogin(){
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
     try { applyBrand(user); } catch {}
-      try { window.selectMode && selectMode('welcome'); } catch {}
+      try {
+  // Non forzare Welcome su refresh: la gestione è in welcome.js (sessionStorage last mode)
+  // Mostra Welcome solo se l'utente ha forzato Home (logo) o se non esiste una last mode.
+  const force = sessionStorage.getItem('abitare_tools_force_welcome') === '1';
+  const last = sessionStorage.getItem('abitare_tools_last_mode');
+  if (force || !last) { window.selectMode && selectMode('welcome'); }
+} catch {}
     }, 2000);
   }
 

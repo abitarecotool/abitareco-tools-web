@@ -94,13 +94,7 @@
       // aggiungo parametro per evitare cache/vecchi script
       const url = new URL(location.href);
       url.searchParams.set('logout','1');
-
-// pulisco last mode e forzo Welcome dopo login
-try { sessionStorage.removeItem('abitare_tools_last_mode'); } catch {}
-try { sessionStorage.setItem('abitare_tools_force_welcome','1'); } catch {}
-// sicurezza blur
-try { document.body.classList.remove('auth-blur'); } catch {}
-  location.href = url.toString();
+      location.href = url.toString();
     };
   }
 
@@ -205,7 +199,8 @@ function initLogin(){
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
     try { applyBrand(user); } catch {}
-  }, 2000);
+      try { window.selectMode && selectMode('welcome'); } catch {}
+    }, 2000);
   }
 
   window.Auth = { current: readStored, logout: () => { try { localStorage.setItem(FORCE_KEY,'1'); } catch {}; clearUser(); location.href = new URL(location.href).toString(); } };

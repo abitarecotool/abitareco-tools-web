@@ -1,9 +1,11 @@
 /* js/modules/welcome.js */
-// Welcome home screen logic only (UI). Non modifica alcuna modalità.
-// - Nasconde sidebar in Welcome (classe body.welcome-home gestita dal CSS)
-// - Le card mostrano SOLO le modalità consentite (stesse visibili in sidebar per ruolo)
-// - Drawer Aiuto: CHIPS + FAQ + ricerca (i bottoni Teams/Mail restano in index.html)
-// - Clic sul logo sidebar: reload pulito su URL base (senza query)
+// Welcome home screen logic only (UI).
+// Policy:
+// - La Welcome NON si apre automaticamente ad ogni refresh.
+// - La Welcome si apre solo quando:
+//   • l'utente clicca sul logo in sidebar (Home) (set flag in sessionStorage)
+//   • non esiste una last_mode nella sessione/tab (prima apertura o tab riaperta)
+// - La modalità corrente viene gestita da shell.js (restore last_mode).
 
 (function(){
   'use strict';
@@ -24,6 +26,9 @@
     ppt: 'Template e font ufficiali.'
   };
 
+  const LAST_MODE_KEY = 'abitare_tools_last_mode';
+  const FORCE_WELCOME_KEY = 'abitare_tools_force_welcome';
+
   function setActionbarVar(){
     const ab = document.getElementById('ActionBar');
     if (!ab) return;
@@ -33,9 +38,9 @@
 
   function enterWelcome(){
     document.body.classList.add('welcome-home');
-    // URL pulita
     try { history.replaceState(null, '', window.location.pathname); } catch {}
     setActionbarVar();
+    buildCards();
   }
 
   function leaveWelcome(){
@@ -53,7 +58,6 @@
   function buildCards(){
     const wrap = document.getElementById('WelcomeCards');
     if (!wrap) return;
-
     const items = $$('#SideMenu li[data-mode]').filter(isAllowedMenuItem);
     wrap.innerHTML = '';
 
@@ -66,7 +70,6 @@
       card.className = 'welcome-card';
       card.setAttribute('role','button');
       card.setAttribute('tabindex','0');
-
       card.innerHTML = `
         <div class="welcome-icowrap"><img alt="" src="${icon}" /></div>
         <div>
@@ -76,6 +79,7 @@
       `;
 
       const go = () => {
+        try { sessionStorage.setItem(LAST_MODE_KEY, String(mode)); } catch {}
         leaveWelcome();
         try { li.click(); } catch {}
       };
@@ -101,7 +105,7 @@
 
   const FAQ = [
     { q: 'Export: dove scarico lo ZIP?', a: 'Dopo “Esporta ora” il browser scarica un file ZIP. Se non parte, controlla blocchi popup/download.' },
-    { q: 'Watermark: come funziona?', a: 'Vai su Watermark, carica (opzionale) un logo PNG e clicca Esporta.' },
+    { q: 'Watermark: come funziona?', a: 'Vai su Watermark, seleziona il preset e clicca Esporta.' },
     { q: 'BV 3D: non vedo l’anteprima', a: 'Compila i campi e clicca Genera anteprima. Il mockup BV 3D si aggiorna automaticamente.' },
     { q: 'QR: come genero un QR con UTM?', a: 'Vai su Genera QR Code, compila i campi UTM e scarica il QR.' },
     { q: 'Immagini: preset Sito Abitare Co.', a: 'Orizzontali 1920×1080; verticali/quadrate H=1080 con larghezza proporzionale (no tagli).' },
@@ -113,7 +117,6 @@
     const chipsWrap = document.getElementById('WelcomeHelpChips');
     const q = document.getElementById('WelcomeHelpQuery');
     if (!chipsWrap || !q) return;
-
     chipsWrap.innerHTML = '';
     CHIPS.forEach(c => {
       const b = document.createElement('button');
@@ -132,7 +135,6 @@
   function renderFaq(list){
     const faqWrap = document.getElementById('WelcomeHelpFaq');
     if (!faqWrap) return;
-
     faqWrap.innerHTML = '';
     (list || []).forEach(item => {
       const box = document.createElement('div');
@@ -148,10 +150,7 @@
   function filterFaq(){
     const q = document.getElementById('WelcomeHelpQuery');
     const term = (q?.value || '').trim().toLowerCase();
-    if (!term){
-      renderFaq(FAQ);
-      return;
-    }
+    if (!term) return renderFaq(FAQ);
     renderFaq(FAQ.filter(x => (x.q + ' ' + x.a).toLowerCase().includes(term)));
   }
 
@@ -161,7 +160,6 @@
     const overlay = document.getElementById('WelcomeHelpOverlay');
     const drawer = document.getElementById('WelcomeHelpDrawer');
     const q = document.getElementById('WelcomeHelpQuery');
-
     if (!btnHelp || !overlay || !drawer) return;
 
     const open = () => {
@@ -196,6 +194,8 @@
     if (!logo) return;
     logo.style.cursor = 'pointer';
     logo.addEventListener('click', () => {
+      // forza welcome e ricarica url pulita
+      try { sessionStorage.setItem(FORCE_WELCOME_KEY, '1'); } catch {}
       window.location.href = window.location.origin + window.location.pathname;
     });
   }
@@ -208,30 +208,49 @@
     const debounce = () => {
       window.clearTimeout(t);
       t = window.setTimeout(() => {
-        // ricostruisci card quando il menu cambia (ruoli)
-        buildCards();
+        if (document.body.classList.contains('welcome-home')) buildCards();
       }, 50);
     };
 
     const obs = new MutationObserver(debounce);
     obs.observe(menu, { attributes:true, childList:true, subtree:true });
+    window.setTimeout(debounce, 200);
+    window.setTimeout(debounce, 600);
+  }
 
-    // anche un rebuild "tardivo" (alcuni filtri ruolo arrivano dopo init)
-    window.setTimeout(buildCards, 200);
-    window.setTimeout(buildCards, 600);
+  function hookSelectMode(){
+    if (!window.selectMode || window.selectMode.__welcomeHooked) return;
+    const orig = window.selectMode;
+    const wrapped = function(mode){
+      const res = orig.apply(this, arguments);
+      try {
+        if (mode === 'welcome') enterWelcome();
+        else leaveWelcome();
+      } catch {}
+      return res;
+    };
+    wrapped.__welcomeHooked = true;
+    wrapped.__welcomeOrig = orig;
+    window.selectMode = wrapped;
   }
 
   function init(){
-    enterWelcome();
-    buildCards();
     bindHelp();
     bindSidebarLogo();
     observeMenuForRoleChanges();
 
-    // Clic su voce menu => esci da Welcome
-    $$('#SideMenu li[data-mode]').forEach(li => {
-      li.addEventListener('click', () => leaveWelcome());
-    });
+    // Hook dopo che shell ha definito selectMode
+    let tries = 0;
+    const t = setInterval(() => {
+      tries++;
+      if (window.selectMode){
+        hookSelectMode();
+        clearInterval(t);
+        // se siamo effettivamente in welcome, render
+        if ((window.currentMode || '') === 'welcome') enterWelcome();
+      }
+      if (tries > 50) clearInterval(t);
+    }, 60);
 
     window.addEventListener('resize', () => {
       if (document.body.classList.contains('welcome-home')) setActionbarVar();

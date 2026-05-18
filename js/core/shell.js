@@ -47,6 +47,8 @@
   function showCards(mode){ (MODE_CARDS[mode] || []).forEach(id => showEl(document.getElementById(id))); }
 
   window.selectMode = function(mode){
+  try { if (mode && mode !== 'welcome') sessionStorage.setItem('abitare_tools_last_mode', String(mode)); } catch {}
+
     window.currentMode = mode;
     hideAllCards();
 
@@ -77,7 +79,24 @@
   });
 
   document.addEventListener('DOMContentLoaded', () => {
-    initSidebarIcons();
-    window.selectMode('welcome');
-  });
+  initSidebarIcons();
+
+  // Start mode policy:
+  // - Welcome only if forced by logo click OR no last_mode in this tab.
+  // - Otherwise restore last_mode.
+  try {
+    const force = sessionStorage.getItem('abitare_tools_force_welcome') === '1';
+    if (force) sessionStorage.removeItem('abitare_tools_force_welcome');
+
+    const last = sessionStorage.getItem('abitare_tools_last_mode');
+    if (!force && last && MODE_CARDS[last]){
+      window.selectMode(last);
+      return;
+    }
+  } catch {}
+
+  window.selectMode('welcome');
+});
+})();
+
 })();

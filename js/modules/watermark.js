@@ -1,16 +1,78 @@
 /* ========================= WATERMARK (presets) ========================= */
+// Fix UX:
+// - Nasconde SOLO il box globale "Carica cartella" (UploadCard) quando sei in Watermark,
+//   senza toccare classi/visibilità usate dagli altri moduli (evita bug su altre sezioni).
+// - In Watermark usa SOLO gli upload interni: Portali / Coming soon.
+// - Doppio click su Watermark in sidebar: UploadCard resta nascosto (CSS su body).
+//
 // Preset 1: Portali immobiliari
-//  - Usa SOLO assets/logo-watermark.png (nessun logo opzionale)
-//  - Immagini + PDF (come prima)
+//  - Upload interno: cartella (click) o drag&drop cartella
+//  - Watermark con assets/logo-watermark.png (fallback logo.png)
+//  - Immagini + PDF
 // Preset 2: Coming soon sito
-//  - Upload dedicato (cartella oppure singola immagine)
-//  - Output: 1920×1080 (cover o crop), blur 5px, overlay velina+testo
-// Nota: questo modulo NON tocca altri moduli.
+//  - Upload interno: cartella o singola immagine (drag&drop) + selezione file (click)
+//  - Crop manuale se 1 sola immagine
+//  - Output 1920x1080, blur 5px, overlay velina+testo
 
 (function(){
   'use strict';
 
-  // ----- UI -----
+  // ---------- Inject CSS override (safe) ----------
+  const STYLE_ID = 'WmHideUploadCardStyle';
+  if (!document.getElementById(STYLE_ID)){
+    const st = document.createElement('style');
+    st.id = STYLE_ID;
+    st.textContent = `
+      body.wm-hide-uploadcard #UploadCard{ display:none !important; }
+    `;
+    document.head.appendChild(st);
+  }
+
+  function setBodyHideUpload(on){
+    document.body.classList.toggle('wm-hide-uploadcard', !!on);
+  }
+
+  // Hook selectMode (senza toccare core): così il toggle è preciso e non "salta" su altre sezioni.
+  function installSelectModeHook(){
+    if (!window.selectMode || window.selectMode.__wmHooked) return false;
+    const original = window.selectMode;
+    const wrapped = function(mode){
+      // chiama core
+      const res = original.apply(this, arguments);
+      // aggiorna dopo che il core ha mostrato/nascosto le card
+      try {
+        const m = (mode || window.currentMode || '').toString();
+        setBodyHideUpload(m === 'watermark');
+      } catch {}
+      return res;
+    };
+    wrapped.__wmHooked = true;
+    wrapped.__wmOriginal = original;
+    window.selectMode = wrapped;
+    return true;
+  }
+
+  // tenta subito e poi per poco tempo (nel caso in cui selectMode arrivi dopo)
+  let tries = 0;
+  const hookTimer = setInterval(() => {
+    tries++;
+    if (installSelectModeHook() || tries > 40){
+      clearInterval(hookTimer);
+      // sincronizza allo stato corrente
+      try { setBodyHideUpload((window.currentMode || '') === 'watermark'); } catch {}
+    }
+  }, 100);
+
+  // In caso di click ripetuti sulla stessa voce (alcune UI non richiamano selectMode)
+  // aggiorniamo anche su click menu.
+  document.addEventListener('click', (e) => {
+    const li = e.target && e.target.closest ? e.target.closest('#SideMenu li[data-mode]') : null;
+    if (!li) return;
+    const mode = li.getAttribute('data-mode');
+    setTimeout(() => setBodyHideUpload(mode === 'watermark'), 0);
+  }, true);
+
+  // ---------- Watermark UI ----------
   const pills = document.getElementById('WmPresetPills');
   const portaliWrap = document.getElementById('WmPortaliUploadWrap');
   const comingWrap  = document.getElementById('WmComingsoonUploadWrap');
@@ -29,16 +91,11 @@
   const cropZoom  = document.getElementById('WmCropZoom');
   const cropReset = document.getElementById('WmCropReset');
 
-  // Global UploadCard (lo nascondiamo solo mentre sei in Watermark)
-  const globalUploadCard = document.getElementById('UploadCard');
-  let hidGlobalUpload = false;
-
-  // ----- State -----
   let wmPreset = 'portali';
   let wmPicked = []; // [{file, relPath}]
   let cropSrcUrl = '';
 
-  // Crop state (pan+zoom)
+  // Crop state
   const crop = {
     x: 0, y: 0, scale: 1,
     minScale: 0.01, maxScale: 4,
@@ -49,48 +106,10 @@
 
   function clamp(v,a,b){ return Math.min(b, Math.max(a,v)); }
 
-  function setModeVisibility(){
-    // nascondi UploadCard globale solo quando sei in modalità watermark
-    try {
-      if (!globalUploadCard) return;
-      if (window.currentMode === 'watermark'){
-        if (!hidGlobalUpload){
-          globalUploadCard.classList.add('hidden');
-          hidGlobalUpload = true;
-        }
-      } else {
-        if (hidGlobalUpload){
-          globalUploadCard.classList.remove('hidden');
-          hidGlobalUpload = false;
-        }
-      }
-    } catch {}
-  }
-
-  // Poll leggero per intercettare cambio modalità senza toccare altri moduli
-  setInterval(setModeVisibility, 300);
-
-  function setPreset(p){
-    wmPreset = p || 'portali';
-
-    // pill active
-    if (pills){
-      pills.querySelectorAll('[data-wm-preset]').forEach(b => {
-        b.classList.toggle('active', b.getAttribute('data-wm-preset') === wmPreset);
-      });
-    }
-
-    // show/hide wrappers
-    if (portaliWrap) portaliWrap.classList.toggle('hidden', wmPreset !== 'portali');
-    if (comingWrap)  comingWrap.classList.toggle('hidden', wmPreset !== 'comingsoon');
-
-    // reset selection + crop when switching preset
-    clearSelection();
-  }
-
   function clearSelection(){
     wmPicked = [];
-    window.picked = [];
+    // Non tocchiamo window.picked globale per non interferire con altri moduli.
+    // Lo useremo solo durante l'export.
 
     if (portaliName) portaliName.textContent = 'Trascina qui la cartella o clicca per sfogliare…';
     portaliClear?.classList.add('hidden');
@@ -99,9 +118,21 @@
     comingClear?.classList.add('hidden');
 
     hideCropUI();
+  }
 
-    // prova a far aggiornare eventuale UI export
-    try { window.ActionProgressWrap && window.hideEl && hideEl(ActionProgressWrap); } catch {}
+  function setPreset(p){
+    wmPreset = p || 'portali';
+
+    if (pills){
+      pills.querySelectorAll('[data-wm-preset]').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-wm-preset') === wmPreset);
+      });
+    }
+
+    if (portaliWrap) portaliWrap.classList.toggle('hidden', wmPreset !== 'portali');
+    if (comingWrap)  comingWrap.classList.toggle('hidden', wmPreset !== 'comingsoon');
+
+    clearSelection();
   }
 
   if (pills){
@@ -111,20 +142,17 @@
       setPreset(btn.getAttribute('data-wm-preset'));
     });
   }
-  // default
   setPreset('portali');
 
-  // ----- Helpers: file picking (folder + dragdrop) -----
-
+  // ---------- File pick helpers ----------
   function toRec(file, relPath){
     return { file, relPath: relPath || file.name };
   }
 
   function setPicked(list){
     wmPicked = list || [];
-    window.picked = wmPicked; // compatibilità con export
-
     const n = wmPicked.length;
+
     if (wmPreset === 'portali'){
       if (portaliName) portaliName.textContent = n ? `${n} file selezionati` : 'Trascina qui la cartella o clicca per sfogliare…';
       portaliClear?.classList.toggle('hidden', !n);
@@ -132,13 +160,10 @@
       if (comingName) comingName.textContent = n ? `${n} file selezionati` : 'Trascina qui la cartella/singola immagine o clicca per sfogliare…';
       comingClear?.classList.toggle('hidden', !n);
 
-      // crop UI solo se 1 immagine
+      // crop se 1 sola immagine
       const imgs = wmPicked.filter(r => /\.(jpe?g|png|tif?f|webp)$/i.test(r.file.name) && (r.file.type || '').startsWith('image/'));
-      if (imgs.length === 1 && wmPicked.length === 1){
-        showCropUI(imgs[0].file);
-      } else {
-        hideCropUI();
-      }
+      if (imgs.length === 1 && wmPicked.length === 1) showCropUI(imgs[0].file);
+      else hideCropUI();
     }
   }
 
@@ -165,9 +190,7 @@
         } else {
           resolve();
         }
-      } catch {
-        resolve();
-      }
+      } catch { resolve(); }
     });
   }
 
@@ -184,7 +207,6 @@
       if (out.length) return out;
     }
 
-    // fallback
     const files = e.dataTransfer && e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
     return files.map(f => toRec(f, f.name));
   }
@@ -234,23 +256,19 @@
   }
 
   bindDropArea(portaliDrop, (list) => {
-    // portali: accettiamo folder (click) o drag drop
     const filtered = (list || []).filter(r => /\.(jpe?g|png|tif?f|webp|pdf)$/i.test(r.file.name));
     setPicked(filtered);
   }, 'folder');
 
   bindDropArea(comingDrop, (list) => {
-    // comingsoon: accetta sia cartella (drag) sia file (click)
     const filtered = (list || []).filter(r => /\.(jpe?g|png|tif?f|webp)$/i.test(r.file.name));
-    // se l'utente ha trascinato una cartella, arrivano più file
-    // se è singola immagine, arriva 1 file
     setPicked(filtered);
   }, 'files');
 
   portaliClear?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); clearSelection(); });
   comingClear?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); clearSelection(); });
 
-  // ----- Crop UI -----
+  // ---------- Crop UI ----------
   function updateZoomTrack(){
     if (!cropZoom) return;
     const min = Number(cropZoom.min) || 0;
@@ -374,7 +392,14 @@
     resetCrop();
   });
 
-  // ----- Export helpers -----
+  // ---------- Export ----------
+  function normalizeZipName(name){
+    let out = (name || '').toString().trim();
+    out = out.replace(/\.{2,}zip$/i, '.zip');
+    if (!/\.zip$/i.test(out)) out += '.zip';
+    return out;
+  }
+
   async function loadFixedWatermarkLogo(){
     const url = './assets/logo-watermark.png';
     try {
@@ -461,13 +486,6 @@
     const x = Math.round((W - lw)/2);
     const y = Math.round((H - lh)/2);
     ctx.drawImage(logoBmp, x, y, lw, lh);
-  }
-
-  function normalizeZipName(name){
-    let out = (name || '').toString().trim();
-    out = out.replace(/\.{2,}zip$/i, '.zip');
-    if (!/\.zip$/i.test(out)) out += '.zip';
-    return out;
   }
 
   async function exportPortali(){
@@ -568,7 +586,6 @@
       const bmp = await loadImageBitmap(rec.file);
       const W = 1920, H = 1080;
 
-      // base canvas: crop solo se 1 immagine e crop visibile
       const useCrop = (total === 1 && cropWrap && !cropWrap.classList.contains('hidden'));
       const baseCanvas = useCrop ? drawCroppedToCanvas(bmp, W, H) : drawCoverToCanvas(bmp, W, H);
 

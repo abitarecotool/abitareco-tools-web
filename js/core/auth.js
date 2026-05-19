@@ -2,66 +2,31 @@
 (function(){
   'use strict';
 
-  // Accounts (NON modificare)
   const USERS = {
-    'admin@abitareco.it': { password: 'Abitare52!', role: 'admin' },
-    'marketing@abitareco.it': { password: 'Abitare52!', role: 'marketing' },
-    'tecnico@abitareco.it': { password: 'Abitare52!', role: 'tecnico' },
-    'info@riabitareco.it': { password: 'Abitare52!', role: 'riabitare', brand: { label: 'RiAbitare Co.', logo: './assets/logo-riabitareco.png' } },
-    'info@abitarecommercial.it': { password: 'Abitare52!', role: 'commercial', brand: { label: 'Abitare Commercial', logo: './assets/logo-commercial.png' } }
-  };
+  'admin@abitareco.it': { password: 'Abitare52!', role: 'admin' },
+  'marketing@abitareco.it': { password: 'Abitare52!', role: 'marketing' },
+  'tecnico@abitareco.it': { password: 'Abitare52!', role: 'tecnico' },
+  'info@riabitareco.it': { password: 'Abitare52!', role: 'riabitare', brand: { label: 'RiAbitare Co.', logo: './assets/logo-riabitareco.png' } },
+  'info@abitarecommercial.it': { password: 'Abitare52!', role: 'commercial', brand: { label: 'Abitare Commercial', logo: './assets/logo-commercial.png' } }
+};
 
   const KEY = 'abitare_tools_auth_user';
   const FORCE_KEY = 'abitare_tools_force_login';
-  const FORCE_WELCOME_KEY = 'abitare_tools_force_welcome';
-
-  // Sessione minima: 1 giorno. Se spunti "Ricordami": 30 giorni.
-  const TTL_DAY_MS = 24 * 60 * 60 * 1000;
-  const TTL_REMEMBER_MS = 30 * 24 * 60 * 60 * 1000;
-
-  const now = () => Date.now();
-
-  function packUser(user, ttlMs){
-    return JSON.stringify({ v: 1, exp: now() + ttlMs, user });
-  }
-
-  function unpackUser(raw){
-    try {
-      const obj = JSON.parse(raw);
-      if (obj && typeof obj === 'object' && obj.user && obj.exp){
-        if (now() <= Number(obj.exp)) return obj.user;
-        return null;
-      }
-      if (obj && typeof obj === 'object' && obj.role){
-        try { localStorage.setItem(KEY, packUser(obj, TTL_DAY_MS)); } catch {}
-        return obj;
-      }
-      return null;
-    } catch { return null; }
-  }
 
   function clearUser(){
-    try { localStorage.removeItem(KEY); } catch {}
     try { sessionStorage.removeItem(KEY); } catch {}
+    try { localStorage.removeItem(KEY); } catch {}
   }
 
   function readStored(){
-    let raw = null;
-    try { raw = localStorage.getItem(KEY) || sessionStorage.getItem(KEY); } catch {}
-    if (!raw) return null;
-    const user = unpackUser(raw);
-    if (!user){ clearUser(); return null; }
-    return user;
+    try {
+      const raw = sessionStorage.getItem(KEY) || localStorage.getItem(KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
   }
 
-  function storeUser(user, remember){
-    const ttl = remember ? TTL_REMEMBER_MS : TTL_DAY_MS;
-    try { localStorage.setItem(KEY, packUser(user, ttl)); } catch {}
-    try { sessionStorage.removeItem(KEY); } catch {}
-  }
-
-  function blurActive(){
-    try { document.activeElement && document.activeElement.blur && document.activeElement.blur(); } catch {}
+  function storeUser(u, remember){
+    try { (remember ? localStorage : sessionStorage).setItem(KEY, JSON.stringify(u)); } catch {}
   }
 
   function showOverlay(){
@@ -74,7 +39,6 @@
   }
 
   function hideOverlay(){
-    blurActive();
     const ov = document.getElementById('AuthOverlay');
     if (!ov) return;
     ov.classList.remove('show');
@@ -87,41 +51,12 @@
     const pl = document.getElementById('AuthPreloader');
     if (!pl) return;
     pl.classList.add('fade-out');
-    setTimeout(() => { try { pl.style.display = 'none'; } catch {} }, 420);
+    setTimeout(() => { pl.style.display = 'none'; }, 420);
   }
 
   function setError(msg){
     const err = document.getElementById('AuthError');
     if (err) err.textContent = msg || '';
-  }
-
-  function hideUserMenu(){
-    try {
-      document.getElementById('UserMenu')?.classList.add('hidden');
-      document.getElementById('UserDropdown')?.classList.add('hidden');
-    } catch {}
-  }
-
-  function applyBrand(user){
-    try{
-      const defaultLogo = './assets/logo.png';
-      const logoPath = (user && user.brand && user.brand.logo) ? user.brand.logo : defaultLogo;
-      const label = (user && user.brand && user.brand.label) ? user.brand.label : 'Abitare Co.';
-
-      const sideImg = document.getElementById('SidebarLogo');
-      if (sideImg){
-        sideImg.onerror = () => { sideImg.onerror = null; sideImg.src = defaultLogo; sideImg.alt = 'Abitare Co.'; };
-        sideImg.src = logoPath;
-        sideImg.alt = label;
-      }
-
-      const welcomeImg = document.querySelector('.welcome-brand img');
-      if (welcomeImg){
-        welcomeImg.onerror = () => { welcomeImg.onerror = null; welcomeImg.src = defaultLogo; welcomeImg.alt = 'Abitare Co.'; };
-        welcomeImg.src = logoPath;
-        welcomeImg.alt = label;
-      }
-    } catch {}
   }
 
   function bindUserMenu(user){
@@ -130,11 +65,11 @@
     const btn = document.getElementById('BtnLogout');
     const label = document.getElementById('UserLabel');
     const avatar = document.querySelector('#UserMenu .user-avatar');
+
     if (!menu || !dd || !btn || !label) return;
 
-    const roleLabel = (window.ROLE_LABELS && window.ROLE_LABELS[user.role]) ? window.ROLE_LABELS[user.role] : user.role;
+    const roleLabel = (window.ROLE_LABELS && ROLE_LABELS[user.role]) ? ROLE_LABELS[user.role] : user.role;
     label.textContent = roleLabel;
-
     if (avatar){
       const t = (roleLabel || 'U').trim();
       avatar.textContent = (t[0] || 'U').toUpperCase();
@@ -143,6 +78,7 @@
     menu.classList.remove('hidden');
 
     const toggle = (e) => { e && e.stopPropagation(); dd.classList.toggle('hidden'); };
+
     if (!menu.__bound){
       menu.__bound = true;
       menu.addEventListener('click', toggle);
@@ -152,49 +88,67 @@
     }
 
     btn.onclick = () => {
-      // Logout: mostra login overlay e resta lì.
+      // Logout definitivo: pulizia + forzo login anche se c'è “Ricordami”
       try { localStorage.setItem(FORCE_KEY, '1'); } catch {}
       clearUser();
-      hideUserMenu();
-      // welcome alla prossima tab/login
-      try { sessionStorage.setItem(FORCE_WELCOME_KEY, '1'); } catch {}
-
+      // aggiungo parametro per evitare cache/vecchi script
       const url = new URL(location.href);
       url.searchParams.set('logout','1');
       location.href = url.toString();
     };
   }
 
-  function initLogin(){
+  
+
+function applyBrand(user){
+  try{
+    const defaultLogo = './assets/logo.png';
+    const logoPath = (user && user.brand && user.brand.logo) ? user.brand.logo : defaultLogo;
+    const label = (user && user.brand && user.brand.label) ? user.brand.label : 'Abitare Co.';
+
+    // Sidebar logo
+    const sideImg = document.getElementById('SidebarLogo');
+    if (sideImg){
+      sideImg.onerror = () => { sideImg.onerror = null; sideImg.src = defaultLogo; sideImg.alt = 'Abitare Co.'; };
+      sideImg.src = logoPath;
+      sideImg.alt = label;
+    }
+
+    // Welcome logo
+    const welcomeImg = document.querySelector('.welcome-brand img');
+    if (welcomeImg){
+      welcomeImg.onerror = () => { welcomeImg.onerror = null; welcomeImg.src = defaultLogo; welcomeImg.alt = 'Abitare Co.'; };
+      welcomeImg.src = logoPath;
+      welcomeImg.alt = label;
+    }
+  } catch {}
+}
+function initLogin(){
     const emailEl = document.getElementById('AuthEmail');
-    const passEl = document.getElementById('AuthPassword');
-    const remEl = document.getElementById('AuthRemember');
-    const btn = document.getElementById('AuthConfirm');
+    const passEl  = document.getElementById('AuthPassword');
+    const remEl   = document.getElementById('AuthRemember');
+    const btn     = document.getElementById('AuthConfirm');
 
     const doLogin = () => {
       const email = (emailEl?.value || '').trim().toLowerCase();
-      const pass = (passEl?.value || '').trim();
+      const pass  = (passEl?.value || '').trim();
       const remember = !!remEl?.checked;
 
       if (!email || !pass){ setError('Compila Email e Password.'); return; }
+
       const u = USERS[email];
       if (!u || u.password !== pass){ setError('Credenziali non valide.'); return; }
 
       setError('');
       try { localStorage.removeItem(FORCE_KEY); } catch {}
-
       const user = { email, role: u.role, brand: u.brand || null };
       storeUser(user, remember);
-
       hideOverlay();
 
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
-      try { applyBrand(user); } catch {}
-
-      // Welcome solo subito dopo login
-      try { sessionStorage.setItem(FORCE_WELCOME_KEY, '1'); } catch {}
-      try { window.selectMode && window.selectMode('welcome'); } catch {}
+    try { applyBrand(user); } catch {}
+      try { window.selectMode && selectMode('welcome'); } catch {}
     };
 
     if (btn && !btn.__bound){
@@ -206,74 +160,50 @@
     emailEl?.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
   }
 
-  function enforceOverlayWhileForced(){
-    // Se qualcuno lo nasconde, lo rimettiamo per 3s
-    const ov = document.getElementById('AuthOverlay');
-    if (!ov || !window.MutationObserver) return;
-    const obs = new MutationObserver(() => {
-      try {
-        const forced = localStorage.getItem(FORCE_KEY) === '1';
-        const url = new URL(location.href);
-        const forcedByUrl = url.searchParams.get('logout') === '1';
-        if (forced || forcedByUrl || !readStored()){
-          showOverlay();
-        }
-      } catch {}
-    });
-    try { obs.observe(ov, { attributes:true, attributeFilter:['class','aria-hidden'] }); } catch {}
-    setTimeout(() => { try { obs.disconnect(); } catch {} }, 3000);
-  }
-
   function boot(){
+    // sanifica UI
+    document.body.classList.remove('auth-blur');
+
     initLogin();
-    setTimeout(hidePreloader, 2000);
 
-    const url = new URL(location.href);
-    const forcedByUrl = url.searchParams.get('logout') === '1';
-    let forcedByKey = false;
-    try { forcedByKey = localStorage.getItem(FORCE_KEY) === '1'; } catch {}
+    setTimeout(() => {
+      hidePreloader();
 
-    if (forcedByUrl || forcedByKey){
-      try { localStorage.removeItem(FORCE_KEY); } catch {}
-      clearUser();
-      hideUserMenu();
+      // se logout=1 o FORCE_KEY=1 -> mostra login sempre
+      const url = new URL(location.href);
+      const forcedByUrl = url.searchParams.get('logout') === '1';
+      let forcedByKey = false;
+      try { forcedByKey = localStorage.getItem(FORCE_KEY) === '1'; } catch {}
 
-      if (forcedByUrl){
-        url.searchParams.delete('logout');
-        history.replaceState({}, '', url.toString());
+      if (forcedByUrl || forcedByKey){
+        try { localStorage.removeItem(FORCE_KEY); } catch {}
+        clearUser();
+        // pulisco url
+        if (forcedByUrl){
+          url.searchParams.delete('logout');
+          history.replaceState({}, '', url.toString());
+        }
+        showOverlay();
+        try { document.getElementById('AuthEmail')?.focus(); } catch {}
+        return;
       }
 
-      showOverlay();
-      enforceOverlayWhileForced();
-      try { document.getElementById('AuthEmail')?.focus(); } catch {}
-      return;
-    }
+      const user = readStored();
+      if (!user){
+        showOverlay();
+        try { document.getElementById('AuthEmail')?.focus(); } catch {}
+        return;
+      }
 
-    const user = readStored();
-    if (!user){
-      hideUserMenu();
-      showOverlay();
-      enforceOverlayWhileForced();
-      try { document.getElementById('AuthEmail')?.focus(); } catch {}
-      return;
-    }
-
-    // Utente valido: non forzare welcome qui
-    hideOverlay();
-    try { window.applyGuards && window.applyGuards(user); } catch {}
-    try { bindUserMenu(user); } catch {}
+      hideOverlay();
+      try { window.applyGuards && window.applyGuards(user); } catch {}
+      try { bindUserMenu(user); } catch {}
     try { applyBrand(user); } catch {}
+      try { window.selectMode && selectMode('welcome'); } catch {}
+    }, 2000);
   }
 
-  window.Auth = {
-    current: readStored,
-    logout: () => {
-      try { localStorage.setItem(FORCE_KEY, '1'); } catch {}
-      clearUser();
-      location.href = new URL(location.href).toString();
-    }
-  };
+  window.Auth = { current: readStored, logout: () => { try { localStorage.setItem(FORCE_KEY,'1'); } catch {}; clearUser(); location.href = new URL(location.href).toString(); } };
 
   document.addEventListener('DOMContentLoaded', boot);
-
 })();

@@ -13,6 +13,7 @@
 
   const KEY = 'abitare_tools_auth_user';
   const FORCE_KEY = 'abitare_tools_force_login';
+  const FORCE_WELCOME_KEY = 'abitare_tools_force_welcome';
 
   // Sessione minima: 1 giorno. Se spunti "Ricordami": 30 giorni.
   const TTL_DAY_MS = 24 * 60 * 60 * 1000;
@@ -27,14 +28,11 @@
   function unpackUser(raw){
     try {
       const obj = JSON.parse(raw);
-      // Nuova struttura con scadenza
       if (obj && typeof obj === 'object' && obj.user && obj.exp){
         if (now() <= Number(obj.exp)) return obj.user;
         return null;
       }
-      // Legacy: user diretto
       if (obj && typeof obj === 'object' && obj.role){
-        // Migra a 1 giorno
         try { localStorage.setItem(KEY, packUser(obj, TTL_DAY_MS)); } catch {}
         return obj;
       }
@@ -52,19 +50,18 @@
     try { raw = localStorage.getItem(KEY) || sessionStorage.getItem(KEY); } catch {}
     if (!raw) return null;
     const user = unpackUser(raw);
-    if (!user){
-      clearUser();
-      return null;
-    }
+    if (!user){ clearUser(); return null; }
     return user;
   }
 
   function storeUser(user, remember){
     const ttl = remember ? TTL_REMEMBER_MS : TTL_DAY_MS;
-    const payload = packUser(user, ttl);
-    // Salva SEMPRE in localStorage: dura anche chiudendo Chrome
-    try { localStorage.setItem(KEY, payload); } catch {}
+    try { localStorage.setItem(KEY, packUser(user, ttl)); } catch {}
     try { sessionStorage.removeItem(KEY); } catch {}
+  }
+
+  function blurActive(){
+    try { document.activeElement && document.activeElement.blur && document.activeElement.blur(); } catch {}
   }
 
   function showOverlay(){
@@ -77,6 +74,7 @@
   }
 
   function hideOverlay(){
+    blurActive();
     const ov = document.getElementById('AuthOverlay');
     if (!ov) return;
     ov.classList.remove('show');
@@ -154,15 +152,12 @@
     }
 
     btn.onclick = () => {
-      // Logout: vogliamo rimanere sulla schermata login con blur attivo.
+      // Logout: mostra login overlay e resta lì.
       try { localStorage.setItem(FORCE_KEY, '1'); } catch {}
-      // pulisco utente e last_mode di tab
       clearUser();
-      try { sessionStorage.removeItem('abitare_tools_last_mode'); } catch {}
-      // Alla prossima apertura/tab: welcome
-      try { sessionStorage.setItem('abitare_tools_force_welcome','1'); } catch {}
-
       hideUserMenu();
+      // welcome alla prossima tab/login
+      try { sessionStorage.setItem(FORCE_WELCOME_KEY, '1'); } catch {}
 
       const url = new URL(location.href);
       url.searchParams.set('logout','1');
@@ -197,8 +192,8 @@
       try { bindUserMenu(user); } catch {}
       try { applyBrand(user); } catch {}
 
-      // Welcome SOLO subito dopo login (come richiesto)
-      try { sessionStorage.setItem('abitare_tools_force_welcome','1'); } catch {}
+      // Welcome solo subito dopo login
+      try { sessionStorage.setItem(FORCE_WELCOME_KEY, '1'); } catch {}
       try { window.selectMode && window.selectMode('welcome'); } catch {}
     };
 
@@ -211,10 +206,26 @@
     emailEl?.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
   }
 
+  function enforceOverlayWhileForced(){
+    // Se qualcuno lo nasconde, lo rimettiamo per 3s
+    const ov = document.getElementById('AuthOverlay');
+    if (!ov || !window.MutationObserver) return;
+    const obs = new MutationObserver(() => {
+      try {
+        const forced = localStorage.getItem(FORCE_KEY) === '1';
+        const url = new URL(location.href);
+        const forcedByUrl = url.searchParams.get('logout') === '1';
+        if (forced || forcedByUrl || !readStored()){
+          showOverlay();
+        }
+      } catch {}
+    });
+    try { obs.observe(ov, { attributes:true, attributeFilter:['class','aria-hidden'] }); } catch {}
+    setTimeout(() => { try { obs.disconnect(); } catch {} }, 3000);
+  }
+
   function boot(){
     initLogin();
-
-    // Preloader: solo estetica
     setTimeout(hidePreloader, 2000);
 
     const url = new URL(location.href);
@@ -232,8 +243,8 @@
         history.replaceState({}, '', url.toString());
       }
 
-      // IMPORTANT: overlay resta visibile (blur attivo)
       showOverlay();
+      enforceOverlayWhileForced();
       try { document.getElementById('AuthEmail')?.focus(); } catch {}
       return;
     }
@@ -242,11 +253,12 @@
     if (!user){
       hideUserMenu();
       showOverlay();
+      enforceOverlayWhileForced();
       try { document.getElementById('AuthEmail')?.focus(); } catch {}
       return;
     }
 
-    // Utente valido: non forzare welcome qui, così F5 resta nella modalità (shell.js ripristina last_mode)
+    // Utente valido: non forzare welcome qui
     hideOverlay();
     try { window.applyGuards && window.applyGuards(user); } catch {}
     try { bindUserMenu(user); } catch {}

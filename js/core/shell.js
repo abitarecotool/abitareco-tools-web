@@ -1,6 +1,7 @@
 // js/core/shell.js
 (function(){
   'use strict';
+
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
   const showEl = (el) => el && el.classList.remove('hidden');
@@ -8,9 +9,13 @@
 
   const SideMenu = $('#SideMenu');
   const BtnProcedi = $('#BtnProcedi');
-
   const DEFAULT_PRIMARY_LABEL = 'Esporta ora';
-  function setPrimaryActionLabel(txt){ if (BtnProcedi) BtnProcedi.textContent = txt || DEFAULT_PRIMARY_LABEL; }
+  const LAST_MODE_KEY = 'abitare_tools_last_mode';
+  const FORCE_WELCOME_KEY = 'abitare_tools_force_welcome';
+
+  function setPrimaryActionLabel(txt){
+    if (BtnProcedi) BtnProcedi.textContent = txt || DEFAULT_PRIMARY_LABEL;
+  }
 
   const MODE_CARDS = {
     welcome: ['WelcomeCard'],
@@ -47,11 +52,12 @@
   function showCards(mode){ (MODE_CARDS[mode] || []).forEach(id => showEl(document.getElementById(id))); }
 
   window.selectMode = function(mode){
-  try { if (mode && mode !== 'welcome') sessionStorage.setItem('abitare_tools_last_mode', String(mode)); } catch {}
+    // salva last mode in sessione (refresh deve restare)
+    try { if (mode && mode !== 'welcome') sessionStorage.setItem(LAST_MODE_KEY, String(mode)); } catch {}
 
     window.currentMode = mode;
-    hideAllCards();
 
+    hideAllCards();
     setPrimaryActionLabel(DEFAULT_PRIMARY_LABEL);
     BtnProcedi?.classList.remove('hidden');
 
@@ -67,7 +73,6 @@
     if (mode === 'ppt') BtnProcedi?.classList.add('hidden');
 
     showCards(mode);
-
     try { window.handleCropUI && window.handleCropUI(); } catch {}
     activateMenuVisual(mode);
   };
@@ -78,20 +83,44 @@
     window.selectMode(li.dataset.mode || 'welcome');
   });
 
+  function restoreFromLastMode(){
+    try {
+      const force = sessionStorage.getItem(FORCE_WELCOME_KEY) === '1';
+      const last = sessionStorage.getItem(LAST_MODE_KEY);
+      if (!force && last && MODE_CARDS[last]){
+        window.selectMode(last);
+        return true;
+      }
+    } catch {}
+    return false;
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
-  initSidebarIcons();
+    initSidebarIcons();
 
-  try {
-    const force = sessionStorage.getItem('abitare_tools_force_welcome') === '1';
-    if (force) sessionStorage.removeItem('abitare_tools_force_welcome');
+    // 1) restore immediato
+    const restored = restoreFromLastMode();
+    if (!restored) window.selectMode('welcome');
 
-    const last = sessionStorage.getItem('abitare_tools_last_mode');
-    if (!force && last && MODE_CARDS[last]){
-      window.selectMode(last);
-      return;
-    }
-  } catch {}
+    // 2) anti-race: se qualche script ti ributta in welcome dopo 200-1500ms,
+    //    riportiamo alla modalità precedente (solo se NON hai forzato welcome)
+    let ticks = 0;
+    const t = setInterval(() => {
+      ticks++;
+      try {
+        const force = sessionStorage.getItem(FORCE_WELCOME_KEY) === '1';
+        const last = sessionStorage.getItem(LAST_MODE_KEY);
+        if (!force && last && MODE_CARDS[last] && window.currentMode === 'welcome'){
+          window.selectMode(last);
+        }
+      } catch {}
+      if (ticks > 20) clearInterval(t); // ~2s
+    }, 100);
 
-  window.selectMode('welcome');
-});
+    // se force_welcome era 1, lo consumiamo una volta qui (welcome.js lo setta su click logo)
+    try {
+      if (sessionStorage.getItem(FORCE_WELCOME_KEY) === '1') sessionStorage.removeItem(FORCE_WELCOME_KEY);
+    } catch {}
+  });
+
 })();

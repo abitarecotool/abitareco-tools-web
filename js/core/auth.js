@@ -2,7 +2,7 @@
 (function(){
   'use strict';
 
-  // Accounts (non modificare: stessa lista attuale)
+  // Accounts (NON modificare)
   const USERS = {
     'admin@abitareco.it': { password: 'Abitare52!', role: 'admin' },
     'marketing@abitareco.it': { password: 'Abitare52!', role: 'marketing' },
@@ -20,21 +20,21 @@
 
   const now = () => Date.now();
 
-  function packUser(user, ttl){
-    return JSON.stringify({ v: 1, exp: now() + ttl, user });
+  function packUser(user, ttlMs){
+    return JSON.stringify({ v: 1, exp: now() + ttlMs, user });
   }
 
   function unpackUser(raw){
     try {
       const obj = JSON.parse(raw);
-      // nuova struttura con scadenza
+      // Nuova struttura con scadenza
       if (obj && typeof obj === 'object' && obj.user && obj.exp){
         if (now() <= Number(obj.exp)) return obj.user;
         return null;
       }
-      // struttura legacy: user diretto
+      // Legacy: user diretto
       if (obj && typeof obj === 'object' && obj.role){
-        // migrazione a 1 giorno
+        // Migra a 1 giorno
         try { localStorage.setItem(KEY, packUser(obj, TTL_DAY_MS)); } catch {}
         return obj;
       }
@@ -43,7 +43,6 @@
   }
 
   function clearUser(){
-    // rimuove sia local che session (compatibilità)
     try { localStorage.removeItem(KEY); } catch {}
     try { sessionStorage.removeItem(KEY); } catch {}
   }
@@ -63,9 +62,8 @@
   function storeUser(user, remember){
     const ttl = remember ? TTL_REMEMBER_MS : TTL_DAY_MS;
     const payload = packUser(user, ttl);
-    // Salva SEMPRE in localStorage: così dura anche chiudendo tab/chrome
+    // Salva SEMPRE in localStorage: dura anche chiudendo Chrome
     try { localStorage.setItem(KEY, payload); } catch {}
-    // pulizia sessionStorage per evitare doppioni
     try { sessionStorage.removeItem(KEY); } catch {}
   }
 
@@ -106,6 +104,28 @@
     } catch {}
   }
 
+  function applyBrand(user){
+    try{
+      const defaultLogo = './assets/logo.png';
+      const logoPath = (user && user.brand && user.brand.logo) ? user.brand.logo : defaultLogo;
+      const label = (user && user.brand && user.brand.label) ? user.brand.label : 'Abitare Co.';
+
+      const sideImg = document.getElementById('SidebarLogo');
+      if (sideImg){
+        sideImg.onerror = () => { sideImg.onerror = null; sideImg.src = defaultLogo; sideImg.alt = 'Abitare Co.'; };
+        sideImg.src = logoPath;
+        sideImg.alt = label;
+      }
+
+      const welcomeImg = document.querySelector('.welcome-brand img');
+      if (welcomeImg){
+        welcomeImg.onerror = () => { welcomeImg.onerror = null; welcomeImg.src = defaultLogo; welcomeImg.alt = 'Abitare Co.'; };
+        welcomeImg.src = logoPath;
+        welcomeImg.alt = label;
+      }
+    } catch {}
+  }
+
   function bindUserMenu(user){
     const menu = document.getElementById('UserMenu');
     const dd = document.getElementById('UserDropdown');
@@ -134,37 +154,20 @@
     }
 
     btn.onclick = () => {
-      // Logout: deve mostrare login overlay (con blur) e NON sparire.
+      // Logout: vogliamo rimanere sulla schermata login con blur attivo.
       try { localStorage.setItem(FORCE_KEY, '1'); } catch {}
+      // pulisco utente e last_mode di tab
       clearUser();
+      try { sessionStorage.removeItem('abitare_tools_last_mode'); } catch {}
+      // Alla prossima apertura/tab: welcome
+      try { sessionStorage.setItem('abitare_tools_force_welcome','1'); } catch {}
+
       hideUserMenu();
-      // url flag per forzare login al reload (evita cache/vecchi stati)
+
       const url = new URL(location.href);
       url.searchParams.set('logout','1');
       location.href = url.toString();
     };
-  }
-
-  function applyBrand(user){
-    try{
-      const defaultLogo = './assets/logo.png';
-      const logoPath = (user && user.brand && user.brand.logo) ? user.brand.logo : defaultLogo;
-      const label = (user && user.brand && user.brand.label) ? user.brand.label : 'Abitare Co.';
-
-      const sideImg = document.getElementById('SidebarLogo');
-      if (sideImg){
-        sideImg.onerror = () => { sideImg.onerror = null; sideImg.src = defaultLogo; sideImg.alt = 'Abitare Co.'; };
-        sideImg.src = logoPath;
-        sideImg.alt = label;
-      }
-
-      const welcomeImg = document.querySelector('.welcome-brand img');
-      if (welcomeImg){
-        welcomeImg.onerror = () => { welcomeImg.onerror = null; welcomeImg.src = defaultLogo; welcomeImg.alt = 'Abitare Co.'; };
-        welcomeImg.src = logoPath;
-        welcomeImg.alt = label;
-      }
-    } catch {}
   }
 
   function initLogin(){
@@ -194,7 +197,8 @@
       try { bindUserMenu(user); } catch {}
       try { applyBrand(user); } catch {}
 
-      // UX invariata: dopo login vai alla Welcome
+      // Welcome SOLO subito dopo login (come richiesto)
+      try { sessionStorage.setItem('abitare_tools_force_welcome','1'); } catch {}
       try { window.selectMode && window.selectMode('welcome'); } catch {}
     };
 
@@ -210,10 +214,9 @@
   function boot(){
     initLogin();
 
-    // Preloader solo estetica: lo chiudiamo sempre dopo 2s
+    // Preloader: solo estetica
     setTimeout(hidePreloader, 2000);
 
-    // Stato auth: NON dipendere dal timeout
     const url = new URL(location.href);
     const forcedByUrl = url.searchParams.get('logout') === '1';
     let forcedByKey = false;
@@ -229,6 +232,7 @@
         history.replaceState({}, '', url.toString());
       }
 
+      // IMPORTANT: overlay resta visibile (blur attivo)
       showOverlay();
       try { document.getElementById('AuthEmail')?.focus(); } catch {}
       return;
@@ -242,7 +246,7 @@
       return;
     }
 
-    // utente valido
+    // Utente valido: non forzare welcome qui, così F5 resta nella modalità (shell.js ripristina last_mode)
     hideOverlay();
     try { window.applyGuards && window.applyGuards(user); } catch {}
     try { bindUserMenu(user); } catch {}

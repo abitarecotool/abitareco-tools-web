@@ -21,7 +21,8 @@
  <link rel="stylesheet" href="./css/modules/bv_3d.css" />
     <link rel="stylesheet" href="./css/modules/auth.css" />
  <link rel="stylesheet" href="./css/modules/welcome.css?v=20260506v4" />
-  </head>
+   <link rel="stylesheet" href="./css/modules/fattura.css?v=20260520" />
+ </head>
 
   <body>
     <!-- AUTH PRELOADER (2s) -->
@@ -98,7 +99,11 @@
             <span class="mi"><img alt="" /></span><span class="txt">Watermark</span>
           </li>
 
-          <li data-mode="bv" data-icon="./assets/icons/icon-bv.png" data-icon-active="./assets/icons/icon-bv-selected.png">
+          <li 
+ <li data-mode="fattura" data-icon="./assets/icons/icon-fattura.png" data-icon-active="./assets/icons/icon-fattura-selected.png">
+  <span class="mi"><img alt="" /></span><span class="txt">Fattura</span>
+ </li>
+data-mode="bv" data-icon="./assets/icons/icon-bv.png" data-icon-active="./assets/icons/icon-bv-selected.png">
             <span class="mi"><img alt="" /></span><span class="txt">Biglietto da visita</span>
           </li>
 
@@ -313,7 +318,81 @@
   </div>
 </section>
 
-            <!-- BIGLIETTO DA VISITA -->
+            
+<!-- FATTURA (Marketing/Admin) -->
+<section id="FatturaCard" class="card hidden">
+ <h3>Fattura</h3>
+ <p class="muted" style="margin-top:6px;line-height:1.6">Seleziona una sezione e un prodotto dal listino, inserisci quantità e (opzionale) sconto. Il costo unitario si compila automaticamente ma resta modificabile. Poi clicca <b>Esporta PDF</b>.</p>
+
+ <div class="fattura-box">
+  <div class="row" style="gap:12px; margin-top:14px">
+   <div>
+    <label for="FatNumero">N.ro</label>
+    <input id="FatNumero" class="input" type="text" readonly placeholder="—" />
+   </div>
+   <div>
+    <label for="FatData">Data</label>
+    <input id="FatData" class="input" type="date" />
+   </div>
+  </div>
+
+  <div class="row" style="gap:12px">
+   <div>
+    <label for="FatCommessa">N. Commessa</label>
+    <input id="FatCommessa" class="input" type="text" placeholder="es. C 3107" />
+   </div>
+   <div>
+    <label for="FatRifCommessa">Rif. Commessa</label>
+    <input id="FatRifCommessa" class="input" type="text" placeholder="es. Segrate Village 2 Redo" />
+   </div>
+  </div>
+
+  <div class="form-group">
+   <label for="FatOggetto">Oggetto</label>
+   <input id="FatOggetto" class="input" type="text" placeholder="es. Creatività Baracca Segrate" />
+  </div>
+
+  <div class="fattura-divider"></div>
+
+  <div class="row" style="gap:12px; align-items:flex-end">
+   <div>
+    <label for="FatSezione">Sezione listino</label>
+    <select id="FatSezione" class="input" style="height:41px"></select>
+   </div>
+   <div>
+    <label for="FatProdotto">Prodotto</label>
+    <select id="FatProdotto" class="input" style="height:41px"></select>
+   </div>
+   <div style="flex:0 0 auto">
+    <button id="FatAddRow" type="button" class="btn-outline" style="height:40px; min-width:160px">Aggiungi riga</button>
+   </div>
+  </div>
+
+  <div class="fattura-table" style="margin-top:14px">
+   <div class="fattura-th">
+    <div>Prodotto</div>
+    <div class="num">Q.tà</div>
+    <div class="num">Costo unit.</div>
+    <div class="num">Sconto %</div>
+    <div class="num">Totale</div>
+    <div></div>
+   </div>
+   <div id="FatRows" class="fattura-tbody"></div>
+  </div>
+
+  <div class="fattura-totals">
+   <div class="muted">Totale fornitura</div>
+   <div id="FatTotale" class="fattura-totalval">€ 0,00</div>
+  </div>
+
+  <div class="form-group" style="margin-top:10px">
+   <label for="FatNote">Note</label>
+   <textarea id="FatNote" class="input" placeholder="Inserisci note (opzionale)"></textarea>
+  </div>
+ </div>
+</section>
+
+<!-- BIGLIETTO DA VISITA -->
 <section id="BusinessCardCard" class="card hidden">
   <h3>Genera biglietto da visita</h3>
 
@@ -516,6 +595,7 @@
 
 <section id="PptMarketingCard" class="card hidden">
 
+
   <h3>Template Marketing</h3>
   <p class="form-section-sub">Campagne e iniziative: annunci, lanci e contenuti commerciali.</p>
   <button type="button" class="btn-primary" onclick="downloadPPT('assets/ppt/template-marketing.pptx')">Scarica</button>
@@ -545,13 +625,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- App scripts (split) -->
-    <script src="./js/core/permissions.js"></script>
-    <script src="./js/core/auth.js"></script>
-    <script src="./js/core/guard.js"></script>
+    <script src="./js/core/permissions.js?v=20260518_fixprod2"></script>
+    <script src="./js/core/auth.js?v=20260518_fixprod2"></script>
+    <script src="./js/core/guard.js?v=20260518_fixprod2"></script>
 
     <script src="./js/core/helpers.js"></script>
-    <script src="./js/core/shell.js"></script>
- <script src="./js/modules/welcome.js?v=20260506v4"></script>
+    <script src="./js/core/shell.js?v=20260518_fixprod2"></script>
+ <script src="./js/modules/welcome.js?v=20260518_fixprod2"></script>
     <script src="./js/core/io.js"></script>
     <script src="./js/core/shared.js"></script>
 
@@ -567,6 +647,7 @@
     <script src="./js/modules/qr.js?v=20260513qr1"></script>
     <script src="./js/modules/iubenda.js"></script>
     <script src="./js/modules/ppt.js"></script>
+ <script src="./js/modules/fattura.js?v=20260520"></script>
 
     <script src="./js/core/actionbar.js"></script>
     <script src="./js/app.js"></script>

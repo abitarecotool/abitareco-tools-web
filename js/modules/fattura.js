@@ -12,21 +12,13 @@
  let __bound = false;
 
  function toast(msg){
-  try{
-   if (window.showToast) return window.showToast(msg);
-  } catch {}
+  try{ if (window.showToast) return window.showToast(msg); } catch {}
   alert(msg);
  }
 
  function euro(n){
   const v = Number(n || 0);
   return new Intl.NumberFormat('it-IT', { style:'currency', currency:'EUR' }).format(v);
- }
-
- function euroPlain(n){
-  const v = Number(n || 0);
-  // Keep symbol for PDF strings
-  return euro(v);
  }
 
  function todayISO(){
@@ -36,7 +28,6 @@
  }
 
  function fmtDate(iso){
-  // iso: YYYY-MM-DD
   try{
    const [y,m,d] = String(iso||'').split('-');
    if (!y || !m || !d) return iso || '';
@@ -44,9 +35,7 @@
   } catch { return iso || ''; }
  }
 
- function makeTimestamp(){
-  return String(Date.now());
- }
+ function makeTimestamp(){ return String(Date.now()); }
 
  function round2(n){
   return Math.round((Number(n||0) + Number.EPSILON) * 100) / 100;
@@ -64,7 +53,7 @@
    }
   } catch {}
 
-  // fallback CSV (simple parser)
+  // fallback CSV
   try{
    const res = await fetch(PATH_CSV, { cache: 'no-store' });
    if (!res.ok) throw new Error('CSV non disponibile');
@@ -105,7 +94,6 @@
  }
 
  function parseCsvLine(line){
-  // handles basic quoted CSV
   const out = [];
   let cur = '';
   let q = false;
@@ -140,7 +128,6 @@
 
   if (selSec.options.length) selSec.selectedIndex = 0;
   fillProductsForSection(selSec.value);
-
   selSec.onchange = () => fillProductsForSection(selSec.value);
  }
 
@@ -295,190 +282,6 @@
   return s.length > max ? (s.slice(0, max-1) + '…') : s;
  }
 
- async function fetchAsArrayBuffer(url){
-  const res = await fetch(url, { cache:'no-store' });
-  if (!res.ok) throw new Error('Impossibile caricare asset: ' + url);
-  return await res.arrayBuffer();
- }
-
- function drawKV(page, font, fontBold, x, y, k, v){
-  page.drawText(k, { x, y, size: 9, font: fontBold });
-  page.drawText(String(v || ''), { x: x + 90, y, size: 9, font });
- }
-
- function drawTableHeader(page, fontBold, x, y, cols, rgb){
-  // background
-  page.drawRectangle({ x, y: y-14, width: cols.reduce((a,c)=>a+c.w,0), height: 18, color: rgb(0.97,0.98,0.99) });
-  let cx = x;
-  for (const c of cols){
-   const tx = (c.align === 'right') ? (cx + c.w - 2) : (cx + 2);
-   page.drawText(c.label, { x: tx, y: y-10, size: 9.5, font: fontBold, color: rgb(0.22,0.25,0.30), ...(c.align==='right'?{ }:{}) });
-   cx += c.w;
-  }
-  // bottom line
-  page.drawLine({ start: {x, y: y-14}, end: {x: x + cols.reduce((a,c)=>a+c.w,0), y: y-14}, thickness: 1, color: rgb(0.9,0.9,0.9) });
- }
-
- function drawRow(page, font, x, y, cols, row, rgb, alt){
-  const h = 18;
-  if (alt){
-   page.drawRectangle({ x, y: y-h+3, width: cols.reduce((a,c)=>a+c.w,0), height: h, color: rgb(0.995,0.995,0.995) });
-  }
-  let cx = x;
-  // values: product, qty, unit, disc, total
-  const values = [
-   trunc(row.product, 48),
-   String(row.qty),
-   euroPlain(row.unit),
-   row.disc ? `${row.disc}%` : '—',
-   euroPlain(row.total)
-  ];
-  for (let i=0;i<cols.length;i++){
-   const c = cols[i];
-   const val = values[i];
-   const tx = (c.align === 'right') ? (cx + c.w - 2) : (cx + 2);
-   page.drawText(String(val), { x: tx, y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
-   cx += c.w;
-  }
-  // row line
-  page.drawLine({ start: {x, y: y-h+3}, end: {x: x + cols.reduce((a,c)=>a+c.w,0), y: y-h+3}, thickness: 0.6, color: rgb(0.93,0.93,0.93) });
-  return y - h;
- }
-
- async function exportFatturaPdf(){
-  const st = getState();
-  if (!st.rows.length){ toast('Aggiungi almeno una riga prima di esportare.'); return; }
-
-  const { PDFDocument, StandardFonts, rgb } = window.PDFLib || {};
-  if (!PDFDocument){ toast('Libreria PDF non disponibile.'); return; }
-
-  const pdfDoc = await PDFDocument.create();
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-  // Logo (Abitare Co.)
-  let logoImg = null;
-  try{
-   const bytes = await fetchAsArrayBuffer('./assets/logo.png');
-   logoImg = await pdfDoc.embedPng(bytes);
-  } catch { /* ignore */ }
-
-  const A4 = [595.28, 841.89];
-  const margin = 40;
-
-  const newPage = () => pdfDoc.addPage(A4);
-  let page = newPage();
-  let y = A4[1] - margin;
-
-  const drawHeader = () => {
-   // logo
-   if (logoImg){
-    const w = 140;
-    const h = (logoImg.height / logoImg.width) * w;
-    page.drawImage(logoImg, { x: margin, y: y - h, width: w, height: h });
-   }
-   page.drawText('Statement accounting', { x: 360, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
-
-   // number/date box
-   const boxX = 360;
-   const boxW = 195;
-   const boxH = 54;
-   page.drawRectangle({ x: boxX, y: y - 74, width: boxW, height: boxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-   drawKV(page, font, fontBold, boxX + 10, y - 32, 'N.ro', st.header.numero);
-   drawKV(page, font, fontBold, boxX + 10, y - 54, 'Del', fmtDate(st.header.data));
-
-   // commessa box
-   const y2 = y - 95;
-   page.drawRectangle({ x: 360, y: y2 - 45, width: 195, height: 46, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-   drawKV(page, font, fontBold, 370, y2 - 18, 'N. Commessa', st.header.commessa || '—');
-   drawKV(page, font, fontBold, 370, y2 - 36, 'Rif. Commessa', st.header.rifCommessa || '—');
-
-   // Oggetto
-   const y3 = y2 - 68;
-   page.drawText('Oggetto:', { x: margin, y: y3, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-   page.drawRectangle({ x: margin + 70, y: y3 - 6, width: A4[0] - margin*2 - 70, height: 20, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-   page.drawText(trunc(st.header.oggetto || '—', 78), { x: margin + 78, y: y3 + 1, size: 10.5, font });
-
-   y = y3 - 40;
-  };
-
-  drawHeader();
-
-  // Table
-  const cols = [
-   { label:'Prodotto', w: 260 },
-   { label:'Q.tà', w: 45, align:'right' },
-   { label:'Costo unit.', w: 80, align:'right' },
-   { label:'Sconto', w: 55, align:'right' },
-   { label:'Totale', w: 85, align:'right' },
-  ];
-  const tableX = margin;
-
-  const ensureSpace = (minY) => {
-   if (y < minY){
-    page = newPage();
-    y = A4[1] - margin;
-    // light header on new page
-    page.drawText('Statement accounting', { x: 360, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
-    y -= 40;
-   }
-  };
-
-  ensureSpace(160);
-  drawTableHeader(page, fontBold, tableX, y, cols, rgb);
-  y -= 18;
-
-  st.rows.forEach((r, idx) => {
-   ensureSpace(140);
-   // if new page created and no header drawn yet
-   if (y > A4[1] - margin - 60){
-    drawTableHeader(page, fontBold, tableX, y, cols, rgb);
-    y -= 18;
-   }
-   y = drawRow(page, font, tableX, y, cols, r, rgb, idx % 2 === 1);
-  });
-
-  // Totale
-  ensureSpace(130);
-  y -= 10;
-  page.drawLine({ start: { x: tableX, y }, end: { x: tableX + cols.reduce((a,c)=>a+c.w,0), y }, thickness: 1, color: rgb(0.86,0.86,0.86) });
-  y -= 18;
-  page.drawText('Totale fornitura', { x: tableX + 260, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-  page.drawText(euroPlain(st.total), { x: tableX + 260 + 45 + 80 + 55 + 85 - 2, y, size: 11, font: fontBold, color: rgb(0.77,0.09,0.17) });
-
-  // Note
-  y -= 30;
-  page.drawText('Note', { x: margin, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-  y -= 10;
-  const noteBoxH = 90;
-  page.drawRectangle({ x: margin, y: y - noteBoxH, width: A4[0] - margin*2, height: noteBoxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-  const noteLines = wrapText(st.header.note || '', 92);
-  let ny = y - 16;
-  noteLines.slice(0,6).forEach(line => {
-   page.drawText(line, { x: margin + 10, y: ny, size: 9.5, font, color: rgb(0.17,0.20,0.25) });
-   ny -= 13;
-  });
-
-  // Timbro e firma
-  y = y - noteBoxH - 36;
-  page.drawText('Timbro e firma', { x: margin, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-  y -= 10;
-  page.drawLine({ start: { x: margin, y }, end: { x: margin + 260, y }, thickness: 1, color: rgb(0.7,0.7,0.7) });
-
-  const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `fattura_${st.header.numero}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
- }
-
  function wrapText(text, maxChars){
   const s = String(text || '').replace(/\r\n/g,'\n');
   const words = s.split(/(\s+)/);
@@ -501,15 +304,179 @@
   return lines;
  }
 
+ async function fetchAsArrayBuffer(url){
+  const res = await fetch(url, { cache:'no-store' });
+  if (!res.ok) throw new Error('Impossibile caricare asset: ' + url);
+  return await res.arrayBuffer();
+ }
+
+ function drawKV(page, font, fontBold, x, y, k, v){
+  page.drawText(k, { x, y, size: 9, font: fontBold });
+  page.drawText(String(v || ''), { x: x + 90, y, size: 9, font });
+ }
+
+ function drawTableHeader(page, fontBold, x, y, cols, rgb){
+  page.drawRectangle({ x, y: y-14, width: cols.reduce((a,c)=>a+c.w,0), height: 18, color: rgb(0.97,0.98,0.99) });
+  let cx = x;
+  for (const c of cols){
+   const tx = (c.align === 'right') ? (cx + c.w - 2) : (cx + 2);
+   page.drawText(c.label, { x: tx, y: y-10, size: 9.5, font: fontBold, color: rgb(0.22,0.25,0.30) });
+   cx += c.w;
+  }
+  page.drawLine({ start: {x, y: y-14}, end: {x: x + cols.reduce((a,c)=>a+c.w,0), y: y-14}, thickness: 1, color: rgb(0.9,0.9,0.9) });
+ }
+
+ function drawRow(page, font, x, y, cols, row, rgb, alt){
+  const h = 18;
+  if (alt){
+   page.drawRectangle({ x, y: y-h+3, width: cols.reduce((a,c)=>a+c.w,0), height: h, color: rgb(0.995,0.995,0.995) });
+  }
+  let cx = x;
+  const values = [
+   trunc(row.product, 48),
+   String(row.qty),
+   euro(row.unit),
+   row.disc ? `${row.disc}%` : '—',
+   euro(row.total)
+  ];
+  for (let i=0;i<cols.length;i++){
+   const c = cols[i];
+   const val = values[i];
+   const tx = (c.align === 'right') ? (cx + c.w - 2) : (cx + 2);
+   page.drawText(String(val), { x: tx, y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
+   cx += c.w;
+  }
+  page.drawLine({ start: {x, y: y-h+3}, end: {x: x + cols.reduce((a,c)=>a+c.w,0), y: y-h+3}, thickness: 0.6, color: rgb(0.93,0.93,0.93) });
+  return y - h;
+ }
+
+ async function exportFatturaPdf(){
+  const st = getState();
+  if (!st.rows.length){ toast('Aggiungi almeno una riga prima di esportare.'); return; }
+
+  const { PDFDocument, StandardFonts, rgb } = window.PDFLib || {};
+  if (!PDFDocument){ toast('Libreria PDF non disponibile.'); return; }
+
+  const pdfDoc = await PDFDocument.create();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  let logoImg = null;
+  try{
+   const bytes = await fetchAsArrayBuffer('./assets/logo.png');
+   logoImg = await pdfDoc.embedPng(bytes);
+  } catch {}
+
+  const A4 = [595.28, 841.89];
+  const margin = 40;
+
+  const newPage = () => pdfDoc.addPage(A4);
+  let page = newPage();
+  let y = A4[1] - margin;
+
+  const drawHeader = () => {
+   if (logoImg){
+    const w = 140;
+    const h = (logoImg.height / logoImg.width) * w;
+    page.drawImage(logoImg, { x: margin, y: y - h, width: w, height: h });
+   }
+   page.drawText('Statement accounting', { x: 360, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+
+   const boxX = 360;
+   page.drawRectangle({ x: boxX, y: y - 74, width: 195, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+   drawKV(page, font, fontBold, boxX + 10, y - 32, 'N.ro', st.header.numero);
+   drawKV(page, font, fontBold, boxX + 10, y - 54, 'Del', fmtDate(st.header.data));
+
+   const y2 = y - 95;
+   page.drawRectangle({ x: 360, y: y2 - 45, width: 195, height: 46, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+   drawKV(page, font, fontBold, 370, y2 - 18, 'N. Commessa', st.header.commessa || '—');
+   drawKV(page, font, fontBold, 370, y2 - 36, 'Rif. Commessa', st.header.rifCommessa || '—');
+
+   const y3 = y2 - 68;
+   page.drawText('Oggetto:', { x: margin, y: y3, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+   page.drawRectangle({ x: margin + 70, y: y3 - 6, width: A4[0] - margin*2 - 70, height: 20, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+   page.drawText(trunc(st.header.oggetto || '—', 78), { x: margin + 78, y: y3 + 1, size: 10.5, font });
+
+   y = y3 - 40;
+  };
+
+  drawHeader();
+
+  const cols = [
+   { label:'Prodotto', w: 260 },
+   { label:'Q.tà', w: 45, align:'right' },
+   { label:'Costo unit.', w: 80, align:'right' },
+   { label:'Sconto', w: 55, align:'right' },
+   { label:'Totale', w: 85, align:'right' },
+  ];
+  const tableX = margin;
+
+  const ensureSpace = (minY) => {
+   if (y < minY){
+    page = newPage();
+    y = A4[1] - margin;
+    page.drawText('Statement accounting', { x: 360, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    y -= 40;
+   }
+  };
+
+  ensureSpace(160);
+  drawTableHeader(page, fontBold, tableX, y, cols, rgb);
+  y -= 18;
+
+  st.rows.forEach((r, idx) => {
+   ensureSpace(140);
+   if (y > A4[1] - margin - 60){
+    drawTableHeader(page, fontBold, tableX, y, cols, rgb);
+    y -= 18;
+   }
+   y = drawRow(page, font, tableX, y, cols, r, rgb, idx % 2 === 1);
+  });
+
+  ensureSpace(130);
+  y -= 10;
+  page.drawLine({ start: { x: tableX, y }, end: { x: tableX + cols.reduce((a,c)=>a+c.w,0), y }, thickness: 1, color: rgb(0.86,0.86,0.86) });
+  y -= 18;
+  page.drawText('Totale fornitura', { x: tableX + 260, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+  page.drawText(euro(st.total), { x: tableX + 260 + 45 + 80 + 55 + 85 - 2, y, size: 11, font: fontBold, color: rgb(0.77,0.09,0.17) });
+
+  y -= 30;
+  page.drawText('Note', { x: margin, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+  y -= 10;
+  const noteBoxH = 90;
+  page.drawRectangle({ x: margin, y: y - noteBoxH, width: A4[0] - margin*2, height: noteBoxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+  const noteLines = wrapText(st.header.note || '', 92);
+  let ny = y - 16;
+  noteLines.slice(0,6).forEach(line => {
+   page.drawText(line, { x: margin + 10, y: ny, size: 9.5, font, color: rgb(0.17,0.20,0.25) });
+   ny -= 13;
+  });
+
+  y = y - noteBoxH - 36;
+  page.drawText('Timbro e firma', { x: margin, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+  y -= 10;
+  page.drawLine({ start: { x: margin, y }, end: { x: margin + 260, y }, thickness: 1, color: rgb(0.7,0.7,0.7) });
+
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fattura_${st.header.numero}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+ }
+
  async function initFattura(){
   if (__bound) return;
-  // Ensure DOM exists
   if (!document.getElementById('FatturaCard')) return;
-
   __bound = true;
 
   initHeaderDefaults();
-
   const listino = await loadListino();
   if (!listino.sections || !listino.sections.length){
    toast('Listino non trovato in assets/data. Carica listino_marketing.json o .csv.');
@@ -519,11 +486,10 @@
   const btnAdd = document.getElementById('FatAddRow');
   if (btnAdd) btnAdd.addEventListener('click', addRowFromSelected);
 
-  // expose export for actionbar
   window.exportFatturaPdf = exportFatturaPdf;
  }
 
- // Hook into selectMode (defined by shell.js)
+ // Hook into selectMode
  try{
   const orig = window.selectMode;
   if (typeof orig === 'function' && !orig.__fatturaPatched){
@@ -537,7 +503,6 @@
  } catch {}
 
  document.addEventListener('DOMContentLoaded', () => {
-  // init in case user lands directly
   if (window.currentMode === 'fattura') initFattura();
  });
 

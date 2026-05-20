@@ -1,336 +1,479 @@
 {
   "version": 1,
   "currency": "EUR",
-  "generatedAt": "2026-05-20T08:50:18",
+  "generatedFrom": "sezioni_prodotti.xlsx",
   "sections": [
     {
-      "name": "BRAND IDENTITY",
+      "name": "DRESS MARKETING",
       "items": [
         {
-          "name": "Naming",
-          "channel": null,
-          "description": "Studio e realizzazione namig, logo, payoff, storytelling",
-          "hours": null,
-          "notes": null,
-          "unitPrice": 2000.0
+          "name": "Impianto creativo",
+          "unitPrice": 0
         },
         {
-          "name": "Shopper",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica",
-          "hours": "da 2 a 3 ore",
-          "notes": null,
-          "unitPrice": 150.0
+          "name": "Virtual Photo",
+          "unitPrice": 0
         },
         {
-          "name": "Folder",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica",
-          "hours": "da 2 a 3 ore",
-          "notes": null,
-          "unitPrice": 200.0
+          "name": "Shooting Fotografico",
+          "unitPrice": 0
+        },
+        {
+          "name": "Grafica in genere",
+          "unitPrice": 0
+        },
+        {
+          "name": "Hosting e domini",
+          "unitPrice": 0
+        },
+        {
+          "name": "Waiting page",
+          "unitPrice": 0
+        },
+        {
+          "name": "Landing page",
+          "unitPrice": 0
+        },
+        {
+          "name": "Sito Web",
+          "unitPrice": 0
+        },
+        {
+          "name": "Popup/Label",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro dress marketing",
+          "unitPrice": 0
         }
       ]
     },
     {
-      "name": "PRINT/PRESS",
+      "name": "TRADE MARKETING",
       "items": [
         {
-          "name": "ADV Riviste",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
-          "hours": "da 2 a 3 ore",
-          "notes": "costo singola pagina",
-          "unitPrice": 500.0
+          "name": "Capitolato Light",
+          "unitPrice": 0
         },
         {
-          "name": "Book (Emozionale/interior etc)",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
-          "hours": null,
-          "notes": "100€ a pagina",
-          "unitPrice": 2000.0
+          "name": "Floor plan Book",
+          "unitPrice": 0
+        },
+        {
+          "name": "Digital Tool",
+          "unitPrice": 0
         },
         {
           "name": "Brochure Light",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
-          "hours": null,
-          "notes": "150€ a facciata",
-          "unitPrice": 900.0
+          "unitPrice": 0
         },
         {
-          "name": "Capitolato Light Vers 1",
-          "channel": "Offline",
-          "description": "Solo realizzazione grafica da contenuti e immagini già forniti",
-          "hours": "da 4 a 8 ore",
-          "notes": null,
-          "unitPrice": 800.0
+          "name": "Book Emozionale",
+          "unitPrice": 0
         },
         {
-          "name": "Capitolato Light Vers 2",
-          "channel": "Offline",
-          "description": "Realizzazione grafica, ricerca delle immagini e scelta dei contenuti",
-          "hours": "da 4 a 8 ore",
-          "notes": null,
-          "unitPrice": 2000.0
+          "name": "Book Capitolato",
+          "unitPrice": 0
         },
         {
-          "name": "Cartello Orari Store",
-          "channel": "Offline",
-          "description": "Istituzionale (A3)",
-          "hours": "1 ora",
-          "notes": null,
-          "unitPrice": 50.0
+          "name": "Book Interior Pack",
+          "unitPrice": 0
         },
         {
-          "name": "Cartellonistica cantiere",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
-          "hours": "da 3 a 5 ore",
-          "notes": "costo per cartello",
-          "unitPrice": 500.0
+          "name": "Shopper",
+          "unitPrice": 0
         },
         {
-          "name": "Coupon (F/R)",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, scelta immagini e copy -  formato F/R",
-          "hours": "da 2 a 3 ore",
-          "notes": "150€ a facciata",
-          "unitPrice": 300.0
+          "name": "Folder",
+          "unitPrice": 0
         },
         {
-          "name": "Flyer",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
-          "hours": "da 3 a 8 ore",
-          "notes": "150€ a facciata",
-          "unitPrice": 800.0
+          "name": "Coupon",
+          "unitPrice": 0
         },
         {
-          "name": "OOH (Gonfaloni/Totem/cartelli etc..)",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
-          "hours": "da 2 a 8 ore",
-          "notes": "costo singolo prodotto",
-          "unitPrice": 500.0
+          "name": "Desk kit",
+          "unitPrice": 0
+        },
+        {
+          "name": "Gadget",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro trade marketing",
+          "unitPrice": 0
         }
       ]
     },
     {
-      "name": "STORE",
+      "name": "GTM - BILLBOARD ON SITE",
       "items": [
         {
-          "name": "Progetto del concept",
-          "channel": "Offline",
-          "description": "Studio del concept marketing generale/D.L. marketing",
-          "hours": null,
-          "notes": "25€/mq",
-          "unitPrice": 2000.0
+          "name": "Cartello 1",
+          "unitPrice": 0
         },
         {
-          "name": "Pannelli interni",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, scelta immagini e copy -  qualsiasi formato",
-          "hours": "da 2 a 8 ore",
-          "notes": "cad.",
-          "unitPrice": 500.0
+          "name": "Imposte comunali 1",
+          "unitPrice": 0
         },
         {
-          "name": "Prespaziati",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, scelta immagini e copy -  qualsiasi formato",
-          "hours": "da 2 a 8 ore",
-          "notes": "cad.",
-          "unitPrice": 150.0
+          "name": "Cartello 2",
+          "unitPrice": 0
         },
         {
-          "name": "Vetrofanie",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, scelta immagini e copy -  qualsiasi formato",
-          "hours": "da 2 a 8 ore",
-          "notes": "cad.",
-          "unitPrice": 150.0
+          "name": "Imposte comunali 2",
+          "unitPrice": 0
         },
         {
-          "name": "Insegne",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, scelta immagini e copy -  qualsiasi formato",
-          "hours": "da 2 a 8 ore",
-          "notes": "cad.",
-          "unitPrice": 300.0
+          "name": "Cartello 3",
+          "unitPrice": 0
         },
         {
-          "name": "Dresswall (grafica)",
-          "channel": "Offline",
-          "description": "Studio e realizzazione grafica, scelta immagini e copy -  qualsiasi formato",
-          "hours": "da 2 a 8 ore",
-          "notes": "cad.",
-          "unitPrice": 250.0
+          "name": "Imposte comunali 3",
+          "unitPrice": 0
         }
       ]
     },
     {
-      "name": "ISTITUZIONALE",
+      "name": "GTM - NATIVE ADVERTISING",
       "items": [
         {
-          "name": "Newsletter",
-          "channel": "Online",
-          "description": "Istituzionale",
-          "hours": "da 4 a 8 ore",
-          "notes": null,
-          "unitPrice": 150.0
+          "name": "Milano Today",
+          "unitPrice": 0
+        },
+        {
+          "name": "Urban File",
+          "unitPrice": 0
+        },
+        {
+          "name": "Native Repubblica",
+          "unitPrice": 0
+        },
+        {
+          "name": "Native Corriere",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro Native advertising",
+          "unitPrice": 0
         }
       ]
     },
     {
-      "name": "WEB/SOCIAL",
+      "name": "GTM - DIRECT MARKETING",
       "items": [
         {
-          "name": "Waiting Page",
-          "channel": "Online",
-          "description": "Studio e realizzazione, copy, immagini, storytelling ( con immagine statica)",
-          "hours": "da 16 a 32 ore",
-          "notes": null,
-          "unitPrice": 600.0
+          "name": "DB - Immobiliare .it",
+          "unitPrice": 0
         },
         {
-          "name": "Landing Page",
-          "channel": "Online",
-          "description": "Studio e realizzazione, copy, immagini, storytelling",
-          "hours": null,
-          "notes": null,
-          "unitPrice": 1200.0
+          "name": "DB - AbitareCo",
+          "unitPrice": 0
         },
         {
-          "name": "Sito onepage",
-          "channel": "Online",
-          "description": "Studio e realizzazione, copy, immagini, storytelling",
-          "hours": null,
-          "notes": null,
-          "unitPrice": 1500.0
+          "name": "DB - Casa.it",
+          "unitPrice": 0
         },
         {
-          "name": "Sito multipagina",
-          "channel": "Online",
-          "description": "Studio e realizzazione, copy, immagini, storytelling",
-          "hours": null,
-          "notes": null,
-          "unitPrice": 3000.0
+          "name": "DB - Idealista.it",
+          "unitPrice": 0
         },
         {
-          "name": "Popup",
-          "channel": "Online",
-          "description": "Realizzazione grafica",
-          "hours": "1 ora",
-          "notes": null,
-          "unitPrice": 150.0
-        },
-        {
-          "name": "Banner ADV Portali",
-          "channel": "Online",
-          "description": "Studio e realizzazione grafica, copy, concept",
-          "hours": "da 2 a 3 ore",
-          "notes": "costo singolo banner",
-          "unitPrice": 300.0
-        },
-        {
-          "name": "DEM",
-          "channel": "Online",
-          "description": "Studio e realizzazione grafica, scelta delle immagini e copy",
-          "hours": "da 2 a 3 ore",
-          "notes": null,
-          "unitPrice": 600.0
-        },
-        {
-          "name": "Digital tool",
-          "channel": "Online",
-          "description": "Realizzazione e vari aggiornamenti",
-          "hours": "da 8 a 16 ore",
-          "notes": null,
-          "unitPrice": 2000.0
-        },
-        {
-          "name": "Grafica Social",
-          "channel": "Online",
-          "description": "Copy + immagini",
-          "hours": null,
-          "notes": "per social",
-          "unitPrice": 500.0
-        },
-        {
-          "name": "Video Emozionale",
-          "channel": "Online",
-          "description": "Realizzazione slideshow dinamico",
-          "hours": "da 8 a 16 ore",
-          "notes": null,
-          "unitPrice": 2000.0
-        },
-        {
-          "name": "attivazione GTM",
-          "channel": "Online",
-          "description": null,
-          "hours": null,
-          "notes": null,
-          "unitPrice": 100.0
+          "name": "DB - Gateway.it",
+          "unitPrice": 0
         }
       ]
     },
     {
-      "name": "PORTALI",
+      "name": "DB - SMS",
       "items": [
         {
-          "name": "Pubblicazione scheda  Sito AbitareCo",
-          "channel": "Online",
-          "description": "Sezione cantiere su sito AbitareCo",
-          "hours": "al mese",
-          "notes": null,
-          "unitPrice": 200.0
+          "name": "Altro direct marketing 1",
+          "unitPrice": 0
         },
         {
-          "name": "Testo annunci portali",
-          "channel": "Online",
-          "description": "Composizione testo annuncio per portali",
-          "hours": "da 4 a 8 ore",
-          "notes": null,
-          "unitPrice": 200.0
+          "name": "Altro direct marketing 2",
+          "unitPrice": 0
         }
       ]
     },
     {
-      "name": "ALTRO",
+      "name": "GTM - PAID ADVERTISING",
       "items": [
         {
-          "name": "Post produzione foto",
-          "channel": "Online",
-          "description": "Refresh e ritocco di design",
-          "hours": "da 2 a 4 ore",
-          "notes": "cad.",
-          "unitPrice": 50.0
+          "name": "Meta",
+          "unitPrice": 0
         },
         {
-          "name": "Book planimetrie",
-          "channel": "offline",
-          "description": "Realizzazione e aggiornamenti vari delle planimetrie",
-          "hours": null,
-          "notes": "90€/cad",
-          "unitPrice": 90.0
+          "name": "Google",
+          "unitPrice": 0
         },
         {
-          "name": "Comunicati Stampa",
-          "channel": null,
-          "description": null,
-          "hours": null,
-          "notes": null,
-          "unitPrice": null
+          "name": "Gestione Campagne",
+          "unitPrice": 0
         },
         {
-          "name": "Redazione testi",
-          "channel": "Online",
-          "description": "creazione testo del comunicato",
-          "hours": null,
-          "notes": "€0,16 a battuta (300 a pag)",
-          "unitPrice": 300.0
+          "name": "Youtube",
+          "unitPrice": 0
+        },
+        {
+          "name": "TikTok",
+          "unitPrice": 0
+        },
+        {
+          "name": "Spotify",
+          "unitPrice": 0
+        },
+        {
+          "name": "Linkedin",
+          "unitPrice": 0
+        },
+        {
+          "name": "Social AbitareCo",
+          "unitPrice": 0
+        },
+        {
+          "name": "Programmatic",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro Paid Advertising 1",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro Paid Advertising 2",
+          "unitPrice": 0
+        }
+      ]
+    },
+    {
+      "name": "GTM - WEB SITE REAL ESTATE",
+      "items": [
+        {
+          "name": "Immobiliare .it",
+          "unitPrice": 0
+        },
+        {
+          "name": "Idealista.it/Casa.it",
+          "unitPrice": 0
+        },
+        {
+          "name": "Abitareco.it",
+          "unitPrice": 0
+        },
+        {
+          "name": "Luxuryestate.com",
+          "unitPrice": 0
+        },
+        {
+          "name": "Lux for Sale",
+          "unitPrice": 0
+        },
+        {
+          "name": "James Editions",
+          "unitPrice": 0
+        },
+        {
+          "name": "Gateaway.it",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro web sitereal estate 1",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro web sitereal estate 2",
+          "unitPrice": 0
+        }
+      ]
+    },
+    {
+      "name": "GTM - LOCAL MARKETING",
+      "items": [
+        {
+          "name": "Flyer Stampa",
+          "unitPrice": 0
+        },
+        {
+          "name": "Flyer Distribuzione",
+          "unitPrice": 0
+        },
+        {
+          "name": "Gonfaloni e Vertical banner",
+          "unitPrice": 0
+        },
+        {
+          "name": "Totem",
+          "unitPrice": 0
+        },
+        {
+          "name": "Poster/manifesti comunali",
+          "unitPrice": 0
+        },
+        {
+          "name": "Cartelli MM",
+          "unitPrice": 0
+        },
+        {
+          "name": "Cartelli Bus/Tram",
+          "unitPrice": 0
+        },
+        {
+          "name": "Cartelli stradali",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro local marketing 1",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro local marketing 2",
+          "unitPrice": 0
+        }
+      ]
+    },
+    {
+      "name": "GTM - MEDIA RELATIONS",
+      "items": [
+        {
+          "name": "Comunicato stampa",
+          "unitPrice": 0
+        },
+        {
+          "name": "Conferenza stampa",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro media relations 1",
+          "unitPrice": 0
+        }
+      ]
+    },
+    {
+      "name": "GTM - ADVERTISING",
+      "items": [
+        {
+          "name": "Corriere della Sera",
+          "unitPrice": 0
+        },
+        {
+          "name": "Sole 24 ore",
+          "unitPrice": 0
+        },
+        {
+          "name": "Milano Finanza",
+          "unitPrice": 0
+        },
+        {
+          "name": "Repubblica",
+          "unitPrice": 0
+        },
+        {
+          "name": "Rivista Locale",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro Advertising 1",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro Advertising 2",
+          "unitPrice": 0
+        }
+      ]
+    },
+    {
+      "name": "GTM - EVENT MARKETING",
+      "items": [
+        {
+          "name": "Gestione evento/location",
+          "unitPrice": 0
+        },
+        {
+          "name": "Catering",
+          "unitPrice": 0
+        },
+        {
+          "name": "Hostess",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro Event marketing",
+          "unitPrice": 0
+        }
+      ]
+    },
+    {
+      "name": "SHOWROOM",
+      "items": [
+        {
+          "name": "Locazione",
+          "unitPrice": 0
+        },
+        {
+          "name": "Utenze varie e assicurazione",
+          "unitPrice": 0
+        },
+        {
+          "name": "Manutenzione e pulizie",
+          "unitPrice": 0
+        },
+        {
+          "name": "Progetto architettonico",
+          "unitPrice": 0
+        },
+        {
+          "name": "Direzione Lavori e opere edili",
+          "unitPrice": 0
+        },
+        {
+          "name": "Progetto grafico",
+          "unitPrice": 0
+        },
+        {
+          "name": "Allestimento Tech",
+          "unitPrice": 0
+        },
+        {
+          "name": "Allestimento grafico",
+          "unitPrice": 0
+        },
+        {
+          "name": "Allestimento fit out",
+          "unitPrice": 0
+        },
+        {
+          "name": "Imposte comunali",
+          "unitPrice": 0
+        },
+        {
+          "name": "Plastico",
+          "unitPrice": 0
+        },
+        {
+          "name": "Spese condominiali",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro showroom",
+          "unitPrice": 0
+        }
+      ]
+    },
+    {
+      "name": "SHOWFLAT",
+      "items": [
+        {
+          "name": "Attività edili",
+          "unitPrice": 0
+        },
+        {
+          "name": "Allestimento arredi",
+          "unitPrice": 0
+        },
+        {
+          "name": "Altro showflat",
+          "unitPrice": 0
         }
       ]
     }

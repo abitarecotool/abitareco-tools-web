@@ -370,7 +370,15 @@
 
   <div class="fattura-table" style="margin-top:14px">
    <div class="fattura-th">
-    <div>Prodotto</div>
+
+   <div>Prodotto</div>
+   <div>Acconto</div>
+   <div class="num">Q.tà</div>
+   <div class="num">Costo unit.</div>
+   <div class="num">Sconto %</div>
+   <div class="num">Totale</div>
+   <div></div>
+  </div>
     <div class="num">Q.tà</div>
     <div class="num">Costo unit.</div>
     <div class="num">Sconto %</div>
@@ -386,8 +394,13 @@
   </div>
 
   <div class="form-group" style="margin-top:10px">
+   
+  <label style="display:flex; gap:8px; align-items:center; margin: 10px 0 10px;">
+   <input id="FatNoteToggle" type="checkbox" />
+   <span>Aggiungi note finali</span>
+  </label>
    <label for="FatNote">Note</label>
-   <textarea id="FatNote" class="input" placeholder="Inserisci note (opzionale)"></textarea>
+   <textarea id="FatNote" class="input hidden" placeholder="Inserisci note (opzionale)"></textarea>
   </div>
  </div>
 </section>

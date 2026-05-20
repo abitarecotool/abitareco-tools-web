@@ -1,0 +1,338 @@
+{
+  "version": 1,
+  "currency": "EUR",
+  "generatedAt": "2026-05-20T08:50:18",
+  "sections": [
+    {
+      "name": "BRAND IDENTITY",
+      "items": [
+        {
+          "name": "Naming",
+          "channel": null,
+          "description": "Studio e realizzazione namig, logo, payoff, storytelling",
+          "hours": null,
+          "notes": null,
+          "unitPrice": 2000.0
+        },
+        {
+          "name": "Shopper",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica",
+          "hours": "da 2 a 3 ore",
+          "notes": null,
+          "unitPrice": 150.0
+        },
+        {
+          "name": "Folder",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica",
+          "hours": "da 2 a 3 ore",
+          "notes": null,
+          "unitPrice": 200.0
+        }
+      ]
+    },
+    {
+      "name": "PRINT/PRESS",
+      "items": [
+        {
+          "name": "ADV Riviste",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
+          "hours": "da 2 a 3 ore",
+          "notes": "costo singola pagina",
+          "unitPrice": 500.0
+        },
+        {
+          "name": "Book (Emozionale/interior etc)",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
+          "hours": null,
+          "notes": "100€ a pagina",
+          "unitPrice": 2000.0
+        },
+        {
+          "name": "Brochure Light",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
+          "hours": null,
+          "notes": "150€ a facciata",
+          "unitPrice": 900.0
+        },
+        {
+          "name": "Capitolato Light Vers 1",
+          "channel": "Offline",
+          "description": "Solo realizzazione grafica da contenuti e immagini già forniti",
+          "hours": "da 4 a 8 ore",
+          "notes": null,
+          "unitPrice": 800.0
+        },
+        {
+          "name": "Capitolato Light Vers 2",
+          "channel": "Offline",
+          "description": "Realizzazione grafica, ricerca delle immagini e scelta dei contenuti",
+          "hours": "da 4 a 8 ore",
+          "notes": null,
+          "unitPrice": 2000.0
+        },
+        {
+          "name": "Cartello Orari Store",
+          "channel": "Offline",
+          "description": "Istituzionale (A3)",
+          "hours": "1 ora",
+          "notes": null,
+          "unitPrice": 50.0
+        },
+        {
+          "name": "Cartellonistica cantiere",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
+          "hours": "da 3 a 5 ore",
+          "notes": "costo per cartello",
+          "unitPrice": 500.0
+        },
+        {
+          "name": "Coupon (F/R)",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, scelta immagini e copy -  formato F/R",
+          "hours": "da 2 a 3 ore",
+          "notes": "150€ a facciata",
+          "unitPrice": 300.0
+        },
+        {
+          "name": "Flyer",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
+          "hours": "da 3 a 8 ore",
+          "notes": "150€ a facciata",
+          "unitPrice": 800.0
+        },
+        {
+          "name": "OOH (Gonfaloni/Totem/cartelli etc..)",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, copy, concept, def di stampa",
+          "hours": "da 2 a 8 ore",
+          "notes": "costo singolo prodotto",
+          "unitPrice": 500.0
+        }
+      ]
+    },
+    {
+      "name": "STORE",
+      "items": [
+        {
+          "name": "Progetto del concept",
+          "channel": "Offline",
+          "description": "Studio del concept marketing generale/D.L. marketing",
+          "hours": null,
+          "notes": "25€/mq",
+          "unitPrice": 2000.0
+        },
+        {
+          "name": "Pannelli interni",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, scelta immagini e copy -  qualsiasi formato",
+          "hours": "da 2 a 8 ore",
+          "notes": "cad.",
+          "unitPrice": 500.0
+        },
+        {
+          "name": "Prespaziati",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, scelta immagini e copy -  qualsiasi formato",
+          "hours": "da 2 a 8 ore",
+          "notes": "cad.",
+          "unitPrice": 150.0
+        },
+        {
+          "name": "Vetrofanie",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, scelta immagini e copy -  qualsiasi formato",
+          "hours": "da 2 a 8 ore",
+          "notes": "cad.",
+          "unitPrice": 150.0
+        },
+        {
+          "name": "Insegne",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, scelta immagini e copy -  qualsiasi formato",
+          "hours": "da 2 a 8 ore",
+          "notes": "cad.",
+          "unitPrice": 300.0
+        },
+        {
+          "name": "Dresswall (grafica)",
+          "channel": "Offline",
+          "description": "Studio e realizzazione grafica, scelta immagini e copy -  qualsiasi formato",
+          "hours": "da 2 a 8 ore",
+          "notes": "cad.",
+          "unitPrice": 250.0
+        }
+      ]
+    },
+    {
+      "name": "ISTITUZIONALE",
+      "items": [
+        {
+          "name": "Newsletter",
+          "channel": "Online",
+          "description": "Istituzionale",
+          "hours": "da 4 a 8 ore",
+          "notes": null,
+          "unitPrice": 150.0
+        }
+      ]
+    },
+    {
+      "name": "WEB/SOCIAL",
+      "items": [
+        {
+          "name": "Waiting Page",
+          "channel": "Online",
+          "description": "Studio e realizzazione, copy, immagini, storytelling ( con immagine statica)",
+          "hours": "da 16 a 32 ore",
+          "notes": null,
+          "unitPrice": 600.0
+        },
+        {
+          "name": "Landing Page",
+          "channel": "Online",
+          "description": "Studio e realizzazione, copy, immagini, storytelling",
+          "hours": null,
+          "notes": null,
+          "unitPrice": 1200.0
+        },
+        {
+          "name": "Sito onepage",
+          "channel": "Online",
+          "description": "Studio e realizzazione, copy, immagini, storytelling",
+          "hours": null,
+          "notes": null,
+          "unitPrice": 1500.0
+        },
+        {
+          "name": "Sito multipagina",
+          "channel": "Online",
+          "description": "Studio e realizzazione, copy, immagini, storytelling",
+          "hours": null,
+          "notes": null,
+          "unitPrice": 3000.0
+        },
+        {
+          "name": "Popup",
+          "channel": "Online",
+          "description": "Realizzazione grafica",
+          "hours": "1 ora",
+          "notes": null,
+          "unitPrice": 150.0
+        },
+        {
+          "name": "Banner ADV Portali",
+          "channel": "Online",
+          "description": "Studio e realizzazione grafica, copy, concept",
+          "hours": "da 2 a 3 ore",
+          "notes": "costo singolo banner",
+          "unitPrice": 300.0
+        },
+        {
+          "name": "DEM",
+          "channel": "Online",
+          "description": "Studio e realizzazione grafica, scelta delle immagini e copy",
+          "hours": "da 2 a 3 ore",
+          "notes": null,
+          "unitPrice": 600.0
+        },
+        {
+          "name": "Digital tool",
+          "channel": "Online",
+          "description": "Realizzazione e vari aggiornamenti",
+          "hours": "da 8 a 16 ore",
+          "notes": null,
+          "unitPrice": 2000.0
+        },
+        {
+          "name": "Grafica Social",
+          "channel": "Online",
+          "description": "Copy + immagini",
+          "hours": null,
+          "notes": "per social",
+          "unitPrice": 500.0
+        },
+        {
+          "name": "Video Emozionale",
+          "channel": "Online",
+          "description": "Realizzazione slideshow dinamico",
+          "hours": "da 8 a 16 ore",
+          "notes": null,
+          "unitPrice": 2000.0
+        },
+        {
+          "name": "attivazione GTM",
+          "channel": "Online",
+          "description": null,
+          "hours": null,
+          "notes": null,
+          "unitPrice": 100.0
+        }
+      ]
+    },
+    {
+      "name": "PORTALI",
+      "items": [
+        {
+          "name": "Pubblicazione scheda  Sito AbitareCo",
+          "channel": "Online",
+          "description": "Sezione cantiere su sito AbitareCo",
+          "hours": "al mese",
+          "notes": null,
+          "unitPrice": 200.0
+        },
+        {
+          "name": "Testo annunci portali",
+          "channel": "Online",
+          "description": "Composizione testo annuncio per portali",
+          "hours": "da 4 a 8 ore",
+          "notes": null,
+          "unitPrice": 200.0
+        }
+      ]
+    },
+    {
+      "name": "ALTRO",
+      "items": [
+        {
+          "name": "Post produzione foto",
+          "channel": "Online",
+          "description": "Refresh e ritocco di design",
+          "hours": "da 2 a 4 ore",
+          "notes": "cad.",
+          "unitPrice": 50.0
+        },
+        {
+          "name": "Book planimetrie",
+          "channel": "offline",
+          "description": "Realizzazione e aggiornamenti vari delle planimetrie",
+          "hours": null,
+          "notes": "90€/cad",
+          "unitPrice": 90.0
+        },
+        {
+          "name": "Comunicati Stampa",
+          "channel": null,
+          "description": null,
+          "hours": null,
+          "notes": null,
+          "unitPrice": null
+        },
+        {
+          "name": "Redazione testi",
+          "channel": "Online",
+          "description": "creazione testo del comunicato",
+          "hours": null,
+          "notes": "€0,16 a battuta (300 a pag)",
+          "unitPrice": 300.0
+        }
+      ]
+    }
+  ]
+}

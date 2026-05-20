@@ -19,7 +19,11 @@ BtnProcedi?.addEventListener('click', async ()=>{
 
     if (mode === 'qr')           { await makeQr(); ok = true; return; }
 
-    // IUBENDA: genera snippet ma NON resettare
+    if (mode === 'fattura') {
+  if (typeof window.exportFatturaPdf !== 'function') { throw new Error('Export Fattura non pronto: apri la sezione Fattura e riprova.'); }
+  await window.exportFatturaPdf(); ok = true; return;
+ }
+ // IUBENDA: genera snippet ma NON resettare
     if (mode === 'iubenda')      { makeIubendaSnippet(); ok = true; return; }
 
     alert('Funzione non attiva.');

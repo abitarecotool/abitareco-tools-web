@@ -521,7 +521,7 @@
 
     // Oggetto (distanza coerente dal box sopra)
     const gapOggetto = 20;
-    const yOggetto = box2Bottom - gapOggetto;
+    const yOggetto = box2Bottom - gapOggetto - 14; // 14px = offset tra baseline label e top del box Oggetto
     page.drawText('Oggetto:', { x: marginX, y: yOggetto, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
     page.drawRectangle({ x: marginX + 70, y: yOggetto - 6, width: contentW - 70, height: 20, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
     page.drawText(trunc(st.header.oggetto || '—', 78), { x: marginX + 78, y: yOggetto + 1, size: 10.5, font, color: rgb(0.07,0.09,0.12) });

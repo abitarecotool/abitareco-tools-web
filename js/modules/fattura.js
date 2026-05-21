@@ -41,6 +41,8 @@
 
  async function loadListino(){
   if (LISTINO) return LISTINO;
+
+  // JSON (preferito)
   try{
    const res = await fetch(PATH_JSON, { cache:'no-store' });
    if (res.ok){
@@ -61,12 +63,16 @@
    const iSec = idx('Sezione');
    const iProd = idx('Prodotto');
    const iPrice = idx('Prezzo_cu');
+
    const map = new Map();
    for (const line of lines){
     const cols = parseCsvLine(line);
     const sec = cols[iSec] || 'GENERICO';
     if (!map.has(sec)) map.set(sec, []);
-    map.get(sec).push({ name: cols[iProd] || '', unitPrice: cols[iPrice] ? Number(String(cols[iPrice]).replace(',', '.')) : 0 });
+    map.get(sec).push({
+      name: cols[iProd] || '',
+      unitPrice: cols[iPrice] ? Number(String(cols[iPrice]).replace(',', '.')) : 0
+    });
    }
    LISTINO = { version:1, currency:'EUR', sections: Array.from(map.entries()).map(([name,items]) => ({ name, items })) };
    return LISTINO;
@@ -99,6 +105,7 @@
   const selSec = $('#FatSezione');
   const selProd = $('#FatProdotto');
   if (!selSec || !selProd) return;
+
   selSec.innerHTML = '';
   const frag = document.createDocumentFragment();
   for (const s of (listino.sections || [])){
@@ -108,6 +115,7 @@
    frag.appendChild(opt);
   }
   selSec.appendChild(frag);
+
   if (selSec.options.length) selSec.selectedIndex = 0;
   fillProductsForSection(selSec.value);
   selSec.onchange = () => fillProductsForSection(selSec.value);
@@ -210,7 +218,7 @@
   let sum = 0;
   for (const r of rows){
    const inputs = r.querySelectorAll('input, select');
-   const qty = inputs[1]?.value;   // desc=0
+   const qty = inputs[1]?.value; // desc=0
    const unit = inputs[2]?.value;
    const disc = inputs[3]?.value;
    sum += calcRowTotal(qty, unit, disc);
@@ -250,8 +258,7 @@
   });
 
   const total = round2(rows.reduce((a,b)=>a+(b.total||0),0));
-  const anyDiscount = rows.some(r => Number(r.disc||0) > 0);
-  return { header, rows, total, anyDiscount };
+  return { header, rows, total };
  }
 
  function trunc(str, max){ const s = String(str||''); return s.length > max ? (s.slice(0, max-1) + '…') : s; }
@@ -308,32 +315,6 @@
   page.drawLine({ start: {x, y: y-14}, end: {x: x + cols.reduce((a,c)=>a+c.w,0), y: y-14}, thickness: 1, color: rgb(0.90,0.90,0.90) });
  }
 
- function drawRow(page, font, x, y, cols, row, anyDiscount, rgb, alt){
-  const h = 18;
-  if (alt){
-   page.drawRectangle({ x, y: y-h+3, width: cols.reduce((a,c)=>a+c.w,0), height: h, color: rgb(0.995,0.995,0.995) });
-  }
-
-  const values = [];
-  values.push(trunc(row.product, 34));
-  values.push(trunc(row.desc || '', 18));
-  values.push(String(row.qty));
-  values.push(euro(row.unit));
-  if (anyDiscount) values.push(row.disc ? `${row.disc}%` : '');
-  values.push(euro(row.total));
-
-  let cx = x;
-  for (let i=0;i<cols.length;i++){
-   const c = cols[i];
-   const val = values[i];
-   const tx = (c.align === 'right') ? (cx + c.w - 2) : (cx + 2);
-   page.drawText(String(val), { x: tx, y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
-   cx += c.w;
-  }
-  page.drawLine({ start: {x, y: y-h+3}, end: {x: x + cols.reduce((a,c)=>a+c.w,0), y: y-h+3}, thickness: 0.6, color: rgb(0.93,0.93,0.93) });
-  return y - h;
- }
-
  async function exportFatturaPdf(){
   const st = getState();
   if (!st.rows.length){ toast('Aggiungi almeno una riga prima di esportare.'); return; }
@@ -346,6 +327,10 @@
   const font = fonts.reg;
   const fontBold = fonts.bold;
 
+  const textW = (f, t, s) => {
+    try{ return f.widthOfTextAtSize(String(t||''), s); } catch { return String(t||'').length * s * 0.52; }
+  };
+
   let logoImg = null;
   try{ const bytes = await fetchAsArrayBuffer('./assets/logo.png'); logoImg = await pdfDoc.embedPng(bytes); } catch {}
 
@@ -354,21 +339,13 @@
   const marginTop = 40;
   const contentW = A4[0] - marginX * 2;
 
-  const cols = st.anyDiscount ? [
-    { label:'Prodotto', w: 190 },
-    { label:'Descrizione', w: 105 },
-    { label:'Q.tà', w: 35, align:'right' },
+  // TABella PDF: solo fino a Costo unit.
+  const cols = [
+    { label:'Prodotto', w: 215 },
+    { label:'Descrizione', w: 160 },
+    { label:'Q.tà', w: 40, align:'right' },
     { label:'Costo unit.', w: 70, align:'right' },
-    { label:'Sconto', w: 45, align:'right' },
-    { label:'Totale', w: 70, align:'right' },
-  ] : [
-    { label:'Prodotto', w: 220 },
-    { label:'Descrizione', w: 120 },
-    { label:'Q.tà', w: 35, align:'right' },
-    { label:'Costo unit.', w: 70, align:'right' },
-    { label:'Totale', w: 70, align:'right' },
   ];
-
   const tableW = cols.reduce((a,c)=>a+c.w,0);
   const tableX = marginX + (contentW - tableW) / 2;
 
@@ -380,77 +357,119 @@
   const rightBoxX = A4[0] - marginX - rightBoxW;
 
   const drawHeader = () => {
-   if (logoImg){
-    const w = 140;
-    const h = (logoImg.height / logoImg.width) * w;
-    page.drawImage(logoImg, { x: marginX, y: y - h, width: w, height: h });
-   }
+    if (logoImg){
+      const w = 140;
+      const h = (logoImg.height / logoImg.width) * w;
+      page.drawImage(logoImg, { x: marginX, y: y - h, width: w, height: h });
+    }
 
-   page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
 
-   page.drawRectangle({ x: rightBoxX, y: y - 74, width: rightBoxW, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-   drawKV(page, font, fontBold, rightBoxX + 10, y - 32, 'N.ro', st.header.numero, rgb);
-   drawKV(page, font, fontBold, rightBoxX + 10, y - 54, 'Del', fmtDate(st.header.data), rgb);
+    page.drawRectangle({ x: rightBoxX, y: y - 74, width: rightBoxW, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    drawKV(page, font, fontBold, rightBoxX + 10, y - 32, 'N.ro', st.header.numero, rgb);
+    drawKV(page, font, fontBold, rightBoxX + 10, y - 54, 'Del', fmtDate(st.header.data), rgb);
 
-   const y2 = y - 95;
-   page.drawRectangle({ x: rightBoxX, y: y2 - 45, width: rightBoxW, height: 46, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-   drawKV(page, font, fontBold, rightBoxX + 10, y2 - 18, 'N. Commessa', st.header.commessa || '—', rgb);
-   drawKV(page, font, fontBold, rightBoxX + 10, y2 - 36, 'Rif. Commessa', st.header.rifCommessa || '—', rgb);
+    const y2 = y - 95;
+    page.drawRectangle({ x: rightBoxX, y: y2 - 45, width: rightBoxW, height: 46, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    drawKV(page, font, fontBold, rightBoxX + 10, y2 - 18, 'N. Commessa', st.header.commessa || '—', rgb);
+    drawKV(page, font, fontBold, rightBoxX + 10, y2 - 36, 'Rif. Commessa', st.header.rifCommessa || '—', rgb);
 
-   const y3 = y2 - 68;
-   page.drawText('Oggetto:', { x: marginX, y: y3, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-   page.drawRectangle({ x: marginX + 70, y: y3 - 6, width: contentW - 70, height: 20, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-   page.drawText(trunc(st.header.oggetto || '—', 78), { x: marginX + 78, y: y3 + 1, size: 10.5, font, color: rgb(0.07,0.09,0.12) });
+    const y3 = y2 - 68;
+    page.drawText('Oggetto:', { x: marginX, y: y3, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    page.drawRectangle({ x: marginX + 70, y: y3 - 6, width: contentW - 70, height: 20, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    page.drawText(trunc(st.header.oggetto || '—', 78), { x: marginX + 78, y: y3 + 1, size: 10.5, font, color: rgb(0.07,0.09,0.12) });
 
-   y = y3 - 40;
+    y = y3 - 40;
+  };
+
+  const ensureSpace = (minY) => {
+    if (y < minY){
+      page = newPage();
+      y = A4[1] - marginTop;
+      page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+      y -= 40;
+    }
+  };
+
+  const drawRowTwoLine = (row, alt) => {
+    const rowH = 30;
+    if (alt){
+      page.drawRectangle({ x: tableX, y: y-rowH+3, width: tableW, height: rowH, color: rgb(0.995,0.995,0.995) });
+    }
+
+    // Riga 1: dati principali
+    let cx = tableX;
+    const main = [
+      trunc(row.product, 34),
+      trunc(row.desc || '', 28),
+      String(row.qty),
+      euro(row.unit)
+    ];
+    for (let i=0;i<cols.length;i++){
+      const c = cols[i];
+      const tx = (c.align === 'right') ? (cx + c.w - 2) : (cx + 2);
+      page.drawText(String(main[i]), { x: tx, y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
+      cx += c.w;
+    }
+
+    // Riga 2 a destra: sconto (se presente) + totale
+    const hasDisc = Number(row.disc || 0) > 0;
+    const totalText = `Totale: ${euro(row.total)}`;
+    const discText  = hasDisc ? `Sconto: ${row.disc}%` : '';
+
+    const rightX = tableX + tableW;
+    const y2 = y - 24;
+
+    if (hasDisc){
+      page.drawText(discText, { x: rightX - 2 - textW(font, discText, 9), y: y2, size: 9, font, color: rgb(0.17,0.20,0.25) });
+    }
+    page.drawText(totalText, { x: rightX - 2 - textW(fontBold, totalText, 10), y: y2, size: 10, font: fontBold, color: rgb(0.07,0.09,0.12) });
+
+    page.drawLine({ start: {x: tableX, y: y-rowH+3}, end: {x: tableX + tableW, y: y-rowH+3}, thickness: 0.6, color: rgb(0.93,0.93,0.93) });
+    y -= rowH;
   };
 
   drawHeader();
 
-  const ensureSpace = (minY) => {
-   if (y < minY){
-    page = newPage();
-    y = A4[1] - marginTop;
-    page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
-    y -= 40;
-   }
-  };
-
-  ensureSpace(160);
+  ensureSpace(210);
   drawTableHeader(page, fontBold, tableX, y, cols, rgb);
   y -= 18;
 
   st.rows.forEach((r, idx) => {
-   ensureSpace(140);
-   if (y > A4[1] - marginTop - 60){
-    drawTableHeader(page, fontBold, tableX, y, cols, rgb);
-    y -= 18;
-   }
-   y = drawRow(page, font, tableX, y, cols, r, st.anyDiscount, rgb, idx % 2 === 1);
+    ensureSpace(150);
+    if (y > A4[1] - marginTop - 60){
+      drawTableHeader(page, fontBold, tableX, y, cols, rgb);
+      y -= 18;
+    }
+    drawRowTwoLine(r, idx % 2 === 1);
   });
 
+  // Totale fornitura
   ensureSpace(130);
   y -= 10;
   page.drawLine({ start: { x: tableX, y }, end: { x: tableX + tableW, y }, thickness: 1, color: rgb(0.86,0.86,0.86) });
   y -= 18;
-  page.drawText('Totale fornitura', { x: tableX + tableW - 170, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-  page.drawText(euro(st.total), { x: tableX + tableW - 2, y, size: 11, font: fontBold, color: rgb(0.77,0.09,0.17) });
 
+  const valTot = euro(st.total);
+  page.drawText('Totale fornitura', { x: tableX + tableW - 200, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+  page.drawText(valTot, { x: tableX + tableW - 2 - textW(fontBold, valTot, 11), y, size: 11, font: fontBold, color: rgb(0.77,0.09,0.17) });
+
+  // Note finali (solo se abilitate)
   if (st.header.noteEnabled){
-   y -= 30;
-   page.drawText('Note', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-   y -= 10;
-   const noteBoxH = 90;
-   page.drawRectangle({ x: marginX, y: y - noteBoxH, width: contentW, height: noteBoxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-   const noteLines = wrapText(st.header.note || '', 92);
-   let ny = y - 16;
-   noteLines.slice(0,6).forEach(line => {
-    page.drawText(line, { x: marginX + 10, y: ny, size: 9.5, font, color: rgb(0.17,0.20,0.25) });
-    ny -= 13;
-   });
-   y = y - noteBoxH - 36;
+    y -= 30;
+    page.drawText('Note', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    y -= 10;
+    const noteBoxH = 90;
+    page.drawRectangle({ x: marginX, y: y - noteBoxH, width: contentW, height: noteBoxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    const noteLines = wrapText(st.header.note || '', 92);
+    let ny = y - 16;
+    noteLines.slice(0,6).forEach(line => {
+      page.drawText(line, { x: marginX + 10, y: ny, size: 9.5, font, color: rgb(0.17,0.20,0.25) });
+      ny -= 13;
+    });
+    y = y - noteBoxH - 36;
   } else {
-   y -= 36;
+    y -= 36;
   }
 
   page.drawText('Timbro e firma', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
@@ -493,7 +512,7 @@
   window.exportFatturaPdf = exportFatturaPdf;
  }
 
- // Hook into selectMode
+ // Hook in selectMode
  try{
   const orig = window.selectMode;
   if (typeof orig === 'function' && !orig.__fatturaPatched){

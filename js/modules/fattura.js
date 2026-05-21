@@ -305,24 +305,262 @@
  }
 
  function drawTableHeader(page, fontBold, x, y, cols, rgb){
-  const headerH = 18;
-  const fontSize = 9.5;
-  const totalW = cols.reduce((a,c)=>a+c.w,0);
-  page.drawRectangle({ x, y: y-14, width: totalW, height: headerH, color: rgb(0.97,0.98,0.99) });
-
-  const textW = (t) => {
-    try{ return fontBold.widthOfTextAtSize(String(t||''), fontSize); }
-    catch { return String(t||'').length * fontSize * 0.52; }
-  };
-
+  page.drawRectangle({ x, y: y-14, width: cols.reduce((a,c)=>a+c.w,0), height: 18, color: rgb(0.97,0.98,0.99) });
   let cx = x;
   for (const c of cols){
-    const w = textW(c.label);
-    const tx = (c.align === 'right') ? (cx + c.w - 2 - w) : (cx + 2);
-    page.drawText(c.label, { x: tx, y: y-10, size: fontSize, font: fontBold, color: rgb(0.22,0.25,0.30) });
-    cx += c.w;
+   const tx = (c.align === 'right') ? (cx + c.w - 2) : (cx + 2);
+   page.drawText(c.label, { x: tx, y: y-10, size: 9.5, font: fontBold, color: rgb(0.22,0.25,0.30) });
+   cx += c.w;
+  }
+  page.drawLine({ start: {x, y: y-14}, end: {x: x + cols.reduce((a,c)=>a+c.w,0), y: y-14}, thickness: 1, color: rgb(0.90,0.90,0.90) });
+ }
+
+ async function exportFatturaPdf(){
+  const st = getState();
+  if (!st.rows.length){ toast('Aggiungi almeno una riga prima di esportare.'); return; }
+
+  const { PDFDocument, rgb } = window.PDFLib || {};
+  if (!PDFDocument){ toast('Libreria PDF non disponibile.'); return; }
+
+  const pdfDoc = await PDFDocument.create();
+  const fonts = await loadPdfFonts(pdfDoc);
+  const font = fonts.reg;
+  const fontBold = fonts.bold;
+
+  // Misura testo (vera se disponibile)
+  const textW = (f, t, s) => {
+    try{ return f.widthOfTextAtSize(String(t||''), s); } catch { return String(t||'').length * s * 0.52; }
+  };
+
+  // "Contain" per celle: riduce size finché entra; se ancora troppo lungo tronca con …
+  const fitText = (f, t, maxW, baseSize, minSize=7) => {
+    let s = baseSize;
+    let str = String(t || '');
+    while (s > minSize && textW(f, str, s) > maxW) s -= 0.5;
+    if (textW(f, str, s) <= maxW) return { text: str, size: s };
+    // truncate
+    const ell = '…';
+    let out = str;
+    while (out.length > 0 && textW(f, out + ell, s) > maxW) out = out.slice(0, -1);
+    return { text: (out || '') + ell, size: s };
+  };
+
+  let logoImg = null;
+  try{ const bytes = await fetchAsArrayBuffer('./assets/logo.png'); logoImg = await pdfDoc.embedPng(bytes); } catch {}
+
+  const A4 = [595.28, 841.89];
+  const marginX = 40;
+  const marginTop = 40;
+  const marginBottom = 80;
+  const contentW = A4[0] - marginX * 2; // area utile
+
+  // Tabella (Prodotto→Costo unit.) allineata a sinistra come Oggetto/Note
+  const colProdW = 200;
+  const colQtyW = 40;
+  const colUnitW = 80;
+  const colDescW = contentW - (colProdW + colQtyW + colUnitW);
+
+  const cols = [
+    { label:'Prodotto', w: colProdW },
+    { label:'Descrizione', w: colDescW },
+    { label:'Q.tà', w: colQtyW, align:'right' },
+    { label:'Costo unit.', w: colUnitW, align:'right' },
+  ];
+
+  const tableW = contentW;
+  const tableX = marginX;
+
+  const newPage = () => pdfDoc.addPage(A4);
+  let page = newPage();
+  let y = A4[1] - marginTop;
+
+  const rightBoxW = 195;
+  const rightBoxX = A4[0] - marginX - rightBoxW;
+
+  const drawHeader = () => {
+    if (logoImg){
+      const w = 140;
+      const h = (logoImg.height / logoImg.width) * w;
+      page.drawImage(logoImg, { x: marginX, y: y - h, width: w, height: h });
+    }
+
+    page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+
+    page.drawRectangle({ x: rightBoxX, y: y - 74, width: rightBoxW, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    drawKV(page, font, fontBold, rightBoxX + 10, y - 32, 'N.ro', st.header.numero, rgb);
+    drawKV(page, font, fontBold, rightBoxX + 10, y - 54, 'Del', fmtDate(st.header.data), rgb);
+
+    const y2 = y - 95;
+    page.drawRectangle({ x: rightBoxX, y: y2 - 45, width: rightBoxW, height: 46, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    drawKV(page, font, fontBold, rightBoxX + 10, y2 - 18, 'N. Commessa', st.header.commessa || '—', rgb);
+    drawKV(page, font, fontBold, rightBoxX + 10, y2 - 36, 'Rif. Commessa', st.header.rifCommessa || '—', rgb);
+
+    const y3 = y2 - 68;
+    page.drawText('Oggetto:', { x: marginX, y: y3, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    page.drawRectangle({ x: marginX + 70, y: y3 - 6, width: contentW - 70, height: 20, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    page.drawText(trunc(st.header.oggetto || '—', 78), { x: marginX + 78, y: y3 + 1, size: 10.5, font, color: rgb(0.07,0.09,0.12) });
+
+    y = y3 - 40;
+  };
+
+  const ensureSpace = (needH) => {
+    if (y - needH < marginBottom){
+      page = newPage();
+      y = A4[1] - marginTop;
+      page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+      y -= 40;
+      // ristampo header tabella quando ricomincio una pagina
+      drawTableHeader(page, fontBold, tableX, y, cols, rgb);
+      y -= 18;
+    }
+  };
+
+  const drawRow = (row, alt) => {
+    const hasDisc = Number(row.disc || 0) > 0;
+    const baseH = 18;
+    const extraH = hasDisc ? 26 : 0;
+    const rowH = baseH + extraH;
+
+    ensureSpace(rowH + 10);
+
+    if (alt){
+      page.drawRectangle({ x: tableX, y: y-rowH+3, width: tableW, height: rowH, color: rgb(0.995,0.995,0.995) });
+    }
+
+    // Riga principale (contain)
+    let cx = tableX;
+
+    // Prodotto
+    const prodFit = fitText(font, row.product, cols[0].w - 4, 9.5);
+    page.drawText(String(prodFit.text), { x: cx + 2, y: y-11, size: prodFit.size, font, color: rgb(0.07,0.09,0.12) });
+    cx += cols[0].w;
+
+    // Descrizione
+    const descFit = fitText(font, row.desc || '', cols[1].w - 4, 9.5);
+    page.drawText(String(descFit.text), { x: cx + 2, y: y-11, size: descFit.size, font, color: rgb(0.07,0.09,0.12) });
+    cx += cols[1].w;
+
+    // Qtà
+    const qtyStr = String(row.qty);
+    page.drawText(qtyStr, { x: cx + cols[2].w - 2 - textW(font, qtyStr, 9.5), y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
+    cx += cols[2].w;
+
+    // Costo unit
+    const unitStr = euro(row.unit);
+    page.drawText(unitStr, { x: cx + cols[3].w - 2 - textW(font, unitStr, 9.5), y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
+
+    // Riga extra SOLO se sconto > 0
+    if (hasDisc){
+      const rightX = tableX + tableW;
+      const discText = `Sconto: ${row.disc}%`;
+      const totalText = `Totale: ${euro(row.total)}`;
+
+      // dentro il rowH: y-28 e y-40 (rowH=44) restano dentro
+      page.drawText(discText, { x: rightX - 2 - textW(font, discText, 9), y: y-28, size: 9, font, color: rgb(0.17,0.20,0.25) });
+      page.drawText(totalText, { x: rightX - 2 - textW(fontBold, totalText, 10), y: y-40, size: 10, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    }
+
+    page.drawLine({ start: {x: tableX, y: y-rowH+3}, end: {x: tableX + tableW, y: y-rowH+3}, thickness: 0.6, color: rgb(0.93,0.93,0.93) });
+    y -= rowH;
+  };
+
+  // HEADER + TAB
+  drawHeader();
+  ensureSpace(120);
+  drawTableHeader(page, fontBold, tableX, y, cols, rgb);
+  y -= 18;
+
+  st.rows.forEach((r, idx) => {
+    drawRow(r, idx % 2 === 1);
+  });
+
+  // Totale fornitura
+  ensureSpace(160);
+  y -= 12;
+  page.drawLine({ start: { x: tableX, y }, end: { x: tableX + tableW, y }, thickness: 1, color: rgb(0.86,0.86,0.86) });
+  y -= 26;
+
+  const labelTot = 'Totale fornitura';
+  const valTot = euro(st.total);
+  const labelX = tableX + (tableW - textW(fontBold, labelTot, 11)) / 2;
+  page.drawText(labelTot, { x: labelX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+  page.drawText(valTot, { x: tableX + tableW - 2 - textW(fontBold, valTot, 11), y, size: 11, font: fontBold, color: rgb(0.77,0.09,0.17) });
+
+  // Note
+  if (st.header.noteEnabled){
+    ensureSpace(180);
+    y -= 34;
+    page.drawText('Note', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    y -= 10;
+    const noteBoxH = 90;
+    page.drawRectangle({ x: marginX, y: y - noteBoxH, width: contentW, height: noteBoxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    const noteLines = wrapText(st.header.note || '', 92);
+    let ny = y - 16;
+    noteLines.slice(0,6).forEach(line => {
+      page.drawText(line, { x: marginX + 10, y: ny, size: 9.5, font, color: rgb(0.17,0.20,0.25) });
+      ny -= 13;
+    });
+    y = y - noteBoxH - 36;
+  } else {
+    y -= 36;
   }
 
-  page.drawLine({ start: {x, y: y-14}, end: {x: x + totalW, y: y-14}, thickness: 1, color: rgb(0.90,0.90,0.90) });
-}
-)();
+  // Firma
+  ensureSpace(120);
+  page.drawText('Timbro e firma', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+  y -= 10;
+  page.drawLine({ start: { x: marginX, y }, end: { x: marginX + 260, y }, thickness: 1, color: rgb(0.7,0.7,0.7) });
+
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fattura_${st.header.numero}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+ }
+async function initFattura(){
+  if (__bound) return;
+  if (!document.getElementById('FatturaCard')) return;
+  __bound = true;
+
+  initHeaderDefaults();
+
+  const listino = await loadListino();
+  fillSections(listino);
+
+  const btnAdd = document.getElementById('FatAddRow');
+  if (btnAdd) btnAdd.addEventListener('click', addRowFromSelected);
+
+  const tgl = document.getElementById('FatNoteToggle');
+  const note = document.getElementById('FatNote');
+  if (tgl && note){
+   const sync = () => note.classList.toggle('hidden', !tgl.checked);
+   tgl.addEventListener('change', sync);
+   sync();
+  }
+
+  window.exportFatturaPdf = exportFatturaPdf;
+ }
+
+ // Hook in selectMode
+ try{
+  const orig = window.selectMode;
+  if (typeof orig === 'function' && !orig.__fatturaPatched){
+   const patched = function(mode){
+    orig(mode);
+    if (mode === 'fattura') initFattura();
+   };
+   patched.__fatturaPatched = true;
+   window.selectMode = patched;
+  }
+ } catch {}
+
+ document.addEventListener('DOMContentLoaded', () => {
+  if (window.currentMode === 'fattura') initFattura();
+ });
+
+})();

@@ -1,0 +1,53 @@
+/* css/modules/fattura.css — modulo Fattura (UI + A4 PDF export) */
+
+.fattura-box{ margin-top: 10px; }
+.fattura-divider{ height:1px; background: var(--gray-200); margin: 8px 0 16px; }
+.fattura-add-btn{ height:41px; min-width:160px; margin-bottom:16px; }
+
+.fattura-table{ border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; background: var(--white); }
+
+/* Prodotto | Descrizione | Qtà | Costo | Sconto | Totale | X */
+.fattura-th, .fattura-row{
+  display:grid;
+  grid-template-columns: 1.55fr 1.05fr 0.55fr 0.75fr 0.70fr 0.80fr 44px;
+  gap: 10px;
+  align-items:center;
+}
+
+.fattura-th{ padding: 10px 12px; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); font-size: 12.5px; font-weight: 800; color: var(--gray-700); }
+.fattura-th .num{ text-align:right; }
+
+.fattura-tbody{ padding:6px 0; }
+.fattura-row{ padding:10px 12px; border-bottom:1px solid var(--gray-100); }
+.fattura-row:last-child{ border-bottom:none; }
+
+.fattura-row .fat-prod{ font-weight:650; color: var(--gray-900); }
+.fattura-row .fat-total{ text-align:right; font-weight:800; color: var(--gray-900); }
+
+.fattura-row input[type='number'],
+.fattura-row input[type='text'],
+.fattura-row select{
+  width:100%; height:36px; margin:0; padding:8px 10px;
+  border-radius:8px; border:1px solid var(--gray-300);
+  background:var(--white);
+  font-family:var(--font);
+  font-size:13px;
+}
+.fattura-row input[type='number']{ text-align:right; }
+
+.fat-del{ width:34px; height:34px; border-radius:10px; border:1px solid var(--gray-200); background:var(--white); cursor:pointer; }
+.fat-del:hover{ border-color: var(--red); background: var(--pink-bg); }
+
+.fattura-totals{ display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:12px; border-top:1px solid var(--gray-200); }
+.fattura-totalval{ font-size:18px; font-weight:900; color:var(--red); }
+
+@media (max-width: 900px){
+  .fattura-th, .fattura-row{ grid-template-columns: 1.35fr 1.0fr 0.6fr 0.8fr 0.7fr 0.9fr 40px; }
+}
+@media (max-width: 680px){
+  .fattura-th{ display:none; }
+  .fattura-row{ grid-template-columns: 1fr 1fr; grid-auto-rows:auto; gap:8px; }
+  .fattura-row .fat-prod{ grid-column:1 / -1; }
+  .fattura-row .fat-total{ grid-column:1 / -1; text-align:right; }
+  .fat-del{ justify-self:end; }
+}

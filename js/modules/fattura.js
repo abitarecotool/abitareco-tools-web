@@ -512,7 +512,7 @@
     drawKV(page, font, fontBold, rightBoxX + 10, box1Bottom + 54 - 44, 'Del', fmtDate(st.header.data), rgb);
 
     // Box N. Commessa / Rif. Commessa (stessa distanza dal box sopra)
-    const gapBoxes = 18;
+    const gapBoxes = 20;
     const box2H = 46;
     const box2Bottom = box1Bottom - gapBoxes - box2H;
     page.drawRectangle({ x: rightBoxX, y: box2Bottom, width: rightBoxW, height: box2H, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });

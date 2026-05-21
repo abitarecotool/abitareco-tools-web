@@ -1,4 +1,3 @@
-
 // js/modules/fattura.js — Fattura (Marketing/Admin)
 (function(){
  'use strict';
@@ -50,7 +49,7 @@
    }
   } catch {}
 
-  // CSV fallback (minimo)
+  // CSV fallback
   try{
    const res = await fetch(PATH_CSV, { cache:'no-store' });
    if (!res.ok) throw new Error('CSV non disponibile');
@@ -100,7 +99,6 @@
   const selSec = $('#FatSezione');
   const selProd = $('#FatProdotto');
   if (!selSec || !selProd) return;
-
   selSec.innerHTML = '';
   const frag = document.createDocumentFragment();
   for (const s of (listino.sections || [])){
@@ -154,9 +152,7 @@
   const q = Number(qty || 0);
   const u = Number(unit || 0);
   const d = Number(disc || 0);
-  const base = q * u;
-  const net = base * (1 - d/100);
-  return round2(net);
+  return round2((q * u) * (1 - d/100));
  }
 
  function addRowFromSelected(){
@@ -187,11 +183,10 @@
   tot.textContent = euro(calcRowTotal(qty.value, unit.value, disc.value));
 
   const del = document.createElement('button');
-  del.type='button'; del.className='fat-del'; del.title='Rimuovi riga'; del.textContent='✕';
+  del.type = 'button'; del.className='fat-del'; del.title='Rimuovi riga'; del.textContent='✕';
   del.onclick = () => { wrap.remove(); recomputeAll(); };
 
   wrap.dataset.product = it.name;
-  wrap.dataset.section = ($('#FatSezione')?.value || '');
 
   const onChange = () => { tot.textContent = euro(calcRowTotal(qty.value, unit.value, disc.value)); recomputeAll(); };
   qty.addEventListener('input', onChange);
@@ -215,8 +210,7 @@
   let sum = 0;
   for (const r of rows){
    const inputs = r.querySelectorAll('input, select');
-   // order: desc(text)=0, qty=1, unit=2, disc(select)=3
-   const qty = inputs[1]?.value;
+   const qty = inputs[1]?.value;   // desc=0
    const unit = inputs[2]?.value;
    const disc = inputs[3]?.value;
    sum += calcRowTotal(qty, unit, disc);
@@ -251,13 +245,12 @@
    const qty = Number(inputs[1]?.value || 0);
    const unit = Number(inputs[2]?.value || 0);
    const disc = Number(inputs[3]?.value || 0);
-   const base = round2(qty * unit);
    const total = calcRowTotal(qty, unit, disc);
-   return { product: prod, desc, qty, unit, disc, base, total };
+   return { product: prod, desc, qty, unit, disc, total };
   });
 
-  const total = round2(rows.reduce((a,b) => a + (b.total || 0), 0));
-  const anyDiscount = rows.some(r => Number(r.disc || 0) > 0);
+  const total = round2(rows.reduce((a,b)=>a+(b.total||0),0));
+  const anyDiscount = rows.some(r => Number(r.disc||0) > 0);
   return { header, rows, total, anyDiscount };
  }
 
@@ -291,11 +284,11 @@
    const boldBytes = await fetchAsArrayBuffer(MANROPE_BOLD);
    const reg = await pdfDoc.embedFont(regBytes);
    const bold = await pdfDoc.embedFont(boldBytes);
-   return { reg, bold, isManrope:true };
+   return { reg, bold };
   } catch {
    const reg = await pdfDoc.embedFont(StandardFonts.Helvetica);
    const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-   return { reg, bold, isManrope:false };
+   return { reg, bold };
   }
  }
 
@@ -320,9 +313,10 @@
   if (alt){
    page.drawRectangle({ x, y: y-h+3, width: cols.reduce((a,c)=>a+c.w,0), height: h, color: rgb(0.995,0.995,0.995) });
   }
+
   const values = [];
-  values.push(trunc(row.product, 30));
-  values.push(trunc(row.desc || '', 16));
+  values.push(trunc(row.product, 34));
+  values.push(trunc(row.desc || '', 18));
   values.push(String(row.qty));
   values.push(euro(row.unit));
   if (anyDiscount) values.push(row.disc ? `${row.disc}%` : '');
@@ -358,9 +352,8 @@
   const A4 = [595.28, 841.89];
   const marginX = 40;
   const marginTop = 40;
-  const contentW = A4[0] - marginX * 2; // 515.28
+  const contentW = A4[0] - marginX * 2;
 
-  // Colonne: somma <= contentW per NON uscire dal margine destro
   const cols = st.anyDiscount ? [
     { label:'Prodotto', w: 190 },
     { label:'Descrizione', w: 105 },
@@ -377,14 +370,14 @@
   ];
 
   const tableW = cols.reduce((a,c)=>a+c.w,0);
-  const tableX = marginX + (contentW - tableW) / 2; // centra la tabella dentro i margini
+  const tableX = marginX + (contentW - tableW) / 2;
 
   const newPage = () => pdfDoc.addPage(A4);
   let page = newPage();
   let y = A4[1] - marginTop;
 
   const rightBoxW = 195;
-  const rightBoxX = A4[0] - marginX - rightBoxW; // sempre dentro margini
+  const rightBoxX = A4[0] - marginX - rightBoxW;
 
   const drawHeader = () => {
    if (logoImg){
@@ -484,7 +477,6 @@
   initHeaderDefaults();
 
   const listino = await loadListino();
-  if (!listino.sections || !listino.sections.length){ toast('Listino non trovato in assets/data.'); }
   fillSections(listino);
 
   const btnAdd = document.getElementById('FatAddRow');
@@ -501,6 +493,7 @@
   window.exportFatturaPdf = exportFatturaPdf;
  }
 
+ // Hook into selectMode
  try{
   const orig = window.selectMode;
   if (typeof orig === 'function' && !orig.__fatturaPatched){

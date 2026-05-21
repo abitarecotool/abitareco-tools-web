@@ -503,7 +503,7 @@
       page.drawImage(logoPngObj, { x: marginX, y: y - h, width: w, height: h });
     }
 
-    page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    page.drawText('Preventivo', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
 
     // Box N.ro/Del (spaziatura coerente)
     const box1Bottom = y - 82; // bottom
@@ -532,7 +532,7 @@
   const newTablePage = () => {
     page = newPage();
     y = A4[1] - marginTop;
-    page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    page.drawText('Preventivo', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
     y -= 40;
     drawTableHeader(page, fontBold, tableX, y, cols, rgb);
     y -= 18;

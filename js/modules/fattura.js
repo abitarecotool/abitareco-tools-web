@@ -63,7 +63,6 @@
   async function loadListino(){
     if (LISTINO) return LISTINO;
 
-    // JSON (preferito)
     try{
       const res = await fetch(PATH_JSON, { cache:'no-store' });
       if (res.ok){
@@ -72,7 +71,6 @@
       }
     } catch {}
 
-    // CSV fallback
     try{
       const res = await fetch(PATH_CSV, { cache:'no-store' });
       if (!res.ok) throw new Error('CSV non disponibile');
@@ -323,7 +321,6 @@
     page.drawText(String(v || ''), { x: x + 90, y, size: 9, font, color: rgb(0.07,0.09,0.12) });
   }
 
-  // Header tabella: fix allineamento right (calcolo larghezza testo)
   function drawTableHeader(page, fontBold, x, y, cols, rgb){
     const headerH = 18;
     const fontSize = 9.5;
@@ -375,8 +372,18 @@
       return { text: (out || '') + ell, size: s };
     };
 
+    // Logo: preferisci SVG (vettoriale). Fallback PNG.
+    let logoSvg = null;
     let logoImg = null;
-    try{ const bytes = await fetchAsArrayBuffer('./assets/logo.png'); logoImg = await pdfDoc.embedPng(bytes); } catch {}
+    try{
+      const svgTxt = await (await fetch('./assets/logo.svg', { cache:'no-store' })).text();
+      if (svgTxt && svgTxt.trim().startsWith('<')){
+        logoSvg = await pdfDoc.embedSvg(svgTxt);
+      }
+    } catch {}
+    if (!logoSvg){
+      try{ const bytes = await fetchAsArrayBuffer('./assets/logo.png'); logoImg = await pdfDoc.embedPng(bytes); } catch {}
+    }
 
     const A4 = [595.28, 841.89];
     const marginX = 40;
@@ -384,7 +391,6 @@
     const marginBottom = 80;
     const contentW = A4[0] - marginX * 2;
 
-    // Tabella: Prodotto / Descrizione / Q.tà / Costo unit.
     const colProdW = 200;
     const colQtyW  = 40;
     const colUnitW = 80;
@@ -408,7 +414,11 @@
     const rightBoxX = A4[0] - marginX - rightBoxW;
 
     const drawHeader = () => {
-      if (logoImg){
+      if (logoSvg){
+        const w = 140;
+        const h = (logoSvg.height / logoSvg.width) * w;
+        page.drawSvg(logoSvg, { x: marginX, y: y - h, width: w, height: h });
+      } else if (logoImg){
         const w = 140;
         const h = (logoImg.height / logoImg.width) * w;
         page.drawImage(logoImg, { x: marginX, y: y - h, width: w, height: h });
@@ -416,11 +426,12 @@
 
       page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
 
-      page.drawRectangle({ x: rightBoxX, y: y - 74, width: rightBoxW, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-      drawKV(page, font, fontBold, rightBoxX + 10, y - 32, 'N.ro', st.header.numero, rgb);
-      drawKV(page, font, fontBold, rightBoxX + 10, y - 54, 'Del', fmtDate(st.header.data), rgb);
+      // Box N.ro / Del leggermente più in basso
+      page.drawRectangle({ x: rightBoxX, y: y - 82, width: rightBoxW, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+      drawKV(page, font, fontBold, rightBoxX + 10, y - 40, 'N.ro', st.header.numero, rgb);
+      drawKV(page, font, fontBold, rightBoxX + 10, y - 62, 'Del', fmtDate(st.header.data), rgb);
 
-      const y2 = y - 95;
+      const y2 = y - 105;
       page.drawRectangle({ x: rightBoxX, y: y2 - 45, width: rightBoxW, height: 46, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
       drawKV(page, font, fontBold, rightBoxX + 10, y2 - 18, 'N. Commessa', st.header.commessa || '—', rgb);
       drawKV(page, font, fontBold, rightBoxX + 10, y2 - 36, 'Rif. Commessa', st.header.rifCommessa || '—', rgb);
@@ -446,10 +457,10 @@
       if (y - needH < marginBottom) newTablePage();
     };
 
-    const drawRow = (row, alt) => {
+    const drawRow = (row, alt, isLast) => {
       const hasDisc = Number(row.disc || 0) > 0;
       const baseH = 18;
-      const extraH = hasDisc ? 14 : 0; // solo riga sconto
+      const extraH = hasDisc ? 14 : 0;
       const rowH = baseH + extraH;
 
       ensureSpace(rowH + 10);
@@ -458,7 +469,6 @@
         page.drawRectangle({ x: tableX, y: y-rowH+3, width: tableW, height: rowH, color: rgb(0.995,0.995,0.995) });
       }
 
-      // Riga principale
       let cx = tableX;
 
       const prodFit = fitText(font, row.product, cols[0].w - 4, 9.5);
@@ -476,24 +486,25 @@
       const unitStr = euro(row.unit);
       page.drawText(unitStr, { x: cx + cols[3].w - 2 - textW(font, unitStr, 9.5), y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
 
-      // Riga extra: SOLO sconto
       if (hasDisc){
         const rightX = tableX + tableW;
         const discText = `Sconto: ${row.disc}%`;
         page.drawText(discText, { x: rightX - 2 - textW(font, discText, 9), y: y-26, size: 9, font, color: rgb(0.17,0.20,0.25) });
       }
 
-      page.drawLine({ start: {x: tableX, y: y-rowH+3}, end: {x: tableX + tableW, y: y-rowH+3}, thickness: 0.6, color: rgb(0.93,0.93,0.93) });
+      // evita doppia riga: non disegnare la linea sottile sull'ultima riga
+      if (!isLast){
+        page.drawLine({ start: {x: tableX, y: y-rowH+3}, end: {x: tableX + tableW, y: y-rowH+3}, thickness: 0.6, color: rgb(0.93,0.93,0.93) });
+      }
       y -= rowH;
     };
 
-    // Disegno
     drawHeader();
     ensureSpace(120);
     drawTableHeader(page, fontBold, tableX, y, cols, rgb);
     y -= 18;
 
-    st.rows.forEach((r, idx) => drawRow(r, idx % 2 === 1));
+    st.rows.forEach((r, idx) => drawRow(r, idx % 2 === 1, idx === st.rows.length - 1));
 
     // Totale fornitura
     ensureSpace(160);
@@ -568,7 +579,6 @@
     window.exportFatturaPdf = exportFatturaPdf;
   }
 
-  // Hook in selectMode
   try{
     const orig = window.selectMode;
     if (typeof orig === 'function' && !orig.__fatturaPatched){

@@ -1,3 +1,4 @@
+
 // js/modules/fattura.js — Fattura (Marketing/Admin)
 (function(){
  'use strict';
@@ -8,7 +9,11 @@
  const PATH_JSON = './assets/data/listino_marketing.json';
  const PATH_CSV  = './assets/data/listino_marketing.csv';
 
- let LISTINO = null; // {sections:[{name,items:[{name,unitPrice,...}]}]}
+ // Font PDF (caricare in assets/fonts)
+ const MANROPE_REG  = './assets/fonts/Manrope-Regular.ttf';
+ const MANROPE_BOLD = './assets/fonts/Manrope-Bold.ttf';
+
+ let LISTINO = null;
  let __bound = false;
 
  function toast(msg){
@@ -28,34 +33,26 @@
  }
 
  function fmtDate(iso){
-  try{
-   const [y,m,d] = String(iso||'').split('-');
-   if (!y || !m || !d) return iso || '';
-   return `${d}/${m}/${y}`;
-  } catch { return iso || ''; }
+  try{ const [y,m,d] = String(iso||'').split('-'); if (!y||!m||!d) return iso||''; return `${d}/${m}/${y}`; }
+  catch { return iso||''; }
  }
 
  function makeTimestamp(){ return String(Date.now()); }
-
- function round2(n){
-  return Math.round((Number(n||0) + Number.EPSILON) * 100) / 100;
- }
+ function round2(n){ return Math.round((Number(n||0) + Number.EPSILON) * 100) / 100; }
 
  async function loadListino(){
   if (LISTINO) return LISTINO;
-
-  // prefer JSON
   try{
-   const res = await fetch(PATH_JSON, { cache: 'no-store' });
+   const res = await fetch(PATH_JSON, { cache:'no-store' });
    if (res.ok){
     const j = await res.json();
     if (j && j.sections) { LISTINO = j; return LISTINO; }
    }
   } catch {}
 
-  // fallback CSV
+  // CSV fallback (minimo)
   try{
-   const res = await fetch(PATH_CSV, { cache: 'no-store' });
+   const res = await fetch(PATH_CSV, { cache:'no-store' });
    if (!res.ok) throw new Error('CSV non disponibile');
    const txt = await res.text();
    const lines = txt.split(/\r?\n/).filter(Boolean);
@@ -65,24 +62,12 @@
    const iSec = idx('Sezione');
    const iProd = idx('Prodotto');
    const iPrice = idx('Prezzo_cu');
-   const iSett = idx('Settore');
-   const iDesc = idx('Descrizione');
-   const iOre = idx('Ore');
-   const iNote = idx('Note');
-
    const map = new Map();
    for (const line of lines){
     const cols = parseCsvLine(line);
     const sec = cols[iSec] || 'GENERICO';
     if (!map.has(sec)) map.set(sec, []);
-    map.get(sec).push({
-     name: cols[iProd] || '',
-     channel: cols[iSett] || null,
-     description: cols[iDesc] || null,
-     hours: cols[iOre] || null,
-     notes: cols[iNote] || null,
-     unitPrice: cols[iPrice] ? Number(String(cols[iPrice]).replace(',', '.')) : null
-    });
+    map.get(sec).push({ name: cols[iProd] || '', unitPrice: cols[iPrice] ? Number(String(cols[iPrice]).replace(',', '.')) : 0 });
    }
    LISTINO = { version:1, currency:'EUR', sections: Array.from(map.entries()).map(([name,items]) => ({ name, items })) };
    return LISTINO;
@@ -125,7 +110,6 @@
    frag.appendChild(opt);
   }
   selSec.appendChild(frag);
-
   if (selSec.options.length) selSec.selectedIndex = 0;
   fillProductsForSection(selSec.value);
   selSec.onchange = () => fillProductsForSection(selSec.value);
@@ -186,17 +170,15 @@
   prod.className = 'fat-prod';
   prod.textContent = it.name;
 
+  const desc = document.createElement('input');
+  desc.type = 'text';
+  desc.placeholder = 'Descrizione (es. Maggio)';
+
   const qty = document.createElement('input');
-  qty.type = 'number';
-  qty.min = '0';
-  qty.step = '1';
-  qty.value = '1';
+  qty.type = 'number'; qty.min='0'; qty.step='1'; qty.value='1';
 
   const unit = document.createElement('input');
-  unit.type = 'number';
-  unit.min = '-999999';
-  unit.step = '1';
-  unit.value = (it.unitPrice ?? 0);
+  unit.type = 'number'; unit.min='-999999'; unit.step='1'; unit.value = (it.unitPrice ?? 0);
 
   const disc = makeDiscountSelect();
 
@@ -205,24 +187,19 @@
   tot.textContent = euro(calcRowTotal(qty.value, unit.value, disc.value));
 
   const del = document.createElement('button');
-  del.type = 'button';
-  del.className = 'fat-del';
-  del.title = 'Rimuovi riga';
-  del.textContent = '✕';
+  del.type='button'; del.className='fat-del'; del.title='Rimuovi riga'; del.textContent='✕';
   del.onclick = () => { wrap.remove(); recomputeAll(); };
 
   wrap.dataset.product = it.name;
   wrap.dataset.section = ($('#FatSezione')?.value || '');
 
-  const onChange = () => {
-   tot.textContent = euro(calcRowTotal(qty.value, unit.value, disc.value));
-   recomputeAll();
-  };
+  const onChange = () => { tot.textContent = euro(calcRowTotal(qty.value, unit.value, disc.value)); recomputeAll(); };
   qty.addEventListener('input', onChange);
   unit.addEventListener('input', onChange);
   disc.addEventListener('change', onChange);
 
   wrap.appendChild(prod);
+  wrap.appendChild(desc);
   wrap.appendChild(qty);
   wrap.appendChild(unit);
   wrap.appendChild(disc);
@@ -238,9 +215,10 @@
   let sum = 0;
   for (const r of rows){
    const inputs = r.querySelectorAll('input, select');
-   const qty = inputs[0]?.value;
-   const unit = inputs[1]?.value;
-   const disc = inputs[2]?.value;
+   // order: desc(text)=0, qty=1, unit=2, disc(select)=3
+   const qty = inputs[1]?.value;
+   const unit = inputs[2]?.value;
+   const disc = inputs[3]?.value;
    sum += calcRowTotal(qty, unit, disc);
   }
   const out = document.getElementById('FatTotale');
@@ -255,50 +233,45 @@
  }
 
  function getState(){
+  const noteEnabled = !!document.getElementById('FatNoteToggle')?.checked;
   const header = {
    numero: ($('#FatNumero')?.value || makeTimestamp()).trim(),
    data: $('#FatData')?.value || todayISO(),
    commessa: ($('#FatCommessa')?.value || '').trim(),
    rifCommessa: ($('#FatRifCommessa')?.value || '').trim(),
    oggetto: ($('#FatOggetto')?.value || '').trim(),
-   note: ($('#FatNote')?.value || '').trim(),
+   noteEnabled,
+   note: noteEnabled ? ($('#FatNote')?.value || '').trim() : ''
   };
+
   const rows = Array.from(document.querySelectorAll('#FatRows .fattura-row')).map(r => {
    const prod = r.dataset.product || r.querySelector('.fat-prod')?.textContent || '';
    const inputs = r.querySelectorAll('input, select');
-   const qty = Number(inputs[0]?.value || 0);
-   const unit = Number(inputs[1]?.value || 0);
-   const disc = Number(inputs[2]?.value || 0);
+   const desc = (inputs[0]?.value || '').trim();
+   const qty = Number(inputs[1]?.value || 0);
+   const unit = Number(inputs[2]?.value || 0);
+   const disc = Number(inputs[3]?.value || 0);
    const base = round2(qty * unit);
    const total = calcRowTotal(qty, unit, disc);
-   return { product: prod, qty, unit, disc, base, total };
+   return { product: prod, desc, qty, unit, disc, base, total };
   });
+
   const total = round2(rows.reduce((a,b) => a + (b.total || 0), 0));
-  return { header, rows, total };
+  const anyDiscount = rows.some(r => Number(r.disc || 0) > 0);
+  return { header, rows, total, anyDiscount };
  }
 
- function trunc(str, max){
-  const s = String(str || '');
-  return s.length > max ? (s.slice(0, max-1) + '…') : s;
- }
+ function trunc(str, max){ const s = String(str||''); return s.length > max ? (s.slice(0, max-1) + '…') : s; }
 
  function wrapText(text, maxChars){
-  const s = String(text || '').replace(/\r\n/g,'\n');
+  const s = String(text||'').replace(/\r\n/g,'\n');
   const words = s.split(/(\s+)/);
   const lines = [];
   let line = '';
   for (const w of words){
-   if (w === '\n'){
-    lines.push(line.trimEnd());
-    line = '';
-    continue;
-   }
-   if ((line + w).length > maxChars){
-    lines.push(line.trimEnd());
-    line = w.trimStart();
-   } else {
-    line += w;
-   }
+   if (w === '\n'){ lines.push(line.trimEnd()); line=''; continue; }
+   if ((line + w).length > maxChars){ lines.push(line.trimEnd()); line = w.trimStart(); }
+   else line += w;
   }
   if (line.trim()) lines.push(line.trimEnd());
   return lines;
@@ -310,9 +283,25 @@
   return await res.arrayBuffer();
  }
 
- function drawKV(page, font, fontBold, x, y, k, v){
-  page.drawText(k, { x, y, size: 9, font: fontBold });
-  page.drawText(String(v || ''), { x: x + 90, y, size: 9, font });
+ async function loadPdfFonts(pdfDoc){
+  const { StandardFonts } = window.PDFLib;
+  try{
+   if (window.fontkit) pdfDoc.registerFontkit(window.fontkit);
+   const regBytes = await fetchAsArrayBuffer(MANROPE_REG);
+   const boldBytes = await fetchAsArrayBuffer(MANROPE_BOLD);
+   const reg = await pdfDoc.embedFont(regBytes);
+   const bold = await pdfDoc.embedFont(boldBytes);
+   return { reg, bold, isManrope:true };
+  } catch {
+   const reg = await pdfDoc.embedFont(StandardFonts.Helvetica);
+   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+   return { reg, bold, isManrope:false };
+  }
+ }
+
+ function drawKV(page, font, fontBold, x, y, k, v, rgb){
+  page.drawText(k, { x, y, size: 9, font: fontBold, color: rgb(0.22,0.25,0.30) });
+  page.drawText(String(v || ''), { x: x + 90, y, size: 9, font, color: rgb(0.07,0.09,0.12) });
  }
 
  function drawTableHeader(page, fontBold, x, y, cols, rgb){
@@ -323,22 +312,23 @@
    page.drawText(c.label, { x: tx, y: y-10, size: 9.5, font: fontBold, color: rgb(0.22,0.25,0.30) });
    cx += c.w;
   }
-  page.drawLine({ start: {x, y: y-14}, end: {x: x + cols.reduce((a,c)=>a+c.w,0), y: y-14}, thickness: 1, color: rgb(0.9,0.9,0.9) });
+  page.drawLine({ start: {x, y: y-14}, end: {x: x + cols.reduce((a,c)=>a+c.w,0), y: y-14}, thickness: 1, color: rgb(0.90,0.90,0.90) });
  }
 
- function drawRow(page, font, x, y, cols, row, rgb, alt){
+ function drawRow(page, font, x, y, cols, row, anyDiscount, rgb, alt){
   const h = 18;
   if (alt){
    page.drawRectangle({ x, y: y-h+3, width: cols.reduce((a,c)=>a+c.w,0), height: h, color: rgb(0.995,0.995,0.995) });
   }
+  const values = [];
+  values.push(trunc(row.product, 30));
+  values.push(trunc(row.desc || '', 16));
+  values.push(String(row.qty));
+  values.push(euro(row.unit));
+  if (anyDiscount) values.push(row.disc ? `${row.disc}%` : '');
+  values.push(euro(row.total));
+
   let cx = x;
-  const values = [
-   trunc(row.product, 48),
-   String(row.qty),
-   euro(row.unit),
-   row.disc ? `${row.disc}%` : '—',
-   euro(row.total)
-  ];
   for (let i=0;i<cols.length;i++){
    const c = cols[i];
    const val = values[i];
@@ -354,68 +344,81 @@
   const st = getState();
   if (!st.rows.length){ toast('Aggiungi almeno una riga prima di esportare.'); return; }
 
-  const { PDFDocument, StandardFonts, rgb } = window.PDFLib || {};
+  const { PDFDocument, rgb } = window.PDFLib || {};
   if (!PDFDocument){ toast('Libreria PDF non disponibile.'); return; }
 
   const pdfDoc = await PDFDocument.create();
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fonts = await loadPdfFonts(pdfDoc);
+  const font = fonts.reg;
+  const fontBold = fonts.bold;
 
   let logoImg = null;
-  try{
-   const bytes = await fetchAsArrayBuffer('./assets/logo.png');
-   logoImg = await pdfDoc.embedPng(bytes);
-  } catch {}
+  try{ const bytes = await fetchAsArrayBuffer('./assets/logo.png'); logoImg = await pdfDoc.embedPng(bytes); } catch {}
 
   const A4 = [595.28, 841.89];
-  const margin = 40;
+  const marginX = 40;
+  const marginTop = 40;
+  const contentW = A4[0] - marginX * 2; // 515.28
+
+  // Colonne: somma <= contentW per NON uscire dal margine destro
+  const cols = st.anyDiscount ? [
+    { label:'Prodotto', w: 190 },
+    { label:'Descrizione', w: 105 },
+    { label:'Q.tà', w: 35, align:'right' },
+    { label:'Costo unit.', w: 70, align:'right' },
+    { label:'Sconto', w: 45, align:'right' },
+    { label:'Totale', w: 70, align:'right' },
+  ] : [
+    { label:'Prodotto', w: 220 },
+    { label:'Descrizione', w: 120 },
+    { label:'Q.tà', w: 35, align:'right' },
+    { label:'Costo unit.', w: 70, align:'right' },
+    { label:'Totale', w: 70, align:'right' },
+  ];
+
+  const tableW = cols.reduce((a,c)=>a+c.w,0);
+  const tableX = marginX + (contentW - tableW) / 2; // centra la tabella dentro i margini
 
   const newPage = () => pdfDoc.addPage(A4);
   let page = newPage();
-  let y = A4[1] - margin;
+  let y = A4[1] - marginTop;
+
+  const rightBoxW = 195;
+  const rightBoxX = A4[0] - marginX - rightBoxW; // sempre dentro margini
 
   const drawHeader = () => {
    if (logoImg){
     const w = 140;
     const h = (logoImg.height / logoImg.width) * w;
-    page.drawImage(logoImg, { x: margin, y: y - h, width: w, height: h });
+    page.drawImage(logoImg, { x: marginX, y: y - h, width: w, height: h });
    }
-   page.drawText('Statement accounting', { x: 360, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
 
-   const boxX = 360;
-   page.drawRectangle({ x: boxX, y: y - 74, width: 195, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-   drawKV(page, font, fontBold, boxX + 10, y - 32, 'N.ro', st.header.numero);
-   drawKV(page, font, fontBold, boxX + 10, y - 54, 'Del', fmtDate(st.header.data));
+   page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+
+   page.drawRectangle({ x: rightBoxX, y: y - 74, width: rightBoxW, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+   drawKV(page, font, fontBold, rightBoxX + 10, y - 32, 'N.ro', st.header.numero, rgb);
+   drawKV(page, font, fontBold, rightBoxX + 10, y - 54, 'Del', fmtDate(st.header.data), rgb);
 
    const y2 = y - 95;
-   page.drawRectangle({ x: 360, y: y2 - 45, width: 195, height: 46, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-   drawKV(page, font, fontBold, 370, y2 - 18, 'N. Commessa', st.header.commessa || '—');
-   drawKV(page, font, fontBold, 370, y2 - 36, 'Rif. Commessa', st.header.rifCommessa || '—');
+   page.drawRectangle({ x: rightBoxX, y: y2 - 45, width: rightBoxW, height: 46, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+   drawKV(page, font, fontBold, rightBoxX + 10, y2 - 18, 'N. Commessa', st.header.commessa || '—', rgb);
+   drawKV(page, font, fontBold, rightBoxX + 10, y2 - 36, 'Rif. Commessa', st.header.rifCommessa || '—', rgb);
 
    const y3 = y2 - 68;
-   page.drawText('Oggetto:', { x: margin, y: y3, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-   page.drawRectangle({ x: margin + 70, y: y3 - 6, width: A4[0] - margin*2 - 70, height: 20, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-   page.drawText(trunc(st.header.oggetto || '—', 78), { x: margin + 78, y: y3 + 1, size: 10.5, font });
+   page.drawText('Oggetto:', { x: marginX, y: y3, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+   page.drawRectangle({ x: marginX + 70, y: y3 - 6, width: contentW - 70, height: 20, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+   page.drawText(trunc(st.header.oggetto || '—', 78), { x: marginX + 78, y: y3 + 1, size: 10.5, font, color: rgb(0.07,0.09,0.12) });
 
    y = y3 - 40;
   };
 
   drawHeader();
 
-  const cols = [
-   { label:'Prodotto', w: 260 },
-   { label:'Q.tà', w: 45, align:'right' },
-   { label:'Costo unit.', w: 80, align:'right' },
-   { label:'Sconto', w: 55, align:'right' },
-   { label:'Totale', w: 85, align:'right' },
-  ];
-  const tableX = margin;
-
   const ensureSpace = (minY) => {
    if (y < minY){
     page = newPage();
-    y = A4[1] - margin;
-    page.drawText('Statement accounting', { x: 360, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    y = A4[1] - marginTop;
+    page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
     y -= 40;
    }
   };
@@ -426,48 +429,50 @@
 
   st.rows.forEach((r, idx) => {
    ensureSpace(140);
-   if (y > A4[1] - margin - 60){
+   if (y > A4[1] - marginTop - 60){
     drawTableHeader(page, fontBold, tableX, y, cols, rgb);
     y -= 18;
    }
-   y = drawRow(page, font, tableX, y, cols, r, rgb, idx % 2 === 1);
+   y = drawRow(page, font, tableX, y, cols, r, st.anyDiscount, rgb, idx % 2 === 1);
   });
 
   ensureSpace(130);
   y -= 10;
-  page.drawLine({ start: { x: tableX, y }, end: { x: tableX + cols.reduce((a,c)=>a+c.w,0), y }, thickness: 1, color: rgb(0.86,0.86,0.86) });
+  page.drawLine({ start: { x: tableX, y }, end: { x: tableX + tableW, y }, thickness: 1, color: rgb(0.86,0.86,0.86) });
   y -= 18;
-  page.drawText('Totale fornitura', { x: tableX + 260, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-  page.drawText(euro(st.total), { x: tableX + 260 + 45 + 80 + 55 + 85 - 2, y, size: 11, font: fontBold, color: rgb(0.77,0.09,0.17) });
+  page.drawText('Totale fornitura', { x: tableX + tableW - 170, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+  page.drawText(euro(st.total), { x: tableX + tableW - 2, y, size: 11, font: fontBold, color: rgb(0.77,0.09,0.17) });
 
-  y -= 30;
-  page.drawText('Note', { x: margin, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-  y -= 10;
-  const noteBoxH = 90;
-  page.drawRectangle({ x: margin, y: y - noteBoxH, width: A4[0] - margin*2, height: noteBoxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-  const noteLines = wrapText(st.header.note || '', 92);
-  let ny = y - 16;
-  noteLines.slice(0,6).forEach(line => {
-   page.drawText(line, { x: margin + 10, y: ny, size: 9.5, font, color: rgb(0.17,0.20,0.25) });
-   ny -= 13;
-  });
+  if (st.header.noteEnabled){
+   y -= 30;
+   page.drawText('Note', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+   y -= 10;
+   const noteBoxH = 90;
+   page.drawRectangle({ x: marginX, y: y - noteBoxH, width: contentW, height: noteBoxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+   const noteLines = wrapText(st.header.note || '', 92);
+   let ny = y - 16;
+   noteLines.slice(0,6).forEach(line => {
+    page.drawText(line, { x: marginX + 10, y: ny, size: 9.5, font, color: rgb(0.17,0.20,0.25) });
+    ny -= 13;
+   });
+   y = y - noteBoxH - 36;
+  } else {
+   y -= 36;
+  }
 
-  y = y - noteBoxH - 36;
-  page.drawText('Timbro e firma', { x: margin, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+  page.drawText('Timbro e firma', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
   y -= 10;
-  page.drawLine({ start: { x: margin, y }, end: { x: margin + 260, y }, thickness: 1, color: rgb(0.7,0.7,0.7) });
+  page.drawLine({ start: { x: marginX, y }, end: { x: marginX + 260, y }, thickness: 1, color: rgb(0.7,0.7,0.7) });
 
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement('a');
   a.href = url;
   a.download = `fattura_${st.header.numero}.pdf`;
   document.body.appendChild(a);
   a.click();
   a.remove();
-
   setTimeout(() => URL.revokeObjectURL(url), 5000);
  }
 
@@ -477,19 +482,25 @@
   __bound = true;
 
   initHeaderDefaults();
+
   const listino = await loadListino();
-  if (!listino.sections || !listino.sections.length){
-   toast('Listino non trovato in assets/data. Carica listino_marketing.json o .csv.');
-  }
+  if (!listino.sections || !listino.sections.length){ toast('Listino non trovato in assets/data.'); }
   fillSections(listino);
 
   const btnAdd = document.getElementById('FatAddRow');
   if (btnAdd) btnAdd.addEventListener('click', addRowFromSelected);
 
+  const tgl = document.getElementById('FatNoteToggle');
+  const note = document.getElementById('FatNote');
+  if (tgl && note){
+   const sync = () => note.classList.toggle('hidden', !tgl.checked);
+   tgl.addEventListener('change', sync);
+   sync();
+  }
+
   window.exportFatturaPdf = exportFatturaPdf;
  }
 
- // Hook into selectMode
  try{
   const orig = window.selectMode;
   if (typeof orig === 'function' && !orig.__fatturaPatched){

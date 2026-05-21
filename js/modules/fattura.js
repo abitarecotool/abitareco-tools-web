@@ -344,218 +344,303 @@
   }
 
   async function exportFatturaPdf(){
-    const st = getState();
-    if (!st.rows.length){ toast('Aggiungi almeno una riga prima di esportare.'); return; }
+  const st = getState();
+  if (!st.rows.length){ toast('Aggiungi almeno una riga prima di esportare.'); return; }
 
-    const { PDFDocument, rgb } = window.PDFLib || {};
-    if (!PDFDocument){ toast('Libreria PDF non disponibile.'); return; }
+  const { PDFDocument, rgb } = window.PDFLib || {};
+  if (!PDFDocument){ toast('Libreria PDF non disponibile.'); return; }
 
-    const pdfDoc = await PDFDocument.create();
-    const fonts = await loadPdfFonts(pdfDoc);
-    const font = fonts.reg;
-    const fontBold = fonts.bold;
+  const pdfDoc = await PDFDocument.create();
+  const fonts = await loadPdfFonts(pdfDoc);
+  const font = fonts.reg;
+  const fontBold = fonts.bold;
 
-    const textW = (f, t, s) => {
-      try{ return f.widthOfTextAtSize(String(t||''), s); }
-      catch { return String(t||'').length * s * 0.52; }
-    };
+  const textW = (f, t, s) => {
+    try{ return f.widthOfTextAtSize(String(t||''), s); }
+    catch { return String(t||'').length * s * 0.52; }
+  };
 
-    // "Contain" celle
-    const fitText = (f, t, maxW, baseSize, minSize=7) => {
-      let s = baseSize;
-      let str = String(t || '');
-      while (s > minSize && textW(f, str, s) > maxW) s -= 0.5;
-      if (textW(f, str, s) <= maxW) return { text: str, size: s };
-      const ell = '…';
-      let out = str;
-      while (out.length > 0 && textW(f, out + ell, s) > maxW) out = out.slice(0, -1);
-      return { text: (out || '') + ell, size: s };
-    };
+  // "Contain" celle
+  const fitText = (f, t, maxW, baseSize, minSize=7) => {
+    let s = baseSize;
+    let str = String(t || '');
+    while (s > minSize && textW(f, str, s) > maxW) s -= 0.5;
+    if (textW(f, str, s) <= maxW) return { text: str, size: s };
+    const ell = '…';
+    let out = str;
+    while (out.length > 0 && textW(f, out + ell, s) > maxW) out = out.slice(0, -1);
+    return { text: (out || '') + ell, size: s };
+  };
 
-    // Logo: preferisci SVG (vettoriale). Fallback PNG.
-    let logoSvg = null;
-    let logoImg = null;
+  // --- LOGO SVG (vettoriale) ---
+  // 1) prova a caricare e "sanitizzare" logo.svg
+  // 2) prova embedSvg (vettoriale)
+  // 3) se fallisce per incompatibilità SVG → fallback: rasterizza lo SVG ad alta risoluzione (molto nitido)
+  // 4) se anche questo fallisce → fallback PNG
+
+  const sanitizeSvg = (svg) => {
+    let s = String(svg || '');
+    // remove XML/doctype
+    s = s.replace(/^\s*<\?xml[\s\S]*?\?>\s*/i, '');
+    s = s.replace(/<!DOCTYPE[\s\S]*?>/ig, '');
+    // remove comments
+    s = s.replace(/<!--([\s\S]*?)-->/g, '');
+    // remove defs/style/metadata that often break embedSvg
+    s = s.replace(/<metadata[\s\S]*?<\/metadata>/ig, '');
+    s = s.replace(/<title[\s\S]*?<\/title>/ig, '');
+    s = s.replace(/<desc[\s\S]*?<\/desc>/ig, '');
+    s = s.replace(/<defs[\s\S]*?<\/defs>/ig, '');
+    s = s.replace(/<style[\s\S]*?<\/style>/ig, '');
+    // strip attributes with url(#...) that often cause issues
+    s = s.replace(/\s(filter|mask|clip-path)="[^"]*"/ig, '');
+    // if style contains url(…), drop the style attribute entirely
+    s = s.replace(/\sstyle="[^"]*url\([^\)]*\)[^"]*"/ig, '');
+    return s.trim();
+  };
+
+  const rasterizeSvgToPngBytes = async (svgText, scale=4) => {
+    const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(svgBlob);
     try{
-      const svgTxt = await (await fetch('./assets/logo.svg', { cache:'no-store' })).text();
-      if (svgTxt && svgTxt.trim().startsWith('<')){
-        logoSvg = await pdfDoc.embedSvg(svgTxt);
-      }
-    } catch {}
-    if (!logoSvg){
-      try{ const bytes = await fetchAsArrayBuffer('./assets/logo.png'); logoImg = await pdfDoc.embedPng(bytes); } catch {}
-    }
-
-    const A4 = [595.28, 841.89];
-    const marginX = 40;
-    const marginTop = 40;
-    const marginBottom = 80;
-    const contentW = A4[0] - marginX * 2;
-
-    const colProdW = 200;
-    const colQtyW  = 40;
-    const colUnitW = 80;
-    const colDescW = contentW - (colProdW + colQtyW + colUnitW);
-
-    const cols = [
-      { label:'Prodotto', w: colProdW },
-      { label:'Descrizione', w: colDescW },
-      { label:'Q.tà', w: colQtyW, align:'right' },
-      { label:'Costo unit.', w: colUnitW, align:'right' },
-    ];
-
-    const tableX = marginX;
-    const tableW = contentW;
-
-    const newPage = () => pdfDoc.addPage(A4);
-    let page = newPage();
-    let y = A4[1] - marginTop;
-
-    const rightBoxW = 195;
-    const rightBoxX = A4[0] - marginX - rightBoxW;
-
-    const drawHeader = () => {
-      if (logoSvg){
-        const w = 140;
-        const h = (logoSvg.height / logoSvg.width) * w;
-        page.drawSvg(logoSvg, { x: marginX, y: y - h, width: w, height: h });
-      } else if (logoImg){
-        const w = 140;
-        const h = (logoImg.height / logoImg.width) * w;
-        page.drawImage(logoImg, { x: marginX, y: y - h, width: w, height: h });
-      }
-
-      page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
-
-      // Box N.ro / Del leggermente più in basso
-      page.drawRectangle({ x: rightBoxX, y: y - 82, width: rightBoxW, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-      drawKV(page, font, fontBold, rightBoxX + 10, y - 40, 'N.ro', st.header.numero, rgb);
-      drawKV(page, font, fontBold, rightBoxX + 10, y - 62, 'Del', fmtDate(st.header.data), rgb);
-
-      const y2 = y - 105;
-      page.drawRectangle({ x: rightBoxX, y: y2 - 45, width: rightBoxW, height: 46, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-      drawKV(page, font, fontBold, rightBoxX + 10, y2 - 18, 'N. Commessa', st.header.commessa || '—', rgb);
-      drawKV(page, font, fontBold, rightBoxX + 10, y2 - 36, 'Rif. Commessa', st.header.rifCommessa || '—', rgb);
-
-      const y3 = y2 - 68;
-      page.drawText('Oggetto:', { x: marginX, y: y3, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-      page.drawRectangle({ x: marginX + 70, y: y3 - 6, width: contentW - 70, height: 20, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-      page.drawText(trunc(st.header.oggetto || '—', 78), { x: marginX + 78, y: y3 + 1, size: 10.5, font, color: rgb(0.07,0.09,0.12) });
-
-      y = y3 - 40;
-    };
-
-    const newTablePage = () => {
-      page = newPage();
-      y = A4[1] - marginTop;
-      page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
-      y -= 40;
-      drawTableHeader(page, fontBold, tableX, y, cols, rgb);
-      y -= 18;
-    };
-
-    const ensureSpace = (needH) => {
-      if (y - needH < marginBottom) newTablePage();
-    };
-
-    const drawRow = (row, alt, isLast) => {
-      const hasDisc = Number(row.disc || 0) > 0;
-      const baseH = 18;
-      const extraH = hasDisc ? 14 : 0;
-      const rowH = baseH + extraH;
-
-      ensureSpace(rowH + 10);
-
-      if (alt){
-        page.drawRectangle({ x: tableX, y: y-rowH+3, width: tableW, height: rowH, color: rgb(0.995,0.995,0.995) });
-      }
-
-      let cx = tableX;
-
-      const prodFit = fitText(font, row.product, cols[0].w - 4, 9.5);
-      page.drawText(prodFit.text, { x: cx + 2, y: y-11, size: prodFit.size, font, color: rgb(0.07,0.09,0.12) });
-      cx += cols[0].w;
-
-      const descFit = fitText(font, row.desc || '', cols[1].w - 4, 9.5);
-      page.drawText(descFit.text, { x: cx + 2, y: y-11, size: descFit.size, font, color: rgb(0.07,0.09,0.12) });
-      cx += cols[1].w;
-
-      const qtyStr = String(row.qty);
-      page.drawText(qtyStr, { x: cx + cols[2].w - 2 - textW(font, qtyStr, 9.5), y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
-      cx += cols[2].w;
-
-      const unitStr = euro(row.unit);
-      page.drawText(unitStr, { x: cx + cols[3].w - 2 - textW(font, unitStr, 9.5), y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
-
-      if (hasDisc){
-        const rightX = tableX + tableW;
-        const discText = `Sconto: ${row.disc}%`;
-        page.drawText(discText, { x: rightX - 2 - textW(font, discText, 9), y: y-26, size: 9, font, color: rgb(0.17,0.20,0.25) });
-      }
-
-      // evita doppia riga: non disegnare la linea sottile sull'ultima riga
-      if (!isLast){
-        page.drawLine({ start: {x: tableX, y: y-rowH+3}, end: {x: tableX + tableW, y: y-rowH+3}, thickness: 0.6, color: rgb(0.93,0.93,0.93) });
-      }
-      y -= rowH;
-    };
-
-    drawHeader();
-    ensureSpace(120);
-    drawTableHeader(page, fontBold, tableX, y, cols, rgb);
-    y -= 18;
-
-    st.rows.forEach((r, idx) => drawRow(r, idx % 2 === 1, idx === st.rows.length - 1));
-
-    // Totale fornitura
-    ensureSpace(160);
-    y -= 12;
-    page.drawLine({ start: { x: tableX, y }, end: { x: tableX + tableW, y }, thickness: 1, color: rgb(0.86,0.86,0.86) });
-    y -= 26;
-
-    const labelTot = 'Totale fornitura';
-    const valTot = euro(st.total);
-    const labelX = tableX + (tableW - textW(fontBold, labelTot, 11)) / 2;
-    page.drawText(labelTot, { x: labelX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-    page.drawText(valTot, { x: tableX + tableW - 2 - textW(fontBold, valTot, 11), y, size: 11, font: fontBold, color: rgb(0.77,0.09,0.17) });
-
-    // Note
-    if (st.header.noteEnabled){
-      ensureSpace(180);
-      y -= 34;
-      page.drawText('Note', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-      y -= 10;
-      const noteBoxH = 90;
-      page.drawRectangle({ x: marginX, y: y - noteBoxH, width: contentW, height: noteBoxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-      const noteLines = wrapText(st.header.note || '', 92);
-      let ny = y - 16;
-      noteLines.slice(0,6).forEach(line => {
-        page.drawText(line, { x: marginX + 10, y: ny, size: 9.5, font, color: rgb(0.17,0.20,0.25) });
-        ny -= 13;
+      const img = new Image();
+      img.decoding = 'async';
+      img.crossOrigin = 'anonymous';
+      const loaded = new Promise((res, rej) => {
+        img.onload = () => res(true);
+        img.onerror = (e) => rej(e);
       });
-      y = y - noteBoxH - 36;
-    } else {
-      y -= 36;
+      img.src = url;
+      await loaded;
+
+      const w = Math.max(1, Math.round(img.naturalWidth || img.width || 400));
+      const h = Math.max(1, Math.round(img.naturalHeight || img.height || 120));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w * scale;
+      canvas.height = h * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.clearRect(0,0,w,h);
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const pngBlob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+      return await pngBlob.arrayBuffer();
+    } finally {
+      URL.revokeObjectURL(url);
     }
+  };
 
-    // Firma
-    ensureSpace(120);
-    page.drawText('Timbro e firma', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-    y -= 10;
-    page.drawLine({ start: { x: marginX, y }, end: { x: marginX + 260, y }, thickness: 1, color: rgb(0.7,0.7,0.7) });
+  let logoSvgObj = null; // vettoriale
+  let logoPngObj = null; // raster
 
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `fattura_${st.header.numero}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  // 1) SVG
+  let svgTxt = '';
+  try{
+    const res = await fetch('./assets/logo.svg', { cache:'no-store' });
+    if (res.ok) svgTxt = await res.text();
+  } catch {}
+
+  if (svgTxt){
+    const clean = sanitizeSvg(svgTxt);
+    try{
+      if (typeof pdfDoc.embedSvg === 'function'){
+        logoSvgObj = await pdfDoc.embedSvg(clean);
+      }
+    } catch (e){
+      // embedSvg può fallire con SVG complessi → fallback raster high-res
+      try{
+        const bytes = await rasterizeSvgToPngBytes(clean, 4);
+        logoPngObj = await pdfDoc.embedPng(bytes);
+      } catch {}
+    }
   }
 
-  async function initFattura(){
+  // 2) PNG fallback
+  if (!logoSvgObj && !logoPngObj){
+    try{ const bytes = await fetchAsArrayBuffer('./assets/logo.png'); logoPngObj = await pdfDoc.embedPng(bytes); } catch {}
+  }
+
+  const A4 = [595.28, 841.89];
+  const marginX = 40;
+  const marginTop = 40;
+  const marginBottom = 80;
+  const contentW = A4[0] - marginX * 2;
+
+  // Tabella: Prodotto / Descrizione / Q.tà / Costo unit.
+  const colProdW = 200;
+  const colQtyW  = 40;
+  const colUnitW = 80;
+  const colDescW = contentW - (colProdW + colQtyW + colUnitW);
+
+  const cols = [
+    { label:'Prodotto', w: colProdW },
+    { label:'Descrizione', w: colDescW },
+    { label:'Q.tà', w: colQtyW, align:'right' },
+    { label:'Costo unit.', w: colUnitW, align:'right' },
+  ];
+
+  const tableX = marginX;
+  const tableW = contentW;
+
+  const newPage = () => pdfDoc.addPage(A4);
+  let page = newPage();
+  let y = A4[1] - marginTop;
+
+  const rightBoxW = 195;
+  const rightBoxX = A4[0] - marginX - rightBoxW;
+
+  const drawHeader = () => {
+    // Logo
+    if (logoSvgObj){
+      const w = 140;
+      const h = (logoSvgObj.height / logoSvgObj.width) * w;
+      page.drawSvg(logoSvgObj, { x: marginX, y: y - h, width: w, height: h });
+    } else if (logoPngObj){
+      const w = 140;
+      const h = (logoPngObj.height / logoPngObj.width) * w;
+      page.drawImage(logoPngObj, { x: marginX, y: y - h, width: w, height: h });
+    }
+
+    page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+
+    // Box N.ro/Del (spaziatura coerente)
+    const box1Bottom = y - 82; // bottom
+    page.drawRectangle({ x: rightBoxX, y: box1Bottom, width: rightBoxW, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    drawKV(page, font, fontBold, rightBoxX + 10, box1Bottom + 54 - 22, 'N.ro', st.header.numero, rgb);
+    drawKV(page, font, fontBold, rightBoxX + 10, box1Bottom + 54 - 44, 'Del', fmtDate(st.header.data), rgb);
+
+    // Box N. Commessa / Rif. Commessa (stessa distanza dal box sopra)
+    const gapBoxes = 18;
+    const box2H = 46;
+    const box2Bottom = box1Bottom - gapBoxes - box2H;
+    page.drawRectangle({ x: rightBoxX, y: box2Bottom, width: rightBoxW, height: box2H, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    drawKV(page, font, fontBold, rightBoxX + 10, box2Bottom + box2H - 20, 'N. Commessa', st.header.commessa || '—', rgb);
+    drawKV(page, font, fontBold, rightBoxX + 10, box2Bottom + box2H - 38, 'Rif. Commessa', st.header.rifCommessa || '—', rgb);
+
+    // Oggetto (distanza coerente dal box sopra)
+    const gapOggetto = 20;
+    const yOggetto = box2Bottom - gapOggetto;
+    page.drawText('Oggetto:', { x: marginX, y: yOggetto, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    page.drawRectangle({ x: marginX + 70, y: yOggetto - 6, width: contentW - 70, height: 20, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    page.drawText(trunc(st.header.oggetto || '—', 78), { x: marginX + 78, y: yOggetto + 1, size: 10.5, font, color: rgb(0.07,0.09,0.12) });
+
+    y = yOggetto - 40;
+  };
+
+  const newTablePage = () => {
+    page = newPage();
+    y = A4[1] - marginTop;
+    page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    y -= 40;
+    drawTableHeader(page, fontBold, tableX, y, cols, rgb);
+    y -= 18;
+  };
+
+  const ensureSpace = (needH) => {
+    if (y - needH < marginBottom) newTablePage();
+  };
+
+  const drawRow = (row, alt, isLast) => {
+    const hasDisc = Number(row.disc || 0) > 0;
+    const baseH = 18;
+    const extraH = hasDisc ? 14 : 0;
+    const rowH = baseH + extraH;
+
+    ensureSpace(rowH + 10);
+
+    if (alt){
+      page.drawRectangle({ x: tableX, y: y-rowH+3, width: tableW, height: rowH, color: rgb(0.995,0.995,0.995) });
+    }
+
+    let cx = tableX;
+
+    const prodFit = fitText(font, row.product, cols[0].w - 4, 9.5);
+    page.drawText(prodFit.text, { x: cx + 2, y: y-11, size: prodFit.size, font, color: rgb(0.07,0.09,0.12) });
+    cx += cols[0].w;
+
+    const descFit = fitText(font, row.desc || '', cols[1].w - 4, 9.5);
+    page.drawText(descFit.text, { x: cx + 2, y: y-11, size: descFit.size, font, color: rgb(0.07,0.09,0.12) });
+    cx += cols[1].w;
+
+    const qtyStr = String(row.qty);
+    page.drawText(qtyStr, { x: cx + cols[2].w - 2 - textW(font, qtyStr, 9.5), y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
+    cx += cols[2].w;
+
+    const unitStr = euro(row.unit);
+    page.drawText(unitStr, { x: cx + cols[3].w - 2 - textW(font, unitStr, 9.5), y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
+
+    if (hasDisc){
+      const rightX = tableX + tableW;
+      const discText = `Sconto: ${row.disc}%`;
+      page.drawText(discText, { x: rightX - 2 - textW(font, discText, 9), y: y-26, size: 9, font, color: rgb(0.17,0.20,0.25) });
+    }
+
+    if (!isLast){
+      page.drawLine({ start: {x: tableX, y: y-rowH+3}, end: {x: tableX + tableW, y: y-rowH+3}, thickness: 0.6, color: rgb(0.93,0.93,0.93) });
+    }
+
+    y -= rowH;
+  };
+
+  drawHeader();
+  ensureSpace(120);
+  drawTableHeader(page, fontBold, tableX, y, cols, rgb);
+  y -= 18;
+
+  st.rows.forEach((r, idx) => drawRow(r, idx % 2 === 1, idx === st.rows.length - 1));
+
+  // Totale fornitura
+  ensureSpace(160);
+  y -= 12;
+  page.drawLine({ start: { x: tableX, y }, end: { x: tableX + tableW, y }, thickness: 1, color: rgb(0.86,0.86,0.86) });
+  y -= 26;
+
+  const labelTot = 'Totale fornitura';
+  const valTot = euro(st.total);
+  const labelX = tableX + (tableW - textW(fontBold, labelTot, 11)) / 2;
+  page.drawText(labelTot, { x: labelX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+  page.drawText(valTot, { x: tableX + tableW - 2 - textW(fontBold, valTot, 11), y, size: 11, font: fontBold, color: rgb(0.77,0.09,0.17) });
+
+  // Note
+  if (st.header.noteEnabled){
+    ensureSpace(180);
+    y -= 34;
+    page.drawText('Note', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    y -= 10;
+    const noteBoxH = 90;
+    page.drawRectangle({ x: marginX, y: y - noteBoxH, width: contentW, height: noteBoxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    const noteLines = wrapText(st.header.note || '', 92);
+    let ny = y - 16;
+    noteLines.slice(0,6).forEach(line => {
+      page.drawText(line, { x: marginX + 10, y: ny, size: 9.5, font, color: rgb(0.17,0.20,0.25) });
+      ny -= 13;
+    });
+    y = y - noteBoxH - 36;
+  } else {
+    y -= 36;
+  }
+
+  // Firma: abbassa la riga per lasciare spazio alla compilazione
+  ensureSpace(140);
+  page.drawText('Timbro e firma', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+  y -= 24; // più spazio sotto la label
+  page.drawLine({ start: { x: marginX, y }, end: { x: marginX + 260, y }, thickness: 1, color: rgb(0.7,0.7,0.7) });
+
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fattura_${st.header.numero}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+async function initFattura(){
     if (__bound) return;
     if (!document.getElementById('FatturaCard')) return;
     __bound = true;

@@ -327,23 +327,35 @@
   const font = fonts.reg;
   const fontBold = fonts.bold;
 
-  // Misura reale testo per allineamenti (fallback se non disponibile)
+  // Misura testo (vera se disponibile)
   const textW = (f, t, s) => {
     try{ return f.widthOfTextAtSize(String(t||''), s); } catch { return String(t||'').length * s * 0.52; }
+  };
+
+  // "Contain" per celle: riduce size finché entra; se ancora troppo lungo tronca con …
+  const fitText = (f, t, maxW, baseSize, minSize=7) => {
+    let s = baseSize;
+    let str = String(t || '');
+    while (s > minSize && textW(f, str, s) > maxW) s -= 0.5;
+    if (textW(f, str, s) <= maxW) return { text: str, size: s };
+    // truncate
+    const ell = '…';
+    let out = str;
+    while (out.length > 0 && textW(f, out + ell, s) > maxW) out = out.slice(0, -1);
+    return { text: (out || '') + ell, size: s };
   };
 
   let logoImg = null;
   try{ const bytes = await fetchAsArrayBuffer('./assets/logo.png'); logoImg = await pdfDoc.embedPng(bytes); } catch {}
 
-  // A4 + margini
   const A4 = [595.28, 841.89];
   const marginX = 40;
   const marginTop = 40;
+  const marginBottom = 80;
   const contentW = A4[0] - marginX * 2; // area utile
 
-  // Tabella PDF: allineata a sinistra come Oggetto/Note e centrata nei margini A4
-  // Somma colonne = contentW (così non taglia mai)
-  const colProdW = 210;
+  // Tabella (Prodotto→Costo unit.) allineata a sinistra come Oggetto/Note
+  const colProdW = 200;
   const colQtyW = 40;
   const colUnitW = 80;
   const colDescW = contentW - (colProdW + colQtyW + colUnitW);
@@ -391,76 +403,79 @@
     y = y3 - 40;
   };
 
-  const ensureSpace = (minY) => {
-    if (y < minY){
+  const ensureSpace = (needH) => {
+    if (y - needH < marginBottom){
       page = newPage();
       y = A4[1] - marginTop;
       page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
       y -= 40;
+      // ristampo header tabella quando ricomincio una pagina
+      drawTableHeader(page, fontBold, tableX, y, cols, rgb);
+      y -= 18;
     }
   };
 
   const drawRow = (row, alt) => {
     const hasDisc = Number(row.disc || 0) > 0;
-    const rowH = hasDisc ? 32 : 18;
+    const baseH = 18;
+    const extraH = hasDisc ? 26 : 0;
+    const rowH = baseH + extraH;
+
+    ensureSpace(rowH + 10);
 
     if (alt){
       page.drawRectangle({ x: tableX, y: y-rowH+3, width: tableW, height: rowH, color: rgb(0.995,0.995,0.995) });
     }
 
-    // Riga principale: Prodotto/Descrizione/Q.tà/Costo unit.
+    // Riga principale (contain)
     let cx = tableX;
-    const main = [
-      trunc(row.product, 40),
-      trunc(row.desc || '', 44),
-      String(row.qty),
-      euro(row.unit)
-    ];
 
-    for (let i=0;i<cols.length;i++){
-      const c = cols[i];
-      const tx = (c.align === 'right') ? (cx + c.w - 2) : (cx + 2);
-      page.drawText(String(main[i]), { x: tx, y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
-      cx += c.w;
-    }
+    // Prodotto
+    const prodFit = fitText(font, row.product, cols[0].w - 4, 9.5);
+    page.drawText(String(prodFit.text), { x: cx + 2, y: y-11, size: prodFit.size, font, color: rgb(0.07,0.09,0.12) });
+    cx += cols[0].w;
 
-    // Riga extra SOLO se c'è lo sconto: prima Sconto, sotto Totale (entrambi a destra)
+    // Descrizione
+    const descFit = fitText(font, row.desc || '', cols[1].w - 4, 9.5);
+    page.drawText(String(descFit.text), { x: cx + 2, y: y-11, size: descFit.size, font, color: rgb(0.07,0.09,0.12) });
+    cx += cols[1].w;
+
+    // Qtà
+    const qtyStr = String(row.qty);
+    page.drawText(qtyStr, { x: cx + cols[2].w - 2 - textW(font, qtyStr, 9.5), y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
+    cx += cols[2].w;
+
+    // Costo unit
+    const unitStr = euro(row.unit);
+    page.drawText(unitStr, { x: cx + cols[3].w - 2 - textW(font, unitStr, 9.5), y: y-11, size: 9.5, font, color: rgb(0.07,0.09,0.12) });
+
+    // Riga extra SOLO se sconto > 0
     if (hasDisc){
+      const rightX = tableX + tableW;
       const discText = `Sconto: ${row.disc}%`;
       const totalText = `Totale: ${euro(row.total)}`;
-      const rightX = tableX + tableW;
 
-      // Posizioni (come reference)
-      const ySconto = y - 24;
-      const yTot = y - 35;
-
-      page.drawText(discText, { x: rightX - 2 - textW(font, discText, 9), y: ySconto, size: 9, font, color: rgb(0.17,0.20,0.25) });
-      page.drawText(totalText, { x: rightX - 2 - textW(fontBold, totalText, 10), y: yTot, size: 10, font: fontBold, color: rgb(0.07,0.09,0.12) });
+      // dentro il rowH: y-28 e y-40 (rowH=44) restano dentro
+      page.drawText(discText, { x: rightX - 2 - textW(font, discText, 9), y: y-28, size: 9, font, color: rgb(0.17,0.20,0.25) });
+      page.drawText(totalText, { x: rightX - 2 - textW(fontBold, totalText, 10), y: y-40, size: 10, font: fontBold, color: rgb(0.07,0.09,0.12) });
     }
 
-    // Separatore
     page.drawLine({ start: {x: tableX, y: y-rowH+3}, end: {x: tableX + tableW, y: y-rowH+3}, thickness: 0.6, color: rgb(0.93,0.93,0.93) });
     y -= rowH;
   };
 
+  // HEADER + TAB
   drawHeader();
-
-  ensureSpace(210);
+  ensureSpace(120);
   drawTableHeader(page, fontBold, tableX, y, cols, rgb);
   y -= 18;
 
   st.rows.forEach((r, idx) => {
-    ensureSpace(150);
-    // se pagina nuova, ristampo intestazione
-    if (y > A4[1] - marginTop - 60){
-      drawTableHeader(page, fontBold, tableX, y, cols, rgb);
-      y -= 18;
-    }
     drawRow(r, idx % 2 === 1);
   });
 
-  // Totale fornitura: label centrata + valore rosso a destra
-  ensureSpace(140);
+  // Totale fornitura
+  ensureSpace(160);
   y -= 12;
   page.drawLine({ start: { x: tableX, y }, end: { x: tableX + tableW, y }, thickness: 1, color: rgb(0.86,0.86,0.86) });
   y -= 26;
@@ -471,8 +486,9 @@
   page.drawText(labelTot, { x: labelX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
   page.drawText(valTot, { x: tableX + tableW - 2 - textW(fontBold, valTot, 11), y, size: 11, font: fontBold, color: rgb(0.77,0.09,0.17) });
 
-  // Note finali (solo se abilitate)
+  // Note
   if (st.header.noteEnabled){
+    ensureSpace(180);
     y -= 34;
     page.drawText('Note', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
     y -= 10;
@@ -490,6 +506,7 @@
   }
 
   // Firma
+  ensureSpace(120);
   page.drawText('Timbro e firma', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
   y -= 10;
   page.drawLine({ start: { x: marginX, y }, end: { x: marginX + 260, y }, thickness: 1, color: rgb(0.7,0.7,0.7) });

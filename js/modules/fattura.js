@@ -360,7 +360,6 @@
     catch { return String(t||'').length * s * 0.52; }
   };
 
-  // "Contain" celle
   const fitText = (f, t, maxW, baseSize, minSize=7) => {
     let s = baseSize;
     let str = String(t || '');
@@ -372,28 +371,17 @@
     return { text: (out || '') + ell, size: s };
   };
 
-  // --- LOGO SVG (vettoriale) ---
-  // 1) prova a caricare e "sanitizzare" logo.svg
-  // 2) prova embedSvg (vettoriale)
-  // 3) se fallisce per incompatibilità SVG → fallback: rasterizza lo SVG ad alta risoluzione (molto nitido)
-  // 4) se anche questo fallisce → fallback PNG
-
   const sanitizeSvg = (svg) => {
     let s = String(svg || '');
-    // remove XML/doctype
     s = s.replace(/^\s*<\?xml[\s\S]*?\?>\s*/i, '');
     s = s.replace(/<!DOCTYPE[\s\S]*?>/ig, '');
-    // remove comments
-    s = s.replace(/<!--([\s\S]*?)-->/g, '');
-    // remove defs/style/metadata that often break embedSvg
+    s = s.replace(//g, '');
     s = s.replace(/<metadata[\s\S]*?<\/metadata>/ig, '');
     s = s.replace(/<title[\s\S]*?<\/title>/ig, '');
     s = s.replace(/<desc[\s\S]*?<\/desc>/ig, '');
     s = s.replace(/<defs[\s\S]*?<\/defs>/ig, '');
     s = s.replace(/<style[\s\S]*?<\/style>/ig, '');
-    // strip attributes with url(#...) that often cause issues
     s = s.replace(/\s(filter|mask|clip-path)="[^"]*"/ig, '');
-    // if style contains url(…), drop the style attribute entirely
     s = s.replace(/\sstyle="[^"]*url\([^\)]*\)[^"]*"/ig, '');
     return s.trim();
   };
@@ -432,10 +420,9 @@
     }
   };
 
-  let logoSvgObj = null; // vettoriale
-  let logoPngObj = null; // raster
+  let logoSvgObj = null; 
+  let logoPngObj = null; 
 
-  // 1) SVG
   let svgTxt = '';
   try{
     const res = await fetch('./assets/logo.svg', { cache:'no-store' });
@@ -449,7 +436,6 @@
         logoSvgObj = await pdfDoc.embedSvg(clean);
       }
     } catch (e){
-      // embedSvg può fallire con SVG complessi → fallback raster high-res
       try{
         const bytes = await rasterizeSvgToPngBytes(clean, 4);
         logoPngObj = await pdfDoc.embedPng(bytes);
@@ -457,7 +443,6 @@
     }
   }
 
-  // 2) PNG fallback
   if (!logoSvgObj && !logoPngObj){
     try{ const bytes = await fetchAsArrayBuffer('./assets/logo.png'); logoPngObj = await pdfDoc.embedPng(bytes); } catch {}
   }
@@ -468,7 +453,6 @@
   const marginBottom = 80;
   const contentW = A4[0] - marginX * 2;
 
-  // Tabella: Prodotto / Descrizione / Q.tà / Costo unit.
   const colProdW = 200;
   const colQtyW  = 40;
   const colUnitW = 80;
@@ -503,30 +487,40 @@
       page.drawImage(logoPngObj, { x: marginX, y: y - h, width: w, height: h });
     }
 
-    page.drawText('Statement accounting', { x: rightBoxX, y: y - 18, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    // --- INIZIO NUOVA LOGICA ALLINEAMENTO UNIFORME ---
+    const stmtY = y - 18;
+    page.drawText('Statement accounting', { x: rightBoxX, y: stmtY, size: 12, font: fontBold, color: rgb(0.07,0.09,0.12) });
 
-    // Box N.ro/Del (spaziatura coerente)
-    const box1Bottom = y - 82; // bottom
-    page.drawRectangle({ x: rightBoxX, y: box1Bottom, width: rightBoxW, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-    drawKV(page, font, fontBold, rightBoxX + 10, box1Bottom + 54 - 22, 'N.ro', st.header.numero, rgb);
-    drawKV(page, font, fontBold, rightBoxX + 10, box1Bottom + 54 - 44, 'Del', fmtDate(st.header.data), rgb);
+    // Impostiamo l'altezza fissa dei box e il gap fisso tra un elemento e l'altro
+    const boxH = 50; 
+    const gap = 16;  
 
-    // Box N. Commessa / Rif. Commessa (stessa distanza dal box sopra)
-    const gapBoxes = 20;
-    const box2H = 46;
-    const box2Bottom = box1Bottom - gapBoxes - box2H;
-    page.drawRectangle({ x: rightBoxX, y: box2Bottom, width: rightBoxW, height: box2H, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-    drawKV(page, font, fontBold, rightBoxX + 10, box2Bottom + box2H - 20, 'N. Commessa', st.header.commessa || '—', rgb);
-    drawKV(page, font, fontBold, rightBoxX + 10, box2Bottom + box2H - 38, 'Rif. Commessa', st.header.rifCommessa || '—', rgb);
+    // Box 1 (N.ro e Del)
+    const box1Top = stmtY - gap; // Distanza fissa dal testo sopra
+    const box1Bottom = box1Top - boxH;
+    page.drawRectangle({ x: rightBoxX, y: box1Bottom, width: rightBoxW, height: boxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    drawKV(page, font, fontBold, rightBoxX + 10, box1Bottom + boxH - 20, 'N.ro', st.header.numero, rgb);
+    drawKV(page, font, fontBold, rightBoxX + 10, box1Bottom + boxH - 38, 'Del', fmtDate(st.header.data), rgb);
 
-    // Oggetto (distanza coerente dal box sopra)
-    const gapOggetto = 20;
-    const yOggetto = box2Bottom - gapOggetto;
-    page.drawText('Oggetto:', { x: marginX, y: yOggetto, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-    page.drawRectangle({ x: marginX + 70, y: yOggetto - 6, width: contentW - 70, height: 20, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
-    page.drawText(trunc(st.header.oggetto || '—', 78), { x: marginX + 78, y: yOggetto + 1, size: 10.5, font, color: rgb(0.07,0.09,0.12) });
+    // Box 2 (N. Commessa e Rif. Commessa)
+    const box2Top = box1Bottom - gap; // Stessa distanza fissa dal Box 1
+    const box2Bottom = box2Top - boxH;
+    page.drawRectangle({ x: rightBoxX, y: box2Bottom, width: rightBoxW, height: boxH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    drawKV(page, font, fontBold, rightBoxX + 10, box2Bottom + boxH - 20, 'N. Commessa', st.header.commessa || '—', rgb);
+    drawKV(page, font, fontBold, rightBoxX + 10, box2Bottom + boxH - 38, 'Rif. Commessa', st.header.rifCommessa || '—', rgb);
 
-    y = yOggetto - 40;
+    // Oggetto
+    const oggettoTop = box2Bottom - gap; // Stessa distanza fissa dal Box 2
+    const oggettoH = 20;
+    const oggettoBottom = oggettoTop - oggettoH;
+
+    // Allineamento testo e box Oggetto mantenendo i gap precisi
+    page.drawText('Oggetto:', { x: marginX, y: oggettoBottom + 6, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
+    page.drawRectangle({ x: marginX + 70, y: oggettoBottom, width: contentW - 70, height: oggettoH, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
+    page.drawText(trunc(st.header.oggetto || '—', 78), { x: marginX + 78, y: oggettoBottom + 6, size: 10.5, font, color: rgb(0.07,0.09,0.12) });
+
+    y = oggettoBottom - 40;
+    // --- FINE NUOVA LOGICA ALLINEAMENTO UNIFORME ---
   };
 
   const newTablePage = () => {
@@ -622,10 +616,10 @@
     y -= 36;
   }
 
-  // Firma: abbassa la riga per lasciare spazio alla compilazione
+  // Firma
   ensureSpace(140);
   page.drawText('Timbro e firma', { x: marginX, y, size: 11, font: fontBold, color: rgb(0.07,0.09,0.12) });
-  y -= 24; // più spazio sotto la label
+  y -= 24;
   page.drawLine({ start: { x: marginX, y }, end: { x: marginX + 260, y }, thickness: 1, color: rgb(0.7,0.7,0.7) });
 
   const pdfBytes = await pdfDoc.save();

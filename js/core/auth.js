@@ -20,24 +20,83 @@
 
   const KEY = 'abitare_tools_auth_user';
   const FORCE_KEY = 'abitare_tools_force_login';
+  const REMEMBER_HOURS = 24;
+  const REMEMBER_MS = REMEMBER_HOURS * 60 * 60 * 1000;
 
   function clearUser(){
     try { sessionStorage.removeItem(KEY); } catch {}
     try { localStorage.removeItem(KEY); } catch {}
   }
 
+  function sanitizeUserPayload(raw){
+    if (!raw || typeof raw !== 'object') return null;
+    if (!raw.email || !raw.role) return null;
+
+    const payload = {
+      email: String(raw.email || '').trim().toLowerCase(),
+      role: raw.role,
+      brand: raw.brand || null,
+      remember: !!raw.remember,
+      loginAt: Number(raw.loginAt || Date.now())
+    };
+
+    if (!payload.email) return null;
+
+    if (payload.remember) {
+      const expiresAt = Number(raw.expiresAt || (payload.loginAt + REMEMBER_MS));
+      if (!Number.isFinite(expiresAt)) return null;
+      if (Date.now() > expiresAt) {
+        clearUser();
+        return null;
+      }
+      payload.expiresAt = expiresAt;
+    }
+
+    return payload;
+  }
+
   function readStored(){
     try {
-      const raw = sessionStorage.getItem(KEY) || localStorage.getItem(KEY);
-      return raw ? JSON.parse(raw) : null;
+      const sessionRaw = sessionStorage.getItem(KEY);
+      if (sessionRaw) {
+        const sessionData = sanitizeUserPayload(JSON.parse(sessionRaw));
+        if (sessionData) return sessionData;
+        try { sessionStorage.removeItem(KEY); } catch {}
+      }
     } catch {
-      return null;
+      try { sessionStorage.removeItem(KEY); } catch {}
     }
+
+    try {
+      const localRaw = localStorage.getItem(KEY);
+      if (localRaw) {
+        const localData = sanitizeUserPayload(JSON.parse(localRaw));
+        if (localData) return localData;
+        try { localStorage.removeItem(KEY); } catch {}
+      }
+    } catch {
+      try { localStorage.removeItem(KEY); } catch {}
+    }
+
+    return null;
   }
 
   function storeUser(user, remember){
+    clearUser();
+
+    const payload = {
+      email: user.email,
+      role: user.role,
+      brand: user.brand || null,
+      remember: !!remember,
+      loginAt: Date.now()
+    };
+
+    if (remember) payload.expiresAt = payload.loginAt + REMEMBER_MS;
+
     try {
-      (remember ? localStorage : sessionStorage).setItem(KEY, JSON.stringify(user));
+      const serialized = JSON.stringify(payload);
+      (remember ? localStorage : sessionStorage).setItem(KEY, serialized);
     } catch {}
   }
 
@@ -183,6 +242,15 @@
     const btn = document.getElementById('AuthConfirm');
 
     bindPasswordToggle();
+
+    // Pre-check Ricordami if there is a valid remembered user in localStorage
+    try {
+      const localRaw = localStorage.getItem(KEY);
+      if (localRaw && remEl) {
+        const remembered = sanitizeUserPayload(JSON.parse(localRaw));
+        remEl.checked = !!(remembered && remembered.remember);
+      }
+    } catch {}
 
     const doLogin = () => {
       const email = (emailEl?.value || '').trim().toLowerCase();

@@ -19,24 +19,22 @@ body.auth-blur #AppRoot{
  color: var(--gray-700); 
  margin: 6px 0 10px; 
  user-select:none; 
-} 
-.auth-password-wrap{ 
- position: relative; 
- display: flex; 
- align-items: center; 
- width: 100%; 
-} 
-.auth-password-input{ 
- width: 100%; 
- padding-right: 44px; 
-} 
+}
+.auth-password-wrap{
+ position: relative;
+ display: block;
+ width: 100%;
+}
+.auth-password-input{
+ width: 100%;
+ padding-right: 48px;
+}
 .auth-password-toggle{
  position: absolute;
- right: 10px;
- top: 50%;
- transform: translateY(-50%);
- width: 20px;
- height: 20px;
+ top: 1px;
+ right: 0;
+ bottom: 1px;
+ width: 42px;
  display: flex;
  align-items: center;
  justify-content: center;
@@ -45,22 +43,30 @@ body.auth-blur #AppRoot{
  color: var(--gray-500, #6b7280);
  cursor: pointer;
  padding: 0;
- line-height: 0;
-} 
-.auth-password-toggle:hover{ 
- color: var(--gray-700, #374151); 
-} 
-
+ margin: 0;
+ line-height: 1;
+ -webkit-appearance: none;
+ appearance: none;
+}
 .auth-password-toggle span{
- display: block;
- line-height: 0;
+ width: 18px;
+ height: 18px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
 }
 .auth-password-toggle svg{
  display: block;
  width: 18px;
  height: 18px;
  pointer-events: none;
+ transform: translateY(-1px);
 }
+ 
+.auth-password-toggle:hover{ 
+ color: var(--gray-700, #374151); 
+} 
+
 .auth-password-toggle:focus-visible{ 
  outline: 2px solid rgba(196, 22, 43, 0.28); 
  outline-offset: 2px; 

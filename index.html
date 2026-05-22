@@ -1,688 +1,611 @@
 <!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="robots" content="noindex, nofollow" />
-    <meta name="googlebot" content="noindex, nofollow" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Abitare Co. – Digital Content Tool</title>
-    <meta name="theme-color" content="#c4162b" />
-
-    <link rel="icon" href="./assets/logo.ico" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-    <link rel="stylesheet" href="./css/styles.css" />
-    <link rel="stylesheet" href="./css/modules/images.css" />
+ <head>
+ <meta charset="utf-8" />
+ <meta name="robots" content="noindex, nofollow" />
+ <meta name="googlebot" content="noindex, nofollow" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>Abitare Co. – Digital Content Tool</title>
+ <meta name="theme-color" content="#c4162b" />
+ <link rel="icon" href="./assets/logo.ico" />
+ <link rel="preconnect" href="https://fonts.googleapis.com" />
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+ <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+ <link rel="stylesheet" href="./css/styles.css" />
+ <link rel="stylesheet" href="./css/modules/images.css" />
  <link rel="stylesheet" href="./css/modules/cropzoom.css" />
  <link rel="stylesheet" href="./css/modules/bv.css" />
  <link rel="stylesheet" href="./css/modules/bv_3d.css" />
-    <link rel="stylesheet" href="./css/modules/auth.css" />
+ <link rel="stylesheet" href="./css/modules/auth.css?v=20260522_login1" />
  <link rel="stylesheet" href="./css/modules/welcome.css?v=20260506v4" />
  <link rel="stylesheet" href="./css/modules/fattura.css?v=20260520v5" />
-   <link rel="stylesheet" href="P260520v4" />
+ <link rel="stylesheet" href="P260520v4" />
 </head>
-
-  <body>
-    <!-- AUTH PRELOADER (2s) -->
-    <div id="AuthPreloader" aria-hidden="true">
-      <div class="auth-bounce" aria-label="Loading">
-        <img src="./assets/logo.ico" alt="Abitare Co." />
-      </div>
-    </div>
-
-    <!-- AUTH MODAL OVERLAY -->
-    <div id="AuthOverlay" aria-hidden="true">
-      <div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="AuthTitle">
-        <div class="auth-icon">
-          <img src="./assets/logo.ico" alt="" />
-        </div>
-
-        <div class="auth-title" id="AuthTitle">Accedi al tuo account</div>
-        <div class="auth-sub">Inserisci email e password per entrare nel tool interno.</div>
-
-        <div style="text-align: left">
-          <label for="AuthEmail">Email *</label>
-          <input id="AuthEmail" class="input" type="email" placeholder="nome@abitareco.it" autocomplete="username" />
-
-          <label for="AuthPassword">Password *</label>
-          <input id="AuthPassword" class="input" type="password" placeholder="Password" autocomplete="current-password" />
-
-          <label class="auth-remember">
-            <input id="AuthRemember" type="checkbox" />
-            <span>Ricordami</span>
-          </label>
-
-          <div id="AuthError"></div>
-        </div>
-
-        <div class="auth-actions">
-          <button id="AuthConfirm" type="button" class="btn-primary">Accedi</button>
-        </div>
-      </div>
-    </div>
-
-    <noscript>
-      <div style="padding: 12px; background: #fff3cd; border: 1px solid #ffe69c; color: #664d03">
-        Questo strumento richiede JavaScript attivo.
-      </div>
-    </noscript>
-
-    <div id="AppRoot" class="app">
-      <!-- ═════════ SIDEBAR ═════════ -->
-      <aside class="sidebar">
-        <img id="SidebarLogo" class="logo" src="./assets/logo.png" alt="Abitare Co." />
-
-        <ul id="SideMenu" class="menu">
-          <li data-mode="images" data-icon="./assets/icons/icon-sito.png" data-icon-active="./assets/icons/icon-sito-selected.png">
-            <span class="mi"><img alt="" /></span><span class="txt">Immagini</span>
-          </li>
-
-          <li data-mode="digitaltool" data-icon="./assets/icons/icon-digital.png" data-icon-active="./assets/icons/icon-digital-selected.png">
-            <span class="mi"><img alt="" /></span><span class="txt">DigitalTool</span>
-          </li>
-
-          <li data-mode="pdf2jpg" data-icon="./assets/icons/icon-pdf.png" data-icon-active="./assets/icons/icon-pdf-selected.png">
-            <span class="mi"><img alt="" /></span><span class="txt">PDF → JPG</span>
-          </li>
-
-          <li data-mode="rename" data-icon="./assets/icons/icon-rename.png" data-icon-active="./assets/icons/icon-rename-selected.png">
-            <span class="mi"><img alt="" /></span><span class="txt">Rename</span>
-          </li>
-
-          <li data-mode="video" data-icon="./assets/icons/icon-video.png" data-icon-active="./assets/icons/icon-video-selected.png">
-            <span class="mi"><img alt="" /></span><span class="txt">Video Slideshow</span>
-          </li>
-
-          <li data-mode="watermark" data-icon="./assets/icons/icon-watermark.png" data-icon-active="./assets/icons/icon-watermark-selected.png">
-            <span class="mi"><img alt="" /></span><span class="txt">Watermark</span>
-          </li>
-
-          
+ <body>
+ <!-- AUTH PRELOADER (2s) -->
+ <div id="AuthPreloader" aria-hidden="true">
+ <div class="auth-bounce" aria-label="Loading">
+ <img src="./assets/logo.ico" alt="Abitare Co." />
+ </div>
+ </div>
+ <!-- AUTH MODAL OVERLAY -->
+ <div id="AuthOverlay" aria-hidden="true">
+ <div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="AuthTitle">
+ <div class="auth-icon">
+ <img src="./assets/logo.ico" alt="" />
+ </div>
+ <div class="auth-title" id="AuthTitle">Accedi al tuo account</div>
+ <div class="auth-sub">Inserisci email e password per entrare nel tool interno.</div>
+ <div style="text-align: left">
+ <label for="AuthEmail">Email *</label>
+ <input id="AuthEmail" class="input" type="email" placeholder="user@abitareco.it" autocomplete="username" />
+ <label for="AuthPassword">Password *</label>
+ <div class="auth-password-wrap">
+   <input id="AuthPassword" class="input auth-password-input" type="password" placeholder="Password" autocomplete="current-password" />
+   <button id="AuthTogglePassword" class="auth-password-toggle" type="button" aria-label="Mostra password" aria-pressed="false" title="Mostra/Nascondi password">
+     <span class="eye-open" aria-hidden="true">
+       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+         <path d="M1.5 12S5.5 5.5 12 5.5 22.5 12 22.5 12 18.5 18.5 12 18.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+         <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+       </svg>
+     </span>
+     <span class="eye-closed hidden" aria-hidden="true">
+       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+         <path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+         <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+         <path d="M9.88 5.09A10.94 10.94 0 0 1 12 4.9c6.5 0 10.5 7.1 10.5 7.1a21.47 21.47 0 0 1-4.31 4.91" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+         <path d="M6.61 6.61A21.48 21.48 0 0 0 1.5 12s4 7.1 10.5 7.1a10.9 10.9 0 0 0 5.03-1.21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+       </svg>
+     </span>
+   </button>
+ </div>
+ <label class="auth-remember">
+ <input id="AuthRemember" type="checkbox" />
+ <span>Ricordami</span>
+ </label>
+ <div id="AuthError"></div>
+ </div>
+ <div class="auth-actions">
+ <button id="AuthConfirm" type="button" class="btn-primary">Accedi</button>
+ </div>
+ </div>
+ </div>
+ <noscript>
+ <div style="padding: 12px; background: #fff3cd; border: 1px solid #ffe69c; color: #664d03">
+ Questo strumento richiede JavaScript attivo.
+ </div>
+ </noscript>
+ <div id="AppRoot" class="app">
+ <!-- ═════════ SIDEBAR ═════════ -->
+ <aside class="sidebar">
+ <img id="SidebarLogo" class="logo" src="./assets/logo.png" alt="Abitare Co." />
+ <ul id="SideMenu" class="menu">
+ <li data-mode="images" data-icon="./assets/icons/icon-sito.png" data-icon-active="./assets/icons/icon-sito-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">Immagini</span>
+ </li>
+ <li data-mode="digitaltool" data-icon="./assets/icons/icon-digital.png" data-icon-active="./assets/icons/icon-digital-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">DigitalTool</span>
+ </li>
+ <li data-mode="pdf2jpg" data-icon="./assets/icons/icon-pdf.png" data-icon-active="./assets/icons/icon-pdf-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">PDF → JPG</span>
+ </li>
+ <li data-mode="rename" data-icon="./assets/icons/icon-rename.png" data-icon-active="./assets/icons/icon-rename-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">Rename</span>
+ </li>
+ <li data-mode="video" data-icon="./assets/icons/icon-video.png" data-icon-active="./assets/icons/icon-video-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">Video Slideshow</span>
+ </li>
+ <li data-mode="watermark" data-icon="./assets/icons/icon-watermark.png" data-icon-active="./assets/icons/icon-watermark-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">Watermark</span>
+ </li>
  <li data-mode="fattura" data-icon="./assets/icons/icon-fattura.png" data-icon-active="./assets/icons/icon-fattura-selected.png">
-  <span class="mi"><img alt="" /></span><span class="txt">Preventivo</span>
+ <span class="mi"><img alt="" /></span><span class="txt">Preventivo</span>
  </li>
 <li data-mode="bv" data-icon="./assets/icons/icon-bv.png" data-icon-active="./assets/icons/icon-bv-selected.png">
-            <span class="mi"><img alt="" /></span><span class="txt">Biglietto da visita</span>
-          </li>
-
-          <li data-mode="qr" data-icon="./assets/icons/icon-qr.png" data-icon-active="./assets/icons/icon-qr-selected.png">
-            <span class="mi"><img alt="" /></span><span class="txt">Genera QR Code</span>
-          </li>
-
-          <li data-mode="iubenda" data-icon="./assets/icons/icon-iubenda.png" data-icon-active="./assets/icons/icon-iubenda-selected.png">
-            <span class="mi"><img alt="" /></span><span class="txt">Iubenda</span>
-          </li>
-
-          <li data-mode="ppt" data-icon="./assets/icons/icon-ppt.png" data-icon-active="./assets/icons/icon-ppt-selected.png">
-            <span class="mi"><img alt="" /></span><span class="txt">Template PPT</span>
-          </li>
-        </ul>
-
-        <!-- Sidebar bottom: User menu (stile Abico) -->
-        <div class="sidebar-bottom">
-          <div id="UserMenu" class="user-menu hidden" role="button" tabindex="0" aria-label="Menu utente">
-            <div class="user-avatar" aria-hidden="true"></div>
-            <div class="user-meta">
-              <div class="user-name" id="UserLabel">Utente</div>
-            </div>
-            <div class="user-chevron" aria-hidden="true">▾</div>
-          </div>
-
-          <div id="UserDropdown" class="user-dropdown hidden" role="menu" aria-label="Azioni utente">
-            <button id="BtnLogout" type="button" class="user-logout">Esci dal tuo account</button>
-          </div>
-        </div>
-      </aside>
-
-      <!-- ═════════ MAIN ═════════ -->
-      <main>
-        <div class="content">
-          <div class="cards-scroll">
-            <!-- WELCOME -->
-            <section id="WelcomeCard" class="card">
-  <div class="welcome-brand" aria-hidden="true">
+ <span class="mi"><img alt="" /></span><span class="txt">Biglietto da visita</span>
+ </li>
+ <li data-mode="qr" data-icon="./assets/icons/icon-qr.png" data-icon-active="./assets/icons/icon-qr-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">Genera QR Code</span>
+ </li>
+ <li data-mode="iubenda" data-icon="./assets/icons/icon-iubenda.png" data-icon-active="./assets/icons/icon-iubenda-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">Iubenda</span>
+ </li>
+ <li data-mode="ppt" data-icon="./assets/icons/icon-ppt.png" data-icon-active="./assets/icons/icon-ppt-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">Template PPT</span>
+ </li>
+ </ul>
+ <!-- Sidebar bottom: User menu (stile Abico) -->
+ <div class="sidebar-bottom">
+ <div id="UserMenu" class="user-menu hidden" role="button" tabindex="0" aria-label="Menu utente">
+ <div class="user-avatar" aria-hidden="true"></div>
+ <div class="user-meta">
+ <div class="user-name" id="UserLabel">Utente</div>
+ </div>
+ <div class="user-chevron" aria-hidden="true">▾</div>
+ </div>
+ <div id="UserDropdown" class="user-dropdown hidden" role="menu" aria-label="Azioni utente">
+ <button id="BtnLogout" type="button" class="user-logout">Esci dal tuo account</button>
+ </div>
+ </div>
+ </aside>
+ <!-- ═════════ MAIN ═════════ -->
+ <main>
+ <div class="content">
+ <div class="cards-scroll">
+ <!-- WELCOME -->
+ <section id="WelcomeCard" class="card">
+ <div class="welcome-brand" aria-hidden="true">
  <img src="./assets/logo.png?v=20260506v3" alt="Abitare Co." />
 </div>
-  <div class="welcome-head">
-    <div>
-      <h2 class="welcome-title">Cosa vuoi creare oggi?</h2>
-      <p class="welcome-sub">Strumenti interni Abitare Co. per produrre e ottimizzare contenuti digitali.</p>
-    </div>
-    <button id="WelcomeHelpBtn" type="button" class="btn-outline welcome-help">Aiuto</button>
-  </div>
-
-  <div id="WelcomeCards" class="welcome-grid" aria-label="Scorciatoie modalità"></div>
+ <div class="welcome-head">
+ <div>
+ <h2 class="welcome-title">Cosa vuoi creare oggi?</h2>
+ <p class="welcome-sub">Strumenti interni Abitare Co. per produrre e ottimizzare contenuti digitali.</p>
+ </div>
+ <button id="WelcomeHelpBtn" type="button" class="btn-outline welcome-help">Aiuto</button>
+ </div>
+ <div id="WelcomeCards" class="welcome-grid" aria-label="Scorciatoie modalità"></div>
 </section>
-
-            <!-- IMMAGINI: Slug -->
-            <section id="SlugCard" class="card hidden">
-              <h3>Ottimizzazioni immagini</h3>
-              <div class="form-group">
-                <label for="TxtSlugIta">Nome file ITA*</label>
-                <input id="TxtSlugIta" class="input" type="text" placeholder="es. appartamento-roma-parioli" />
-              </div>
-              <div class="form-group">
-                <label for="TxtSlugEng">Nome file ENG*</label>
-                <input id="TxtSlugEng" class="input" type="text" placeholder="es. apartment-rome-parioli" />
-              </div>
-            </section>
-
-            <!-- IMMAGINI: Formato -->
-            <section id="FormatCard" class="card hidden">
-              <label>Formato</label>
-              <div class="radios" style="display:flex;flex-direction:column;gap:6px">
-                <label><input type="radio" name="fmtSite" id="FmtSite1920" checked /> Sito Abitare Co.</label>
-                <label><input type="radio" name="fmtSite" id="FmtSiteShare" /> Share (1200×630)</label>
-                <label><input type="radio" name="fmtSite" id="FmtSiteCustom" /> Personalizzato</label>
-              </div>
-              <div id="CustomSizeRow" class="row hidden" style="margin-top:10px">
-                <div>
-                  <label>Larghezza (px)</label>
-                  <input id="CustomW" class="input" type="number" min="1" value="1920" />
-                </div>
-                <div>
-                  <label>Altezza (px)</label>
-                  <input id="CustomH" class="input" type="number" min="1" value="1080" />
-                </div>
-              </div>
-            </section>
-
-            <!-- IMMAGINI: Crop manuale -->
-            <section id="ImageCropCard" class="card hidden">
-              <h3>Ritaglio immagine</h3>
-              <p class="muted">Hai caricato una sola immagine. Trascina e ridimensiona l’immagine per regolare l’inquadratura.</p>
-              <div id="CropFrame" class="crop-frame"><img id="CropImg" alt="Anteprima ritaglio" /></div>
-              <label style="margin-top:12px">Zoom immagine</label>
-              <input type="range" id="CropZoom" class="input" />
-              <button id="CropReset" type="button" class="btn-outline" style="margin-top:12px">Ripristina</button>
-            </section>
-
-            <!-- UPLOAD GENERALE -->
-            <section id="DTCard" class="card hidden">
-              <h3>Immagini per Digital Tool</h3>
-              <p class="muted" style="margin-top:6px;line-height:1.6">Ottimizza automaticamente le immagini per l'utilizzo digitale. Carica la cartella e clicca <b>Esporta ora</b>.</p>
-            </section>
-
+ <!-- IMMAGINI: Slug -->
+ <section id="SlugCard" class="card hidden">
+ <h3>Ottimizzazioni immagini</h3>
+ <div class="form-group">
+ <label for="TxtSlugIta">Nome file ITA*</label>
+ <input id="TxtSlugIta" class="input" type="text" placeholder="es. appartamento-roma-parioli" />
+ </div>
+ <div class="form-group">
+ <label for="TxtSlugEng">Nome file ENG*</label>
+ <input id="TxtSlugEng" class="input" type="text" placeholder="es. apartment-rome-parioli" />
+ </div>
+ </section>
+ <!-- IMMAGINI: Formato -->
+ <section id="FormatCard" class="card hidden">
+ <label>Formato</label>
+ <div class="radios" style="display:flex;flex-direction:column;gap:6px">
+ <label><input type="radio" name="fmtSite" id="FmtSite1920" checked /> Sito Abitare Co.</label>
+ <label><input type="radio" name="fmtSite" id="FmtSiteShare" /> Share (1200×630)</label>
+ <label><input type="radio" name="fmtSite" id="FmtSiteCustom" /> Personalizzato</label>
+ </div>
+ <div id="CustomSizeRow" class="row hidden" style="margin-top:10px">
+ <div>
+ <label>Larghezza (px)</label>
+ <input id="CustomW" class="input" type="number" min="1" value="1920" />
+ </div>
+ <div>
+ <label>Altezza (px)</label>
+ <input id="CustomH" class="input" type="number" min="1" value="1080" />
+ </div>
+ </div>
+ </section>
+ <!-- IMMAGINI: Crop manuale -->
+ <section id="ImageCropCard" class="card hidden">
+ <h3>Ritaglio immagine</h3>
+ <p class="muted">Hai caricato una sola immagine. Trascina e ridimensiona l’immagine per regolare l’inquadratura.</p>
+ <div id="CropFrame" class="crop-frame"><img id="CropImg" alt="Anteprima ritaglio" /></div>
+ <label style="margin-top:12px">Zoom immagine</label>
+ <input type="range" id="CropZoom" class="input" />
+ <button id="CropReset" type="button" class="btn-outline" style="margin-top:12px">Ripristina</button>
+ </section>
+ <!-- UPLOAD GENERALE -->
+ <section id="DTCard" class="card hidden">
+ <h3>Immagini per Digital Tool</h3>
+ <p class="muted" style="margin-top:6px;line-height:1.6">Ottimizza automaticamente le immagini per l'utilizzo digitale. Carica la cartella e clicca <b>Esporta ora</b>.</p>
+ </section>
 <section id="UploadCard" class="card hidden">
-              <h3>Carica cartella*</h3>
-              <div id="DropArea" class="drop" tabindex="0" role="button" aria-label="Carica cartella" title="Clicca per selezionare una cartella o trascinala qui">
-                <div class="drop-inner">
-                  <span id="TxtFolderPath" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
-                  <button id="BtnClearPath" class="btn-small hidden" title="Rimuovi cartella" type="button">✕</button>
-                </div>
-              </div>
-            </section>
-
-            <!-- DIGITAL TOOL -->
-            
-
-            <!-- RENAME -->
-            <section id="RenameCard" class="card hidden">
-              <h3>Rinomina i file</h3>
-              <p class="muted" style="margin-bottom:16px">Se non inserisci un nome base, verranno generati solo numeri (01, 02, 03…)</p>
-              <div class="form-group">
-                <label for="TxtRenameBase">Nome base (opzionale)</label>
-                <input id="TxtRenameBase" class="input" type="text" placeholder="es. cucina" />
-              </div>
-              <div class="form-group">
-                <label>Carica cartella*</label>
-                <div id="DropAreaRename" class="drop" tabindex="0" role="button" aria-label="Carica cartella da rinominare">
-                  <div class="drop-inner">
-                    <span id="TxtFolderRename" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
-                    <button id="BtnClearRename" class="btn-small hidden" type="button">✕</button>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- VIDEO -->
-            <section id="VideoCard" class="card hidden">
-              <h3>Creazione video slideshow</h3>
-              <p class="muted" style="margin-bottom:16px">Imposta nome, durata e formato. Poi clicca "Esporta ora".</p>
-              <div class="form-group">
-                <label for="VidTitle">Nome video*</label>
-                <input id="VidTitle" class="input" type="text" placeholder="es. abitareco-presentazione" />
-              </div>
-              <div class="row" style="margin-bottom:16px">
-                <div>
-                  <label for="VidDuration">Durata</label>
-                  <select id="VidDuration" class="input" style="height:41px">
-                    <option value="15">15 secondi</option>
-                    <option value="30" selected>30 secondi</option>
-                    <option value="45">45 secondi</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Formato</label>
-                  <div class="radios" style="display:flex;flex-direction:column;gap:6px">
-                    <label><input type="radio" name="VidFmt" id="VidFmtH" checked /> Orizzontale (1920×1080)</label>
-                    <label><input type="radio" name="VidFmt" id="VidFmtV" /> Verticale (1080×1920)</label>
-                    <label><input type="radio" name="VidFmt" id="VidFmtS" /> Quadrato (1080×1080)</label>
-                  </div>
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Carica cartella immagini*</label>
-                <div id="DropAreaVideo" class="drop" tabindex="0" role="button" aria-label="Carica cartella per video">
-                  <div class="drop-inner">
-                    <span id="TxtFolderVideo" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
-                    <button id="BtnClearVideo" class="btn-small hidden" type="button">✕</button>
-                  </div>
-                </div>
-              </div>
-              <canvas id="VidCanvas" width="1920" height="1080" hidden></canvas>
-            </section>
-
-            <!-- WATERMARK -->
-            <section id="WatermarkCard" class="card hidden">
-  <h3>Watermark</h3>
-  <p class="muted" style="margin-top:6px;line-height:1.6">
-    Seleziona il preset e poi carica la cartella immagini. Infine clicca <b>Esporta ora</b>.
-  </p>
-
-  <div class="brand-pills" id="WmPresetPills" style="margin-top:12px">
-    <button type="button" class="brand-pill" data-wm-preset="portali" id="WmPresetPortali">Portali immobiliari</button>
-    <button type="button" class="brand-pill" data-wm-preset="comingsoon" id="WmPresetComingsoon">Coming soon sito</button>
-  </div>
-
-  <!-- Upload Portali (solo quando selezionato Portali immobiliari) -->
-  <div id="WmPortaliUploadWrap" style="margin-top:14px">
-    <div id="WmPortaliDrop" class="drop" tabindex="0" role="button" aria-label="Carica cartella Portali" title="Clicca per selezionare una cartella o trascinala qui">
-      <div class="drop-inner">
-        <span id="WmPortaliName" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
-        <button id="WmPortaliClear" class="btn-small hidden" title="Rimuovi" type="button">✕</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Upload Coming soon (solo quando selezionato Coming soon sito) -->
-  <div id="WmComingsoonUploadWrap" class="hidden" style="margin-top:14px">
-    <div id="WmComingsoonDrop" class="drop" tabindex="0" role="button" aria-label="Carica cartella o immagine Coming soon" title="Clicca per selezionare file o trascina qui una cartella/immagine">
-      <div class="drop-inner">
-        <span id="WmComingsoonName" class="muted">Trascina qui la cartella/singola immagine o clicca per sfogliare…</span>
-        <button id="WmComingsoonClear" class="btn-small hidden" title="Rimuovi" type="button">✕</button>
-      </div>
-    </div>
-
-    <!-- Crop manuale (solo se 1 immagine in Coming soon) -->
-    <div id="WmCropWrap" class="hidden" style="margin-top:14px">
-      <h4 style="margin:0 0 6px 0">Ritaglio (Coming soon)</h4>
-      <p class="muted" style="margin-top:0; line-height:1.6">Trascina per spostare e usa lo zoom per regolare l'inquadratura (output 1920×1080).</p>
-      <div id="WmCropFrame" class="crop-frame"><img id="WmCropImg" alt="Anteprima ritaglio Coming soon" /></div>
-      <label style="margin-top:12px">Zoom immagine</label>
-      <input type="range" id="WmCropZoom" class="input" />
-      <button id="WmCropReset" type="button" class="btn-outline" style="margin-top:12px">Ripristina</button>
-    </div>
-  </div>
+ <h3>Carica cartella*</h3>
+ <div id="DropArea" class="drop" tabindex="0" role="button" aria-label="Carica cartella" title="Clicca per selezionare una cartella o trascinala qui">
+ <div class="drop-inner">
+ <span id="TxtFolderPath" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
+ <button id="BtnClearPath" class="btn-small hidden" title="Rimuovi cartella" type="button">✕</button>
+ </div>
+ </div>
+ </section>
+ <!-- DIGITAL TOOL -->
+ <!-- RENAME -->
+ <section id="RenameCard" class="card hidden">
+ <h3>Rinomina i file</h3>
+ <p class="muted" style="margin-bottom:16px">Se non inserisci un nome base, verranno generati solo numeri (01, 02, 03…)</p>
+ <div class="form-group">
+ <label for="TxtRenameBase">Nome base (opzionale)</label>
+ <input id="TxtRenameBase" class="input" type="text" placeholder="es. cucina" />
+ </div>
+ <div class="form-group">
+ <label>Carica cartella*</label>
+ <div id="DropAreaRename" class="drop" tabindex="0" role="button" aria-label="Carica cartella da rinominare">
+ <div class="drop-inner">
+ <span id="TxtFolderRename" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
+ <button id="BtnClearRename" class="btn-small hidden" type="button">✕</button>
+ </div>
+ </div>
+ </div>
+ </section>
+ <!-- VIDEO -->
+ <section id="VideoCard" class="card hidden">
+ <h3>Creazione video slideshow</h3>
+ <p class="muted" style="margin-bottom:16px">Imposta nome, durata e formato. Poi clicca "Esporta ora".</p>
+ <div class="form-group">
+ <label for="VidTitle">Nome video*</label>
+ <input id="VidTitle" class="input" type="text" placeholder="es. abitareco-presentazione" />
+ </div>
+ <div class="row" style="margin-bottom:16px">
+ <div>
+ <label for="VidDuration">Durata</label>
+ <select id="VidDuration" class="input" style="height:41px">
+ <option value="15">15 secondi</option>
+ <option value="30" selected>30 secondi</option>
+ <option value="45">45 secondi</option>
+ </select>
+ </div>
+ <div>
+ <label>Formato</label>
+ <div class="radios" style="display:flex;flex-direction:column;gap:6px">
+ <label><input type="radio" name="VidFmt" id="VidFmtH" checked /> Orizzontale (1920×1080)</label>
+ <label><input type="radio" name="VidFmt" id="VidFmtV" /> Verticale (1080×1920)</label>
+ <label><input type="radio" name="VidFmt" id="VidFmtS" /> Quadrato (1080×1080)</label>
+ </div>
+ </div>
+ </div>
+ <div class="form-group">
+ <label>Carica cartella immagini*</label>
+ <div id="DropAreaVideo" class="drop" tabindex="0" role="button" aria-label="Carica cartella per video">
+ <div class="drop-inner">
+ <span id="TxtFolderVideo" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
+ <button id="BtnClearVideo" class="btn-small hidden" type="button">✕</button>
+ </div>
+ </div>
+ </div>
+ <canvas id="VidCanvas" width="1920" height="1080" hidden></canvas>
+ </section>
+ <!-- WATERMARK -->
+ <section id="WatermarkCard" class="card hidden">
+ <h3>Watermark</h3>
+ <p class="muted" style="margin-top:6px;line-height:1.6">
+ Seleziona il preset e poi carica la cartella immagini. Infine clicca <b>Esporta ora</b>.
+ </p>
+ <div class="brand-pills" id="WmPresetPills" style="margin-top:12px">
+ <button type="button" class="brand-pill" data-wm-preset="portali" id="WmPresetPortali">Portali immobiliari</button>
+ <button type="button" class="brand-pill" data-wm-preset="comingsoon" id="WmPresetComingsoon">Coming soon sito</button>
+ </div>
+ <!-- Upload Portali (solo quando selezionato Portali immobiliari) -->
+ <div id="WmPortaliUploadWrap" style="margin-top:14px">
+ <div id="WmPortaliDrop" class="drop" tabindex="0" role="button" aria-label="Carica cartella Portali" title="Clicca per selezionare una cartella o trascinala qui">
+ <div class="drop-inner">
+ <span id="WmPortaliName" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
+ <button id="WmPortaliClear" class="btn-small hidden" title="Rimuovi" type="button">✕</button>
+ </div>
+ </div>
+ </div>
+ <!-- Upload Coming soon (solo quando selezionato Coming soon sito) -->
+ <div id="WmComingsoonUploadWrap" class="hidden" style="margin-top:14px">
+ <div id="WmComingsoonDrop" class="drop" tabindex="0" role="button" aria-label="Carica cartella o immagine Coming soon" title="Clicca per selezionare file o trascina qui una cartella/immagine">
+ <div class="drop-inner">
+ <span id="WmComingsoonName" class="muted">Trascina qui la cartella/singola immagine o clicca per sfogliare…</span>
+ <button id="WmComingsoonClear" class="btn-small hidden" title="Rimuovi" type="button">✕</button>
+ </div>
+ </div>
+ <!-- Crop manuale (solo se 1 immagine in Coming soon) -->
+ <div id="WmCropWrap" class="hidden" style="margin-top:14px">
+ <h4 style="margin:0 0 6px 0">Ritaglio (Coming soon)</h4>
+ <p class="muted" style="margin-top:0; line-height:1.6">Trascina per spostare e usa lo zoom per regolare l'inquadratura (output 1920×1080).</p>
+ <div id="WmCropFrame" class="crop-frame"><img id="WmCropImg" alt="Anteprima ritaglio Coming soon" /></div>
+ <label style="margin-top:12px">Zoom immagine</label>
+ <input type="range" id="WmCropZoom" class="input" />
+ <button id="WmCropReset" type="button" class="btn-outline" style="margin-top:12px">Ripristina</button>
+ </div>
+ </div>
 </section>
-
-            
 <!-- FATTURA (Marketing/Admin) -->
 <section id="FatturaCard" class="card hidden">
  <h3>Preventivo</h3>
  <p class="muted" style="margin-top:6px;line-height:1.6">Seleziona una sezione e un prodotto dal listino, inserisci quantità e (opzionale) sconto. Il costo unitario si compila automaticamente ma resta modificabile. Poi clicca <b>Esporta PDF</b>.</p>
-
  <div class="fattura-box">
-  <div class="row" style="gap:12px; margin-top:14px">
-   <div>
-    <label for="FatNumero">N.ro</label>
-    <input id="FatNumero" class="input" type="text" readonly placeholder="—" />
-   </div>
-   <div>
-    <label for="FatData">Data</label>
-    <input id="FatData" class="input" type="date" />
-   </div>
-  </div>
-
-  <div class="row" style="gap:12px">
-   <div>
-    <label for="FatCommessa">N. Commessa</label>
-    <input id="FatCommessa" class="input" type="text" placeholder="es. C 3107" />
-   </div>
-   <div>
-    <label for="FatRifCommessa">Rif. Commessa</label>
-    <input id="FatRifCommessa" class="input" type="text" placeholder="es. Segrate Village 2 Redo" />
-   </div>
-  </div>
-
-  <div class="form-group">
-   <label for="FatOggetto">Oggetto</label>
-   <input id="FatOggetto" class="input" type="text" placeholder="es. Creatività Baracca Segrate" />
-  </div>
-
-  <div class="fattura-divider"></div>
-
-  <div class="row" style="gap:12px; align-items:flex-end">
-   <div>
-    <label for="FatSezione">Sezione listino</label>
-    <select id="FatSezione" class="input" style="height:41px"></select>
-   </div>
-   <div>
-    <label for="FatProdotto">Prodotto</label>
-    <select id="FatProdotto" class="input" style="height:41px"></select>
-   </div>
-   <div style="flex:0 0 auto">
-    <button id="FatAddRow" type="button" class="btn-outline fattura-add-btn">Aggiungi riga</button>
-   </div>
-  </div>
-
-  <div class="fattura-table" style="margin-top:14px"> 
-   <div class="fattura-th"> 
-    <div>Prodotto</div> 
-    <div>Descrizione</div> 
-    <div class="num">Q.tà</div> 
-    <div class="num">Costo unit.</div> 
-    <div class="num">Sconto %</div> 
-    <div class="num">Totale</div> 
-    <div></div> 
-   </div> 
-   <div id="FatRows" class="fattura-tbody"></div> 
-  </div>
-
-  <div class="fattura-totals">
-   <div class="muted">Totale fornitura</div>
-   <div id="FatTotale" class="fattura-totalval">€ 0,00</div>
-  </div>
-
-  <div class="form-group" style="margin-top:10px">
-     <label style="display:flex; gap:8px; align-items:center; margin: 10px 0 10px;">
-   <input id="FatNoteToggle" type="checkbox" />
-   <span>Aggiungi note finali</span>
-  </label>
-   <label for="FatNote">Note</label>
-   <textarea id="FatNote" class="input hidden" placeholder="Inserisci note (opzionale)"></textarea>
-  </div>
+ <div class="row" style="gap:12px; margin-top:14px">
+ <div>
+ <label for="FatNumero">N.ro</label>
+ <input id="FatNumero" class="input" type="text" readonly placeholder="—" />
+ </div>
+ <div>
+ <label for="FatData">Data</label>
+ <input id="FatData" class="input" type="date" />
+ </div>
+ </div>
+ <div class="row" style="gap:12px">
+ <div>
+ <label for="FatCommessa">N. Commessa</label>
+ <input id="FatCommessa" class="input" type="text" placeholder="es. C 3107" />
+ </div>
+ <div>
+ <label for="FatRifCommessa">Rif. Commessa</label>
+ <input id="FatRifCommessa" class="input" type="text" placeholder="es. Segrate Village 2 Redo" />
+ </div>
+ </div>
+ <div class="form-group">
+ <label for="FatOggetto">Oggetto</label>
+ <input id="FatOggetto" class="input" type="text" placeholder="es. Creatività Baracca Segrate" />
+ </div>
+ <div class="fattura-divider"></div>
+ <div class="row" style="gap:12px; align-items:flex-end">
+ <div>
+ <label for="FatSezione">Sezione listino</label>
+ <select id="FatSezione" class="input" style="height:41px"></select>
+ </div>
+ <div>
+ <label for="FatProdotto">Prodotto</label>
+ <select id="FatProdotto" class="input" style="height:41px"></select>
+ </div>
+ <div style="flex:0 0 auto">
+ <button id="FatAddRow" type="button" class="btn-outline fattura-add-btn">Aggiungi riga</button>
+ </div>
+ </div>
+ <div class="fattura-table" style="margin-top:14px">
+ <div class="fattura-th">
+ <div>Prodotto</div>
+ <div>Descrizione</div>
+ <div class="num">Q.tà</div>
+ <div class="num">Costo unit.</div>
+ <div class="num">Sconto %</div>
+ <div class="num">Totale</div>
+ <div></div>
+ </div>
+ <div id="FatRows" class="fattura-tbody"></div>
+ </div>
+ <div class="fattura-totals">
+ <div class="muted">Totale fornitura</div>
+ <div id="FatTotale" class="fattura-totalval">€ 0,00</div>
+ </div>
+ <div class="form-group" style="margin-top:10px">
+ <label style="display:flex; gap:8px; align-items:center; margin: 10px 0 10px;">
+ <input id="FatNoteToggle" type="checkbox" />
+ <span>Aggiungi note finali</span>
+ </label>
+ <label for="FatNote">Note</label>
+ <textarea id="FatNote" class="input hidden" placeholder="Inserisci note (opzionale)"></textarea>
+ </div>
  </div>
 </section>
-
 <!-- BIGLIETTO DA VISITA -->
 <section id="BusinessCardCard" class="card hidden">
-  <h3>Genera biglietto da visita</h3>
-
-  <div class="brand-pills" id="BvBrandPills">
-    <button type="button" class="brand-pill" data-brand="abitareco">Abitare Co.</button>
-    <button type="button" class="brand-pill" data-brand="commercial">Abitare Commercial</button>
-    <button type="button" class="brand-pill" data-brand="riabitareco">RiAbitare Co.</button>
-  </div>
-
-  <div id="BvForm" class="hidden">
-    <div class="row" style="gap: 12px">
-      <input id="BvFullName" class="input" placeholder="Nome e Cognome*" />
-      <input id="BvJobTitle" class="input" placeholder="Job title*" />
-    </div>
-
-    <div class="row" style="gap: 12px">
-      <input id="BvPhone" class="input" placeholder="Cellulare*" />
-      <input id="BvEmail" class="input" placeholder="Email*" />
-    </div>
-
-    <div id="BvReaWrap" class="row hidden" style="gap: 12px; align-items: center">
-      <label style="display:flex; align-items:center; gap:8px; margin-bottom:0;">
-        <input id="BvHasRea" type="checkbox" />
-        <span>Inserisci REA</span>
-      </label>
-    </div>
-
-    <div id="BvReaInput" class="row hidden" style="gap: 12px">
-      <input id="BvRea" class="input" placeholder="Codice REA" />
-    </div>
-
-    <p class="muted">Seleziona il brand, compila i dati e clicca “Esporta ora”.</p>
-  </div>
-
-  <!-- Anteprima PDF (Fronte / Retro) -->
-  <div class="bv-preview-area" id="BvPreviewArea">
-    <div class="bv-preview-head">
-      <div>
-        <div class="bv-preview-title">Anteprima biglietto</div>
-        <div class="bv-preview-sub" id="BvPreviewHint">Compila i dati e genera l’anteprima (PDF identico all’export).</div>
-      </div>
-      <button id="BvPreviewBtn" type="button" class="btn-primary" disabled>Genera anteprima</button>
-    </div>
-
-    
+ <h3>Genera biglietto da visita</h3>
+ <div class="brand-pills" id="BvBrandPills">
+ <button type="button" class="brand-pill" data-brand="abitareco">Abitare Co.</button>
+ <button type="button" class="brand-pill" data-brand="commercial">Abitare Commercial</button>
+ <button type="button" class="brand-pill" data-brand="riabitareco">RiAbitare Co.</button>
+ </div>
+ <div id="BvForm" class="hidden">
+ <div class="row" style="gap: 12px">
+ <input id="BvFullName" class="input" placeholder="Nome e Cognome*" />
+ <input id="BvJobTitle" class="input" placeholder="Job title*" />
+ </div>
+ <div class="row" style="gap: 12px">
+ <input id="BvPhone" class="input" placeholder="Cellulare*" />
+ <input id="BvEmail" class="input" placeholder="Email*" />
+ </div>
+ <div id="BvReaWrap" class="row hidden" style="gap: 12px; align-items: center">
+ <label style="display:flex; align-items:center; gap:8px; margin-bottom:0;">
+ <input id="BvHasRea" type="checkbox" />
+ <span>Inserisci REA</span>
+ </label>
+ </div>
+ <div id="BvReaInput" class="row hidden" style="gap: 12px">
+ <input id="BvRea" class="input" placeholder="Codice REA" />
+ </div>
+ <p class="muted">Seleziona il brand, compila i dati e clicca “Esporta ora”.</p>
+ </div>
+ <!-- Anteprima PDF (Fronte / Retro) -->
+ <div class="bv-preview-area" id="BvPreviewArea">
+ <div class="bv-preview-head">
+ <div>
+ <div class="bv-preview-title">Anteprima biglietto</div>
+ <div class="bv-preview-sub" id="BvPreviewHint">Compila i dati e genera l’anteprima (PDF identico all’export).</div>
+ </div>
+ <button id="BvPreviewBtn" type="button" class="btn-primary" disabled>Genera anteprima</button>
+ </div>
 <!-- Mockup 3D (stile Pixart) -->
 <div class="bv3d-wrap" id="Bv3DWrap" aria-label="Anteprima 3D biglietto" tabindex="0">
-  <div class="bv3d-toolbar">
-    <div class="bv3d-left">
-      <button id="Bv3DFront" type="button" class="btn-outline bv3d-btn">Fronte</button>
-      <button id="Bv3DBack" type="button" class="btn-outline bv3d-btn">Retro</button>
-    </div>
-    <div class="bv3d-right">
-      <button id="Bv3DZoomOut" type="button" class="btn-outline bv3d-btn" title="Zoom out">−</button>
-      <button id="Bv3DZoomIn" type="button" class="btn-outline bv3d-btn" title="Zoom in">+</button>
-      <button id="Bv3DReset" type="button" class="btn-outline bv3d-btn">Reset</button>
-      <label class="bv3d-auto">
-        <input id="Bv3DAuto" type="checkbox" />
-        <span>Auto</span>
-      </label>
-    </div>
-  </div>
-
-  <div class="bv3d-stage">
-    <canvas id="Bv3DCanvas"></canvas>
-    <div id="Bv3DSpinner" class="bv3d-spinner hidden" aria-hidden="true">
-      <div class="bv3d-spin"></div>
-      <div class="bv3d-spin-txt">Generazione…</div>
-    </div>
-    <div id="Bv3DPlaceholder" class="bv3d-placeholder">Genera l’anteprima per vedere il mockup 3D.</div>
-  </div>
-
-  <div class="bv3d-hint">Trascina per ruotare · Rotellina/pinch per zoom · Usa “Fronte/Retro” per orientare</div>
+ <div class="bv3d-toolbar">
+ <div class="bv3d-left">
+ <button id="Bv3DFront" type="button" class="btn-outline bv3d-btn">Fronte</button>
+ <button id="Bv3DBack" type="button" class="btn-outline bv3d-btn">Retro</button>
+ </div>
+ <div class="bv3d-right">
+ <button id="Bv3DZoomOut" type="button" class="btn-outline bv3d-btn" title="Zoom out">−</button>
+ <button id="Bv3DZoomIn" type="button" class="btn-outline bv3d-btn" title="Zoom in">+</button>
+ <button id="Bv3DReset" type="button" class="btn-outline bv3d-btn">Reset</button>
+ <label class="bv3d-auto">
+ <input id="Bv3DAuto" type="checkbox" />
+ <span>Auto</span>
+ </label>
+ </div>
+ </div>
+ <div class="bv3d-stage">
+ <canvas id="Bv3DCanvas"></canvas>
+ <div id="Bv3DSpinner" class="bv3d-spinner hidden" aria-hidden="true">
+ <div class="bv3d-spin"></div>
+ <div class="bv3d-spin-txt">Generazione…</div>
+ </div>
+ <div id="Bv3DPlaceholder" class="bv3d-placeholder">Genera l’anteprima per vedere il mockup 3D.</div>
+ </div>
+ <div class="bv3d-hint">Trascina per ruotare · Rotellina/pinch per zoom · Usa “Fronte/Retro” per orientare</div>
 </div>
-
 <!-- Anteprima 2D (fallback) -->
-      <div class="bv-preview-grid">
-      <div class="bv-preview-box">
-        <div class="bv-preview-label">Fronte</div>
-        <div class="bv-preview-canvaswrap"><canvas id="BvPreviewFront"></canvas></div>
-      </div>
-      <div class="bv-preview-box">
-        <div class="bv-preview-label">Retro</div>
-        <div class="bv-preview-canvaswrap"><canvas id="BvPreviewBack"></canvas></div>
-      </div>
-    </div>
-  </div>
+ <div class="bv-preview-grid">
+ <div class="bv-preview-box">
+ <div class="bv-preview-label">Fronte</div>
+ <div class="bv-preview-canvaswrap"><canvas id="BvPreviewFront"></canvas></div>
+ </div>
+ <div class="bv-preview-box">
+ <div class="bv-preview-label">Retro</div>
+ <div class="bv-preview-canvaswrap"><canvas id="BvPreviewBack"></canvas></div>
+ </div>
+ </div>
+ </div>
 </section>
-
 <!-- QR + UTM -->
 <section id="QrCard" class="card hidden">
-  <h3>Genera QR Code</h3>
-  <p class="form-section-sub">Inserisci una URL completa (anche già con UTM) e genera il QR. Se devi aggiungere/tracciare UTM, compila i parametri: la URL generata si aggiorna automaticamente e il QR userà quella.</p>
-
-  <div class="form-group">
-    <label for="QrBase">Website URL *</label>
-    <input id="QrBase" class="input" placeholder="https://…" />
-  </div>
-
-  <div class="row" style="gap: 12px">
-    <div class="form-group">
-      <label for="QrSource">Campaign source</label>
-      <input id="QrSource" class="input" placeholder="utm_source" />
-    </div>
-    <div class="form-group">
-      <label for="QrMedium">Campaign medium</label>
-      <input id="QrMedium" class="input" placeholder="utm_medium" />
-    </div>
-    <div class="form-group">
-      <label for="QrCampaign">Campaign name</label>
-      <input id="QrCampaign" class="input" placeholder="utm_campaign" />
-    </div>
-  </div>
-
-  <div class="row" style="gap: 12px">
-    <div class="form-group">
-      <label for="QrId">Campaign ID</label>
-      <input id="QrId" class="input" placeholder="utm_id (opz.)" />
-    </div>
-    <div class="form-group">
-      <label for="QrTerm">Campaign term</label>
-      <input id="QrTerm" class="input" placeholder="utm_term (opz.)" />
-    </div>
-    <div class="form-group">
-      <label for="QrContent">Campaign content</label>
-      <input id="QrContent" class="input" placeholder="utm_content (opz.)" />
-    </div>
-  </div>
-
-  <div class="form-group">
-    <label for="QrGeneratedUrl">URL generata</label>
-    <input id="QrGeneratedUrl" class="input" type="text" readonly placeholder="—" />
-  </div>
-
-  <div class="row" style="gap: 12px; align-items: center">
-    <button id="QrCopyUrl" type="button" class="btn-outline" style="min-width:150px; height:40px; flex:0 0 auto">Copia URL</button>
-  </div>
-
-  <div id="QrPreviewWrap" class="hidden"></div>
-  <canvas id="QrCanvas" class="hidden"></canvas>
-  <a id="QrDownloadPng" class="hidden"></a>
-  <a id="QrDownloadSvg" class="hidden"></a>
+ <h3>Genera QR Code</h3>
+ <p class="form-section-sub">Inserisci una URL completa (anche già con UTM) e genera il QR. Se devi aggiungere/tracciare UTM, compila i parametri: la URL generata si aggiorna automaticamente e il QR userà quella.</p>
+ <div class="form-group">
+ <label for="QrBase">Website URL *</label>
+ <input id="QrBase" class="input" placeholder="https://…" />
+ </div>
+ <div class="row" style="gap: 12px">
+ <div class="form-group">
+ <label for="QrSource">Campaign source</label>
+ <input id="QrSource" class="input" placeholder="utm_source" />
+ </div>
+ <div class="form-group">
+ <label for="QrMedium">Campaign medium</label>
+ <input id="QrMedium" class="input" placeholder="utm_medium" />
+ </div>
+ <div class="form-group">
+ <label for="QrCampaign">Campaign name</label>
+ <input id="QrCampaign" class="input" placeholder="utm_campaign" />
+ </div>
+ </div>
+ <div class="row" style="gap: 12px">
+ <div class="form-group">
+ <label for="QrId">Campaign ID</label>
+ <input id="QrId" class="input" placeholder="utm_id (opz.)" />
+ </div>
+ <div class="form-group">
+ <label for="QrTerm">Campaign term</label>
+ <input id="QrTerm" class="input" placeholder="utm_term (opz.)" />
+ </div>
+ <div class="form-group">
+ <label for="QrContent">Campaign content</label>
+ <input id="QrContent" class="input" placeholder="utm_content (opz.)" />
+ </div>
+ </div>
+ <div class="form-group">
+ <label for="QrGeneratedUrl">URL generata</label>
+ <input id="QrGeneratedUrl" class="input" type="text" readonly placeholder="—" />
+ </div>
+ <div class="row" style="gap: 12px; align-items: center">
+ <button id="QrCopyUrl" type="button" class="btn-outline" style="min-width:150px; height:40px; flex:0 0 auto">Copia URL</button>
+ </div>
+ <div id="QrPreviewWrap" class="hidden"></div>
+ <canvas id="QrCanvas" class="hidden"></canvas>
+ <a id="QrDownloadPng" class="hidden"></a>
+ <a id="QrDownloadSvg" class="hidden"></a>
 </section>
-
 <!-- IUBENDA -->
 <section id="IubendaCard" class="card hidden">
-  <h3>Genera snippet Iubenda</h3>
-  <p class="form-section-sub">Inserisci Widget URL, siteId e cookiePolicyId (IT). Se il sito è anche in inglese, attiva lo switch EN.</p>
-
-  <div class="form-group">
-    <label for="IubWidgetUrl">Widget URL *</label>
-    <input id="IubWidgetUrl" class="input" placeholder="//cdn.iubenda.com/cs/iubenda_cs.js oppure incolla il tag <script> completo" />
-  </div>
-
-  <div class="row" style="gap: 12px">
-    <div class="form-group">
-      <label for="IubSiteId">siteId *</label>
-      <input id="IubSiteId" class="input" placeholder="es. 1234567" />
-    </div>
-    <div class="form-group">
-      <label for="IubCookieIt">cookiePolicyId (IT) *</label>
-      <input id="IubCookieIt" class="input" placeholder="es. 12345678" />
-    </div>
-    <div class="form-group hidden" id="IubCookieEnWrap">
-      <label for="IubCookieEn">cookiePolicyId (EN) *</label>
-      <input id="IubCookieEn" class="input" placeholder="es. 87654321" />
-    </div>
-  </div>
-
-  <label style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
-    <input id="IubDualLang" type="checkbox" />
-    <span>Sito anche in inglese</span>
-  </label>
-
-  <textarea id="IubOut" class="input" placeholder="Preview snippet (pulita):"></textarea>
-
-  <div style="display:flex; justify-content:flex-end">
-    <button id="IubCopyBtn" type="button" class="btn-outline" style="min-width:150px; height:40px; flex:0 0 auto">Copia codice</button>
-  </div>
+ <h3>Genera snippet Iubenda</h3>
+ <p class="form-section-sub">Inserisci Widget URL, siteId e cookiePolicyId (IT). Se il sito è anche in inglese, attiva lo switch EN.</p>
+ <div class="form-group">
+ <label for="IubWidgetUrl">Widget URL *</label>
+ <input id="IubWidgetUrl" class="input" placeholder="//cdn.iubenda.com/cs/iubenda_cs.js oppure incolla il tag <script> completo" />
+ </div>
+ <div class="row" style="gap: 12px">
+ <div class="form-group">
+ <label for="IubSiteId">siteId *</label>
+ <input id="IubSiteId" class="input" placeholder="es. 1234567" />
+ </div>
+ <div class="form-group">
+ <label for="IubCookieIt">cookiePolicyId (IT) *</label>
+ <input id="IubCookieIt" class="input" placeholder="es. 12345678" />
+ </div>
+ <div class="form-group hidden" id="IubCookieEnWrap">
+ <label for="IubCookieEn">cookiePolicyId (EN) *</label>
+ <input id="IubCookieEn" class="input" placeholder="es. 87654321" />
+ </div>
+ </div>
+ <label style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+ <input id="IubDualLang" type="checkbox" />
+ <span>Sito anche in inglese</span>
+ </label>
+ <textarea id="IubOut" class="input" placeholder="Preview snippet (pulita):"></textarea>
+ <div style="display:flex; justify-content:flex-end">
+ <button id="IubCopyBtn" type="button" class="btn-outline" style="min-width:150px; height:40px; flex:0 0 auto">Copia codice</button>
+ </div>
 </section>
-
 <!-- TEMPLATE PPT -->
 <section id="PptFontsCard" class="card hidden">
-  <h3>Font ufficiali</h3>
-  <p class="form-section-sub">Per mantenere uno stile coerente scarica i font brand (Circular Std + PPPangaia + Manrope).</p>
-  <button type="button" class="btn-primary" id="BtnFontsZip">Scarica font ufficiali</button>
+ <h3>Font ufficiali</h3>
+ <p class="form-section-sub">Per mantenere uno stile coerente scarica i font brand (Circular Std + PPPangaia + Manrope).</p>
+ <button type="button" class="btn-primary" id="BtnFontsZip">Scarica font ufficiali</button>
 </section>
-
 <section id="PptCorporateCard" class="card hidden">
-  <h3>Template Corporate</h3>
-  <p class="form-section-sub">Presentazioni istituzionali: chi siamo, numeri chiave, valori del brand.</p>
-  <button type="button" class="btn-primary" onclick="downloadPPT('assets/ppt/template-corporate.pptx')">Scarica</button>
+ <h3>Template Corporate</h3>
+ <p class="form-section-sub">Presentazioni istituzionali: chi siamo, numeri chiave, valori del brand.</p>
+ <button type="button" class="btn-primary" onclick="downloadPPT('assets/ppt/template-corporate.pptx')">Scarica</button>
 </section>
-
 <section id="PptAdvisorCard" class="card hidden">
-  <h3>Template Advisor</h3>
-  <p class="form-section-sub">Analisi e advisory: ricerche, benchmark e valutazioni sintetiche.</p>
-  <button type="button" class="btn-primary" onclick="downloadPPT('assets/ppt/template-advisor.pptx')">Scarica</button>
+ <h3>Template Advisor</h3>
+ <p class="form-section-sub">Analisi e advisory: ricerche, benchmark e valutazioni sintetiche.</p>
+ <button type="button" class="btn-primary" onclick="downloadPPT('assets/ppt/template-advisor.pptx')">Scarica</button>
 </section>
-
 <section id="PptMarketingCard" class="card hidden">
-
-
-  <h3>Template Marketing</h3>
-  <p class="form-section-sub">Campagne e iniziative: annunci, lanci e contenuti commerciali.</p>
-  <button type="button" class="btn-primary" onclick="downloadPPT('assets/ppt/template-marketing.pptx')">Scarica</button>
+ <h3>Template Marketing</h3>
+ <p class="form-section-sub">Campagne e iniziative: annunci, lanci e contenuti commerciali.</p>
+ <button type="button" class="btn-primary" onclick="downloadPPT('assets/ppt/template-marketing.pptx')">Scarica</button>
 </section>
 </div>
-
-          <!-- ACTION BAR -->
-          <section id="ActionBar" class="actionbar">
-            <div class="action-left">
-              <div id="ActionProgressWrap" class="action-progress hidden">
-                <div id="ActionProgressLabel" class="muted">Elaborazione…</div>
-                <progress id="ActionProgress" max="100" value="0" class="progress"></progress>
-              </div>
-              <div class="copyright">© 2026 Abitare Co. – Design by Abitare Co. Creative Unit – All rights reserved.</div>
-            </div>
-            <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
-          </section>
-        </div>
-      </main>
-    </div>
-
-    <!-- ═════════ LIBRARIES ═════════ -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-    <!-- App scripts (split) -->
-    <script src="./js/core/permissions.js?v=20260518_fixprod2"></script>
-    <script src="./js/core/auth.js?v=20260518_fixprod2"></script>
-    <script src="./js/core/guard.js?v=20260518_fixprod2"></script>
-
-    <script src="./js/core/helpers.js"></script>
-    <script src="./js/core/shell.js?v=20260518_fixprod2"></script>
+ <!-- ACTION BAR -->
+ <section id="ActionBar" class="actionbar">
+ <div class="action-left">
+ <div id="ActionProgressWrap" class="action-progress hidden">
+ <div id="ActionProgressLabel" class="muted">Elaborazione…</div>
+ <progress id="ActionProgress" max="100" value="0" class="progress"></progress>
+ </div>
+ <div class="copyright">© 2026 Abitare Co. – Design by Abitare Co. Creative Unit – All rights reserved.</div>
+ </div>
+ <button id="BtnProcedi" class="btn-primary hidden" type="button">Esporta ora</button>
+ </section>
+ </div>
+ </main>
+ </div>
+ <!-- ═════════ LIBRARIES ═════════ -->
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
+ <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+ <script src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+ <!-- App scripts (split) -->
+ <script src="./js/core/permissions.js?v=20260518_fixprod2"></script>
+ <script src="./js/core/auth.js?v=20260522_login1"></script>
+ <script src="./js/core/guard.js?v=20260518_fixprod2"></script>
+ <script src="./js/core/helpers.js"></script>
+ <script src="./js/core/shell.js?v=20260518_fixprod2"></script>
  <script src="./js/modules/welcome.js?v=20260518_fixprod2"></script>
-    <script src="./js/core/io.js"></script>
-    <script src="./js/core/shared.js"></script>
-
-    <script src="./js/modules/images.js"></script>
-    <script src="./js/modules/digitaltool.js"></script>
-    <script src="./js/modules/pdf2jpg.js"></script>
-    <script src="./js/modules/rename.js"></script>
-    <script src="./js/modules/video.js"></script>
-    <script src="./js/modules/watermark.js?v=20260514wm3"></script>
-    <script src="./js/modules/bv.js"></script>
+ <script src="./js/core/io.js"></script>
+ <script src="./js/core/shared.js"></script>
+ <script src="./js/modules/images.js"></script>
+ <script src="./js/modules/digitaltool.js"></script>
+ <script src="./js/modules/pdf2jpg.js"></script>
+ <script src="./js/modules/rename.js"></script>
+ <script src="./js/modules/video.js"></script>
+ <script src="./js/modules/watermark.js?v=20260514wm3"></script>
+ <script src="./js/modules/bv.js"></script>
  <script src="./js/modules/bv_preview.js"></script>
  <script src="./js/modules/bv_3d.js"></script>
-    <script src="./js/modules/qr.js?v=20260513qr1"></script>
-    <script src="./js/modules/iubenda.js"></script>
-    <script src="./js/modules/ppt.js"></script>
+ <script src="./js/modules/qr.js?v=20260513qr1"></script>
+ <script src="./js/modules/iubenda.js"></script>
+ <script src="./js/modules/ppt.js"></script>
  <script src="./js/modules/fattura.js?v=20260520v5"></script>
  <script src="./js/core/actionbar.js?v=20260520v5"></script>
 <script src="P260520v4"></script>
-
-    <script src="P260520v5"></script>
-    <script src="./js/app.js"></script>
-  
+ <script src="P260520v5"></script>
+ <script src="./js/app.js"></script>
 <!-- WELCOME · HELP DRAWER (solo UI, no AI) -->
 <div id="WelcomeHelpOverlay" class="welcome-help-overlay hidden" aria-hidden="true"></div>
 <aside id="WelcomeHelpDrawer" class="welcome-help-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="WelcomeHelpTitle" aria-hidden="true">
-  <div class="welcome-help-top">
-    <button id="WelcomeHelpClose" type="button" class="welcome-help-close" aria-label="Chiudi">✕</button>
-  </div>
-  <div class="welcome-help-body">
-    <h3 id="WelcomeHelpTitle" class="welcome-help-title">Serve una mano?</h3>
-    <p class="welcome-help-sub">Risposte rapide e scorciatoie per usare il tool interno.</p>
-
-    <div class="welcome-help-search">
-      <input id="WelcomeHelpQuery" class="input" type="text" placeholder="Cerca (es. immagini, export, watermark, BV 3D)" />
-    </div>
-
-    <div class="welcome-help-chips" id="WelcomeHelpChips" aria-label="Suggerimenti rapidi"></div>
-    <div id="WelcomeHelpFaq" class="welcome-help-faq" aria-label="FAQ"></div>
-
-    <div class="welcome-help-actions">
-      <a class="btn-outline" href="https://teams.microsoft.com/l/chat/0/0?users=billy.dolor@abitareco.it,mattia.nichettistanghellini@abitareco.it&topicName=Assistenza%20tool%20%C2%B7%20Abitare%20Co.">Parla con noi</a>
-      <a class="btn-outline" href="mailto:billy.dolor@abitareco.it?cc=mattia.nichettistanghellini@abitareco.it&subject=Assistenza%20tool%20%C2%B7%20Abitare%20Co.">Contatta l’assistenza</a>
-    </div>
-    
-  </div>
+ <div class="welcome-help-top">
+ <button id="WelcomeHelpClose" type="button" class="welcome-help-close" aria-label="Chiudi">✕</button>
+ </div>
+ <div class="welcome-help-body">
+ <h3 id="WelcomeHelpTitle" class="welcome-help-title">Serve una mano?</h3>
+ <p class="welcome-help-sub">Risposte rapide e scorciatoie per usare il tool interno.</p>
+ <div class="welcome-help-search">
+ <input id="WelcomeHelpQuery" class="input" type="text" placeholder="Cerca (es. immagini, export, watermark, BV 3D)" />
+ </div>
+ <div class="welcome-help-chips" id="WelcomeHelpChips" aria-label="Suggerimenti rapidi"></div>
+ <div id="WelcomeHelpFaq" class="welcome-help-faq" aria-label="FAQ"></div>
+ <div class="welcome-help-actions">
+ <a class="btn-outline" href="https://teams.microsoft.com/l/chat/0/0?users=billy.dolor@abitareco.it,mattia.nichettistanghellini@abitareco.it&topicName=Assistenza%20tool%20%C2%B7%20Abitare%20Co.">Parla con noi</a>
+ <a class="btn-outline" href="mailto:billy.dolor@abitareco.it?cc=mattia.nichettistanghellini@abitareco.it&subject=Assistenza%20tool%20%C2%B7%20Abitare%20Co.">Contatta l’assistenza</a>
+ </div>
+ </div>
 </aside>
 </body>
 </html>

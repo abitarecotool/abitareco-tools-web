@@ -1,5 +1,4 @@
 /* css/modules/auth.css */
-
 /* Effetto "wow" in login: blur + saturazione + leggero zoom */
 body.auth-blur #AppRoot{
   filter: blur(16px) saturate(1.2);
@@ -22,6 +21,55 @@ body.auth-blur #AppRoot{
   color: var(--gray-700);
   margin: 6px 0 10px;
   user-select:none;
+}
+
+.auth-password-wrap{
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.auth-password-input{
+  width: 100%;
+  padding-right: 46px;
+}
+
+.auth-password-toggle{
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--gray-500, #6b7280);
+  cursor: pointer;
+  padding: 0;
+}
+
+.auth-password-toggle:hover{
+  color: var(--gray-700, #374151);
+}
+
+.auth-password-toggle:focus-visible{
+  outline: 2px solid rgba(196, 22, 43, 0.28);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.auth-password-toggle svg{
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+.auth-password-toggle .hidden{
+  display: none;
 }
 
 .user-menu{ width:100%; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; border:1.5px solid var(--gray-200); background: var(--white); cursor:pointer; transition: border-color .15s, background .15s, color .15s; }

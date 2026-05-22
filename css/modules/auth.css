@@ -28,26 +28,22 @@ body.auth-blur #AppRoot{
 } 
 .auth-password-input{ 
  width: 100%; 
- padding-right: 46px; 
+ padding-right: 44px; 
 } 
-.auth-password-toggle{ 
- position: absolute; 
- top: 0; 
- right: 10px; 
- bottom: 0; 
- margin: auto 0; 
- width: 32px; 
- height: 32px; 
- display: inline-flex; 
- align-items: center; 
- justify-content: center; 
- border: none; 
- background: transparent; 
- color: var(--gray-500, #6b7280); 
- cursor: pointer; 
- padding: 0; 
- transform: none; 
- line-height: 1; 
+.auth-password-toggle{
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--gray-500, #6b7280);
+  cursor: pointer;
+  padding: 0;
 } 
 .auth-password-toggle:hover{ 
  color: var(--gray-700, #374151); 

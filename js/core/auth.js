@@ -23,13 +23,26 @@
   const REMEMBER_HOURS = 24;
   const REMEMBER_MS = REMEMBER_HOURS * 60 * 60 * 1000;
 
+  function now(){ return Date.now(); }
+
   function clearUser(){
     try { sessionStorage.removeItem(KEY); } catch {}
     try { localStorage.removeItem(KEY); } catch {}
   }
 
-  function sanitizeUserPayload(raw){
+  function normalizePayload(raw){
     if (!raw || typeof raw !== 'object') return null;
+
+    // Compatibilità con sessionfix.js: formato { v, exp, payload }
+    if (raw.payload && typeof raw.payload === 'object') {
+      const exp = Number(raw.exp || 0);
+      if (!Number.isFinite(exp) || exp <= now()) {
+        clearUser();
+        return null;
+      }
+      raw = raw.payload;
+    }
+
     if (!raw.email || !raw.role) return null;
 
     const payload = {
@@ -37,15 +50,14 @@
       role: raw.role,
       brand: raw.brand || null,
       remember: !!raw.remember,
-      loginAt: Number(raw.loginAt || Date.now())
+      loginAt: Number(raw.loginAt || now())
     };
 
     if (!payload.email) return null;
 
     if (payload.remember) {
       const expiresAt = Number(raw.expiresAt || (payload.loginAt + REMEMBER_MS));
-      if (!Number.isFinite(expiresAt)) return null;
-      if (Date.now() > expiresAt) {
+      if (!Number.isFinite(expiresAt) || now() > expiresAt) {
         clearUser();
         return null;
       }
@@ -57,10 +69,10 @@
 
   function readStored(){
     try {
-      const sessionRaw = sessionStorage.getItem(KEY);
-      if (sessionRaw) {
-        const sessionData = sanitizeUserPayload(JSON.parse(sessionRaw));
-        if (sessionData) return sessionData;
+      const rawS = sessionStorage.getItem(KEY);
+      if (rawS) {
+        const dataS = normalizePayload(JSON.parse(rawS));
+        if (dataS) return dataS;
         try { sessionStorage.removeItem(KEY); } catch {}
       }
     } catch {
@@ -68,10 +80,10 @@
     }
 
     try {
-      const localRaw = localStorage.getItem(KEY);
-      if (localRaw) {
-        const localData = sanitizeUserPayload(JSON.parse(localRaw));
-        if (localData) return localData;
+      const rawL = localStorage.getItem(KEY);
+      if (rawL) {
+        const dataL = normalizePayload(JSON.parse(rawL));
+        if (dataL) return dataL;
         try { localStorage.removeItem(KEY); } catch {}
       }
     } catch {
@@ -89,7 +101,7 @@
       role: user.role,
       brand: user.brand || null,
       remember: !!remember,
-      loginAt: Date.now()
+      loginAt: now()
     };
 
     if (remember) payload.expiresAt = payload.loginAt + REMEMBER_MS;
@@ -243,13 +255,9 @@
 
     bindPasswordToggle();
 
-    // Pre-check Ricordami if there is a valid remembered user in localStorage
     try {
-      const localRaw = localStorage.getItem(KEY);
-      if (localRaw && remEl) {
-        const remembered = sanitizeUserPayload(JSON.parse(localRaw));
-        remEl.checked = !!(remembered && remembered.remember);
-      }
+      const remembered = readStored();
+      if (remEl) remEl.checked = !!(remembered && remembered.remember);
     } catch {}
 
     const doLogin = () => {

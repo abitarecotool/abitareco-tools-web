@@ -509,7 +509,7 @@
     const box1Bottom = y - 82; // bottom
     page.drawRectangle({ x: rightBoxX, y: box1Bottom, width: rightBoxW, height: 54, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
     drawKV(page, font, fontBold, rightBoxX + 10, box1Bottom + 54 - 22, 'N.ro', st.header.numero, rgb);
-    drawKV(page, font, fontBold, rightBoxX + 10, box1Bottom + 54 - 44, 'Del', fmtDate(st.header.data), rgb);
+    drawKV(page, font, fontBold, rightBoxX + 10, box1Bottom + 54 - 44, 'Data', fmtDate(st.header.data), rgb);
 
     // Box N. Commessa / Rif. Commessa (stessa distanza dal box sopra)
     const gapBoxes = 20;
@@ -517,7 +517,7 @@
     const box2Bottom = box1Bottom - gapBoxes - box2H;
     page.drawRectangle({ x: rightBoxX, y: box2Bottom, width: rightBoxW, height: box2H, borderWidth: 1, borderColor: rgb(0.9,0.9,0.9) });
     drawKV(page, font, fontBold, rightBoxX + 10, box2Bottom + box2H - 20, 'N. Commessa', st.header.commessa || '—', rgb);
-    drawKV(page, font, fontBold, rightBoxX + 10, box2Bottom + box2H - 38, 'Rif. Commessa', st.header.rifCommessa || '—', rgb);
+    drawKV(page, font, fontBold, rightBoxX + 10, box2Bottom + box2H - 38, 'Nome cantiere', st.header.rifCommessa || '—', rgb);
 
     // Oggetto (distanza coerente dal box sopra)
     const gapOggetto = 20;

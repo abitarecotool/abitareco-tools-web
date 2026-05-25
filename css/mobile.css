@@ -18,7 +18,7 @@
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     z-index:90; box-shadow:0 4px 14px rgba(17,24,39,.05);
   }
-  .logo{ width:clamp(160px, 42vw, 240px); margin:0 auto 8px; }
+  .logo{ width:clamp(148px, 38vw, 220px); margin:0 auto 8px; }
   .menu{
     display:flex; flex-wrap:nowrap; overflow-x:auto; gap:8px;
     padding:0 var(--mobile-pad) 8px; scrollbar-width:none; -ms-overflow-style:none;
@@ -31,7 +31,7 @@
   .user-menu{ min-height:58px; border-radius:14px; }
   .user-dropdown{ margin-top:8px; }
   main, .content, .content > .cards-scroll{ overflow:visible; }
-  .content > .cards-scroll{ padding: calc(var(--mobile-header-h) + 12px) var(--mobile-pad) calc(12px + var(--mobile-bottom-safe)); }
+  .content > .cards-scroll{ padding: calc(var(--mobile-header-h) + var(--mobile-top-gap)) var(--mobile-pad) calc(12px + var(--mobile-bottom-safe)); }
   .card{ border-radius:18px; padding: var(--mobile-card-pad) 18px; box-shadow:0 2px 10px rgba(17,24,39,.05); margin-bottom:16px; }
   .card h2, .card h3{ font-size:22px; letter-spacing:-0.35px; }
   .row{ flex-direction:column; gap:0; }
@@ -64,11 +64,12 @@
   body.welcome-home .sidebar{ width:100% !important; overflow:visible !important; padding:calc(10px + env(safe-area-inset-top)) 0 8px !important; border-bottom:1px solid var(--gray-200) !important; }
   body.welcome-home main{ min-height:100vh; height:auto; overflow:visible; padding-bottom:var(--mobile-bottom-safe); }
   body.welcome-home #ActionBar{ position:fixed; }
-  body.welcome-home .cards-scroll{ min-height:auto !important; display:block !important; place-items:initial !important; padding:calc(var(--mobile-header-h) + 10px) var(--mobile-pad) calc(12px + var(--mobile-bottom-safe)) !important; }
+  body.welcome-home .cards-scroll{ min-height:auto !important; display:block !important; place-items:initial !important; padding:calc(var(--mobile-header-h) + var(--mobile-top-gap)) var(--mobile-pad) calc(12px + var(--mobile-bottom-safe)) !important; }
   body.welcome-home #WelcomeCard{ width:100% !important; max-width:860px; margin:0 auto; }
   .welcome-brand{ justify-content:flex-start; margin:0 0 12px 0; }
-  .welcome-brand img{ width:min(100%, 320px); max-height:56px; height:auto; object-fit:contain; }
-  .welcome-head{ display:flex; flex-direction:column; align-items:stretch; gap:12px; }
+    .welcome-brand{ display:none !important; }
+.welcome-brand img{ width:min(100%, 320px); max-height:56px; height:auto; object-fit:contain; }
+  .welcome-head{ display:flex; flex-direction:column; align-items:stretch; gap:12px; margin-top:2px; }
   .welcome-title{ font-size:22px; line-height:1.15; margin:0; }
   .welcome-sub{ font-size:13px; line-height:1.7; margin-top:6px; }
   .welcome-help{ align-self:flex-start; min-height:42px; padding-inline:16px; }
@@ -100,8 +101,8 @@
   .bv-preview-canvaswrap, .cards-scroll, .content, .welcome-help-body{ -webkit-overflow-scrolling:touch; }
 }
 @media (max-width: 680px){
-  :root{ --mobile-pad:14px; --mobile-card-pad:18px; --mobile-header-h:160px; --mobile-bottom-safe: calc(116px + env(safe-area-inset-bottom)); }
-  .logo{ width:min(82vw, 280px); }
+  :root{ --mobile-pad:14px; --mobile-card-pad:18px; --mobile-header-h:174px; --mobile-top-gap:22px; --mobile-bottom-safe: calc(116px + env(safe-area-inset-bottom)); }
+  .logo{ width:min(74vw, 248px); }
   .menu{ padding-inline:12px; }
   .menu li{ padding:10px 13px; border-radius:14px; }
   .content > .cards-scroll, body.welcome-home .cards-scroll{ padding-inline:14px !important; }

@@ -27,7 +27,7 @@ if (DropAreaVideo) {
   });
   DropAreaVideo.addEventListener('click', ()=>{
     const input = document.createElement('input');
-    input.type = 'file'; input.webkitdirectory = true; input.multiple = true; input.accept = 'image/*';
+    input.type = 'file'; input.multiple = true; input.accept = 'image/*'; if (!isMobileGalleryPicker()) { input.webkitdirectory = true; input.directory = true; }
     input.onchange = ()=>{
       const fl = input.files ? Array.from(input.files) : [];
       pickedVideo = fl
@@ -44,7 +44,7 @@ if (DropAreaVideo) {
   BtnClearVideo?.addEventListener('click', (e)=>{
     e.stopPropagation();
     pickedVideo = [];
-    TxtFolderVideo.textContent = 'Trascina qui la cartella…';
+    TxtFolderVideo.textContent = isMobileGalleryPicker() ? 'Tocca per selezionare più immagini…' : 'Trascina qui la cartella…';
     BtnClearVideo.classList.add('hidden');
   });
 }

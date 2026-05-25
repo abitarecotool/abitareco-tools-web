@@ -111,10 +111,10 @@
     // Non tocchiamo window.picked globale per non interferire con altri moduli.
     // Lo useremo solo durante l'export.
 
-    if (portaliName) portaliName.textContent = 'Trascina qui la cartella o clicca per sfogliare…';
+    if (portaliName) portaliName.textContent = isMobileGalleryPicker() ? 'Tocca per selezionare più immagini…' : 'Trascina qui la cartella o clicca per sfogliare…';
     portaliClear?.classList.add('hidden');
 
-    if (comingName) comingName.textContent = 'Trascina qui la cartella/singola immagine o clicca per sfogliare…';
+    if (comingName) comingName.textContent = isMobileGalleryPicker() ? 'Tocca per selezionare più immagini…' : 'Trascina qui la cartella/singola immagine o clicca per sfogliare…';
     comingClear?.classList.add('hidden');
 
     hideCropUI();
@@ -148,16 +148,19 @@
   function toRec(file, relPath){
     return { file, relPath: relPath || file.name };
   }
+  function isMobileGalleryPicker(){
+    return window.matchMedia('(max-width: 900px)').matches && (navigator.maxTouchPoints > 0 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || ''));
+  }
 
   function setPicked(list){
     wmPicked = list || [];
     const n = wmPicked.length;
 
     if (wmPreset === 'portali'){
-      if (portaliName) portaliName.textContent = n ? `${n} file selezionati` : 'Trascina qui la cartella o clicca per sfogliare…';
+      if (portaliName) portaliName.textContent = n ? `${n} file selezionati` : (isMobileGalleryPicker() ? 'Tocca per selezionare più immagini…' : 'Trascina qui la cartella o clicca per sfogliare…');
       portaliClear?.classList.toggle('hidden', !n);
     } else {
-      if (comingName) comingName.textContent = n ? `${n} file selezionati` : 'Trascina qui la cartella/singola immagine o clicca per sfogliare…';
+      if (comingName) comingName.textContent = n ? `${n} file selezionati` : (isMobileGalleryPicker() ? 'Tocca per selezionare più immagini…' : 'Trascina qui la cartella/singola immagine o clicca per sfogliare…');
       comingClear?.classList.toggle('hidden', !n);
 
       // crop se 1 sola immagine
@@ -237,6 +240,18 @@
     };
     inp.click();
   }
+  function openImageGalleryPicker(callback){
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.multiple = true;
+    inp.accept = 'image/*';
+    inp.onchange = () => {
+      const files = Array.from(inp.files || []);
+      const list = files.map(f => toRec(f, f.name));
+      callback(list);
+    };
+    inp.click();
+  }
 
   function bindDropArea(dropEl, onPick, clickMode){
     if (!dropEl) return;
@@ -250,6 +265,10 @@
       onPick(list);
     });
     dropEl.addEventListener('click', () => {
+      if (isMobileGalleryPicker()) {
+        openImageGalleryPicker(onPick);
+        return;
+      }
       if (clickMode === 'folder') openFolderPicker(onPick);
       else openFilesPicker(onPick);
     });

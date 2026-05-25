@@ -169,6 +169,17 @@
     const it = getSelectedItem();
     if (!it){ toast('Seleziona un prodotto dal listino.'); return; }
 
+    const makeField = (labelText, inputEl, cls) => {
+      const field = document.createElement('div');
+      field.className = 'fat-field ' + (cls || '');
+      const lbl = document.createElement('div');
+      lbl.className = 'fat-mini-label';
+      lbl.textContent = labelText;
+      field.appendChild(lbl);
+      field.appendChild(inputEl);
+      return field;
+    };
+
     const wrap = document.createElement('div');
     wrap.className = 'fattura-row';
 
@@ -179,20 +190,24 @@
     const desc = document.createElement('input');
     desc.type = 'text';
     desc.placeholder = 'Descrizione (es. Maggio)';
+    desc.className = 'fat-desc';
 
     const qty = document.createElement('input');
     qty.type = 'number';
     qty.min = '0';
     qty.step = '1';
     qty.value = '1';
+    qty.className = 'fat-qty';
 
     const unit = document.createElement('input');
     unit.type = 'number';
     unit.min = '-999999';
     unit.step = '1';
     unit.value = (it.unitPrice ?? 0);
+    unit.className = 'fat-unit';
 
     const disc = makeDiscountSelect();
+    disc.className = 'fat-disc';
 
     const tot = document.createElement('div');
     tot.className = 'fat-total';
@@ -211,37 +226,34 @@
       tot.textContent = euro(calcRowTotal(qty.value, unit.value, disc.value));
       recomputeAll();
     };
+
     qty.addEventListener('input', onChange);
     unit.addEventListener('input', onChange);
     disc.addEventListener('change', onChange);
 
     wrap.appendChild(prod);
-    wrap.appendChild(desc);
-    wrap.appendChild(qty);
-    wrap.appendChild(unit);
-    wrap.appendChild(disc);
+    wrap.appendChild(makeField('Descrizione', desc, 'fat-field-desc'));
+    wrap.appendChild(makeField('Quantità', qty, 'fat-field-qty'));
+    wrap.appendChild(makeField('Costo unit.', unit, 'fat-field-unit'));
+    wrap.appendChild(makeField('Sconto %', disc, 'fat-field-disc'));
     wrap.appendChild(tot);
     wrap.appendChild(del);
-
     elRows()?.appendChild(wrap);
     recomputeAll();
   }
-
-  function recomputeAll(){
+function recomputeAll(){
     const rows = Array.from(document.querySelectorAll('#FatRows .fattura-row'));
     let sum = 0;
     for (const r of rows){
-      const inputs = r.querySelectorAll('input, select');
-      const qty = inputs[1]?.value; // desc=0
-      const unit = inputs[2]?.value;
-      const disc = inputs[3]?.value;
+      const qty = r.querySelector('.fat-qty')?.value;
+      const unit = r.querySelector('.fat-unit')?.value;
+      const disc = r.querySelector('.fat-disc')?.value;
       sum += calcRowTotal(qty, unit, disc);
     }
     const out = document.getElementById('FatTotale');
     if (out) out.textContent = euro(sum);
   }
-
-  function initHeaderDefaults(){
+function initHeaderDefaults(){
     const n = document.getElementById('FatNumero');
     const d = document.getElementById('FatData');
     if (n && !n.value) n.value = makeTimestamp();
@@ -262,11 +274,10 @@
 
     const rows = Array.from(document.querySelectorAll('#FatRows .fattura-row')).map(r => {
       const prod = r.dataset.product || r.querySelector('.fat-prod')?.textContent || '';
-      const inputs = r.querySelectorAll('input, select');
-      const desc = (inputs[0]?.value || '').trim();
-      const qty = Number(inputs[1]?.value || 0);
-      const unit = Number(inputs[2]?.value || 0);
-      const disc = Number(inputs[3]?.value || 0);
+      const desc = (r.querySelector('.fat-desc')?.value || '').trim();
+      const qty = Number(r.querySelector('.fat-qty')?.value || 0);
+      const unit = Number(r.querySelector('.fat-unit')?.value || 0);
+      const disc = Number(r.querySelector('.fat-disc')?.value || 0);
       const total = calcRowTotal(qty, unit, disc);
       return { product: prod, desc, qty, unit, disc, total };
     });

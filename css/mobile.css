@@ -1,0 +1,452 @@
+/* css/mobile.css */
+/*
+  Mobile TOP livello app
+  - Solo override responsive
+  - Nessuna modifica alla logica JS o alle funzioni
+  - Desktop invariato
+*/
+
+@media (max-width: 900px){
+  :root{
+    --mobile-pad: 16px;
+    --mobile-card-pad: 20px;
+    --mobile-bottom-safe: calc(94px + env(safe-area-inset-bottom));
+  }
+
+  html, body{
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+
+  body{
+    background: var(--gray-50);
+  }
+
+  .app{
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .sidebar{
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 12px 0 10px;
+    overflow: visible;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(255,255,255,.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .logo{
+    width: clamp(170px, 42vw, 230px);
+    margin: 0 auto 12px;
+  }
+
+  .menu{
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 0 var(--mobile-pad) 6px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .menu::-webkit-scrollbar{
+    display: none;
+  }
+
+  .menu li{
+    flex: 0 0 auto;
+    min-height: 46px;
+    padding: 10px 14px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    background: var(--white);
+    margin-bottom: 0;
+  }
+
+  .menu li.active{
+    border-color: rgba(196,22,43,.12);
+    box-shadow: 0 1px 0 rgba(196,22,43,.03);
+  }
+
+  .sidebar-bottom{
+    padding: 10px var(--mobile-pad) 0;
+    border-top: 0;
+    background: transparent;
+  }
+
+  .user-menu{
+    border-radius: 14px;
+    min-height: 64px;
+  }
+
+  .user-dropdown{
+    margin-top: 8px;
+  }
+
+  main,
+  .content,
+  .content > .cards-scroll{
+    overflow: visible;
+  }
+
+  .content > .cards-scroll{
+    padding: var(--mobile-pad) var(--mobile-pad) calc(18px + var(--mobile-bottom-safe));
+  }
+
+  .card{
+    border-radius: 18px;
+    padding: var(--mobile-card-pad) 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 10px rgba(17,24,39,.05);
+  }
+
+  .card h2,
+  .card h3{
+    font-size: 22px;
+    letter-spacing: -0.35px;
+  }
+
+  .row{
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .row > *{
+    min-width: 0;
+  }
+
+  .input,
+  input[type="text"],
+  input[type="number"],
+  textarea,
+  select.input,
+  input[type="date"],
+  input[type="email"],
+  input[type="password"]{
+    font-size: 16px;
+  }
+
+  .drop{
+    min-height: 132px;
+    padding: 12px;
+  }
+
+  .drop-inner{
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .drop .btn-small{
+    margin-top: 6px;
+  }
+
+  .btn-primary,
+  .btn-outline{
+    min-height: 46px;
+  }
+
+  .actionbar{
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 12px var(--mobile-pad) calc(12px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.97);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 -6px 24px rgba(17,24,39,.08);
+  }
+
+  .action-left{
+    min-width: 0;
+  }
+
+  .copyright{
+    font-size: 10px;
+    line-height: 1.45;
+    max-width: 44vw;
+  }
+
+  .actionbar .btn-primary{
+    min-width: 0;
+    width: min(100%, 360px);
+    padding-inline: 20px;
+    font-size: 15px;
+    border-radius: 14px;
+  }
+
+  .toast{
+    left: 16px;
+    right: 16px;
+    bottom: calc(12px + var(--mobile-bottom-safe));
+    max-width: none;
+  }
+
+  .modal{
+    width: min(100%, 560px);
+    padding: 22px 18px;
+  }
+
+  .modal-actions{
+    flex-direction: column;
+  }
+
+  .modal-actions .btn-primary,
+  .modal-actions .btn-outline{
+    width: 100%;
+  }
+
+  #AuthOverlay{
+    align-items: center;
+    padding: 14px;
+  }
+
+  .auth-modal{
+    width: min(100%, 540px);
+    max-width: calc(100vw - 28px);
+    padding: 24px 18px 18px;
+    border-radius: 18px;
+  }
+
+  .auth-actions{
+    flex-direction: column;
+  }
+
+  .auth-actions .btn-primary,
+  .auth-actions .btn-outline{
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Welcome / Home */
+  body.welcome-home main{
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+    padding-bottom: var(--mobile-bottom-safe);
+  }
+
+  body.welcome-home #ActionBar{
+    position: fixed;
+  }
+
+  body.welcome-home .cards-scroll{
+    min-height: auto;
+    display: block;
+    padding: 18px var(--mobile-pad) calc(12px + var(--mobile-bottom-safe));
+  }
+
+  body.welcome-home #WelcomeCard{
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .welcome-brand{
+    margin: 4px 0 14px;
+  }
+
+  .welcome-brand img{
+    height: auto;
+    max-height: 56px;
+    width: min(100%, 320px);
+    object-fit: contain;
+  }
+
+  .welcome-head{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .welcome-title{
+    font-size: 22px;
+    line-height: 1.15;
+  }
+
+  .welcome-sub{
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .welcome-help{
+    align-self: flex-start;
+    min-height: 42px;
+    padding-inline: 16px;
+  }
+
+  .welcome-grid{
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .welcome-card{
+    border-radius: 16px;
+    padding: 14px;
+  }
+
+  .welcome-icowrap{
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .welcome-icowrap img{
+    width: 20px;
+    height: 20px;
+  }
+
+  .welcome-card h4{
+    font-size: 15px;
+    line-height: 1.25;
+  }
+
+  .welcome-card p{
+    font-size: 13px;
+  }
+
+  .welcome-help-drawer{
+    width: min(100vw, 460px);
+  }
+
+  /* Fattura */
+  .fattura-box .row{
+    gap: 0;
+  }
+
+  .fattura-add-btn{
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 0;
+  }
+
+  .fattura-divider{
+    margin: 8px 0 14px;
+  }
+
+  .fattura-table{
+    margin-top: 12px !important;
+  }
+
+  .fattura-row{
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .fattura-row input[type='number'],
+  .fattura-row input[type='text'],
+  .fattura-row select{
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .fattura-totals{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .fattura-totalval{
+    font-size: 16px;
+  }
+
+  /* Business card previews */
+  .bv-preview-grid{
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Generic canvases / preview blocks */
+  .bv-preview-canvaswrap,
+  .welcome-help-body,
+  .cards-scroll,
+  .content{
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 680px){
+  :root{
+    --mobile-pad: 14px;
+    --mobile-card-pad: 18px;
+  }
+
+  .logo{
+    width: min(82vw, 280px);
+  }
+
+  .menu{
+    padding-inline: 12px;
+  }
+
+  .menu li{
+    padding: 10px 13px;
+    border-radius: 14px;
+  }
+
+  .menu li .txt{
+    font-size: 14px;
+  }
+
+  .sidebar-bottom{
+    padding-inline: 12px;
+  }
+
+  .content > .cards-scroll{
+    padding-inline: 14px;
+  }
+
+  .card{
+    border-radius: 16px;
+    padding: 18px 16px;
+  }
+
+  .card h2,
+  .card h3{
+    font-size: 20px;
+  }
+
+  .welcome-title{
+    font-size: 20px;
+  }
+
+  .welcome-brand img{
+    max-height: 50px;
+    width: min(84vw, 280px);
+  }
+
+  .auth-modal{
+    padding: 22px 16px 16px;
+  }
+
+  .copyright{
+    max-width: 46vw;
+    font-size: 9px;
+  }
+
+  .actionbar .btn-primary{
+    width: min(100%, 220px);
+  }
+
+  .fattura-row{
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .fattura-row .fat-prod,
+  .fattura-row .fat-total{
+    grid-column: 1 / -1;
+  }
+}

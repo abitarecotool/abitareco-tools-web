@@ -273,7 +273,7 @@
       <div class="platform-plans-wrap">
         <div class="platform-plan-card">
           <h4>Preview planimetrie</h4>
-          <p class="muted">Output automatico JPG 850×1000 px con <strong>contain</strong>. Nei PDF, prima del crop il tool prova a disattivare automaticamente i livelli <strong>CARTIGLIO</strong> e <strong>5_TESTO</strong> quando presenti. Poi puoi ritagliare ogni file per togliere eventuali riferimenti residui. Se il file sorgente è verticale, viene ruotato in orizzontale prima del crop/contain per uniformare la resa finale.</p>
+          <p class="muted">Output automatico JPG 850×1000 px con <strong>contain</strong>. Nei PDF, prima del crop il tool verifica i livelli disponibili, prova a spegnere automaticamente <strong>CARTIGLIO</strong> e <strong>5_TESTO</strong>, poi rasterizza la tavola e applica un centraggio intelligente sulla planimetria. Infine puoi rifinire tutto con il crop manuale. Se il file sorgente è verticale, viene ruotato in orizzontale prima del crop/contain per uniformare la resa finale.</p>
           <div class="platform-upload platform-plan-upload" data-plan-drop tabindex="0" role="button" aria-label="Carica planimetrie" title="Clicca per selezionare file o trascina qui cartella/file supportato">
             <div class="platform-upload-inner platform-upload-inner--stack">
               <div class="platform-upload-copy">
@@ -471,6 +471,86 @@
     return c;
   }
 
+  function extractLargestPlanComponent(sourceCanvas){
+    try {
+      const sw = sourceCanvas.width;
+      const sh = sourceCanvas.height;
+      const maxSide = 420;
+      const scale = Math.min(1, maxSide / Math.max(sw, sh));
+      const w = Math.max(1, Math.round(sw * scale));
+      const h = Math.max(1, Math.round(sh * scale));
+      const probe = document.createElement('canvas');
+      probe.width = w; probe.height = h;
+      const pctx = probe.getContext('2d', { alpha:false, willReadFrequently:true });
+      pctx.fillStyle = '#ffffff';
+      pctx.fillRect(0,0,w,h);
+      pctx.drawImage(sourceCanvas, 0, 0, w, h);
+      const data = pctx.getImageData(0,0,w,h).data;
+      const mask = new Uint8Array(w * h);
+      const thr = 22;
+      for (let y = 0; y < h; y++){
+        for (let x = 0; x < w; x++){
+          const i = (y * w + x) * 4;
+          const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+          const delta = Math.abs(255-r) + Math.abs(255-g) + Math.abs(255-b);
+          if (a > 8 && delta > thr) mask[y * w + x] = 1;
+        }
+      }
+      const visited = new Uint8Array(w * h);
+      let best = null;
+      const nbs = [-1, 1, -w, w, -w-1, -w+1, w-1, w+1];
+      for (let idx = 0; idx < mask.length; idx++){
+        if (!mask[idx] || visited[idx]) continue;
+        const q = [idx];
+        visited[idx] = 1;
+        let area = 0;
+        let minX = w, minY = h, maxX = 0, maxY = 0;
+        while (q.length){
+          const cur = q.pop();
+          const x = cur % w, y = Math.floor(cur / w);
+          area += 1;
+          if (x < minX) minX = x; if (x > maxX) maxX = x;
+          if (y < minY) minY = y; if (y > maxY) maxY = y;
+          for (const d of nbs){
+            const nxt = cur + d;
+            if (nxt < 0 || nxt >= mask.length || visited[nxt] || !mask[nxt]) continue;
+            const nx = nxt % w, ny = Math.floor(nxt / w);
+            if (Math.abs(nx - x) > 1 || Math.abs(ny - y) > 1) continue;
+            visited[nxt] = 1;
+            q.push(nxt);
+          }
+        }
+        const bboxW = maxX - minX + 1;
+        const bboxH = maxY - minY + 1;
+        const score = area * Math.max(1, bboxW * bboxH);
+        if (!best || score > best.score) best = { score, minX, minY, maxX, maxY };
+      }
+      if (!best) return sourceCanvas;
+      const padX = Math.round((best.maxX - best.minX + 1) * 0.08);
+      const padY = Math.round((best.maxY - best.minY + 1) * 0.08);
+      const sx = Math.max(0, Math.round((best.minX - padX) / scale));
+      const sy = Math.max(0, Math.round((best.minY - padY) / scale));
+      const ex = Math.min(sw, Math.round((best.maxX + padX + 1) / scale));
+      const ey = Math.min(sh, Math.round((best.maxY + padY + 1) / scale));
+      const cw = Math.max(1, ex - sx);
+      const ch = Math.max(1, ey - sy);
+      const out = document.createElement('canvas');
+      out.width = cw; out.height = ch;
+      const octx = out.getContext('2d', { alpha:false });
+      octx.fillStyle = '#ffffff';
+      octx.fillRect(0,0,cw,ch);
+      octx.drawImage(sourceCanvas, sx, sy, cw, ch, 0, 0, cw, ch);
+      return out;
+    } catch {
+      return sourceCanvas;
+    }
+  }
+
+  function preparePdfCanvasForCrop(renderedCanvas){
+    const landscape = rotateSourceToLandscape(renderedCanvas);
+    return extractLargestPlanComponent(landscape);
+  }
+
   function drawCoverToCanvas(bmp, W, H){
     const c = document.createElement('canvas');
     c.width = W; c.height = H;
@@ -554,15 +634,18 @@
   async function buildPdfOptionalContentConfigPromise(pdf, hiddenNames=['CARTIGLIO','5_TESTO']){
     try {
       if (!pdf || typeof pdf.getOptionalContentConfig !== 'function') return null;
-      const config = await pdf.getOptionalContentConfig();
+      const normalize = (v) => String(v || '').trim().toUpperCase().replace(/\s+/g, '').replace(/[^A-Z0-9_]/g, '');
+      const wanted = new Set((hiddenNames || []).map(normalize));
+      const config = await pdf.getOptionalContentConfig({ intent: 'display' });
       if (!config || typeof config.getGroups !== 'function') return null;
-      const names = new Set((hiddenNames || []).map(v => String(v || '').trim().toUpperCase()));
       const groups = config.getGroups() || {};
       Object.keys(groups).forEach((id) => {
         const g = groups[id] || {};
-        const n = String(g.name || '').trim().toUpperCase();
-        if (names.has(n) && typeof config.setVisibility === 'function') {
-          try { config.setVisibility(id, false); } catch {}
+        const rawName = g.name || g._name || '';
+        const normalizedName = normalize(rawName);
+        if (wanted.has(normalizedName)) {
+          try { if (typeof config.setVisibility === 'function') config.setVisibility(id, false); } catch {}
+          try { groups[id].visible = false; } catch {}
         }
       });
       return Promise.resolve(config);
@@ -650,9 +733,9 @@
           progressSet(Math.round((processed / Math.max(total,1)) * 100), `Preparo ${file.name} · pagina ${p}/${pdf.numPages}…`);
           const page = await pdf.getPage(p);
           const rendered = await renderPdfPage(page, optionalContentConfigPromise);
-          const landscape = rotateSourceToLandscape(rendered);
+          const prepared = preparePdfCanvasForCrop(rendered);
           const base = file.name.replace(/\.pdf$/i, '');
-          items.push({ name: `${base}${pdf.numPages > 1 ? '-' + pad(p) : ''}`, source: landscape, cropData: null });
+          items.push({ name: `${base}${pdf.numPages > 1 ? '-' + pad(p) : ''}`, source: prepared, cropData: null });
           processed += 1;
           try { page.cleanup && page.cleanup(); } catch {}
         }

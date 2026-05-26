@@ -1,6 +1,7 @@
 /* =============================== Piattaforma (Absuite) ====================== */
 (function(){
   'use strict';
+
   const $ = (s, root=document) => root.querySelector(s);
   const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
   const showEl = (el) => el && el.classList.remove('hidden');
@@ -13,15 +14,16 @@
   const ActionProgressWrap = $('#ActionProgressWrap');
   const ActionProgress = $('#ActionProgress');
   const ActionProgressLabel = $('#ActionProgressLabel');
+  const BtnProcedi = $('#BtnProcedi');
 
   const BASE_SLOTS = [
-    { key:'hero', label:'Hero', desk:[1920,1080], mob:[750,1600], enabled:true },
-    { key:'carousel', label:'Carousel', desk:[1420,642], mob:[660,660], enabled:true },
-    { key:'immagine', label:'Immagine', desk:[1760,990], mob:[670,420], enabled:true },
-    { key:'testo-immagine', label:'Testo e immagine', desk:[880,1080], mob:[750,720], enabled:true },
-    { key:'banner', label:'Banner', desk:[1920,1080], mob:[750,1600], enabled:true },
-    { key:'banner-appuntamento', label:'Banner appuntamento', desk:[1920,680], mob:[750,1440], enabled:true },
-    { key:'appartamenti', label:'Appartamenti', desk:[1920,1080], mob:[1420,642], enabled:true }
+    { key:'hero', label:'Hero', desk:[1920,1080], mob:[750,1600] },
+    { key:'carousel', label:'Carousel', desk:[1420,642], mob:[660,660] },
+    { key:'immagine', label:'Immagine', desk:[1760,990], mob:[670,420] },
+    { key:'testo-immagine', label:'Testo e immagine', desk:[880,1080], mob:[750,720] },
+    { key:'banner', label:'Banner', desk:[1920,1080], mob:[750,1600] },
+    { key:'banner-appuntamento', label:'Banner appuntamento', desk:[1920,680], mob:[750,1440] },
+    { key:'appartamenti', label:'Appartamenti', desk:[1920,1080], mob:[1420,642] }
   ];
 
   const SECTIONS = [
@@ -39,7 +41,13 @@
     plans: [],
     platformSlug: '',
     customSectionName: '',
-    customFormats: Object.fromEntries(BASE_SLOTS.map(s => [s.key, true]))
+    customFormats: Object.fromEntries(BASE_SLOTS.map(s => [s.key, true])),
+    planCrop: {
+      active: false,
+      items: [],
+      index: 0,
+      crop: { x:0, y:0, scale:1, minScale:0.01, maxScale:4, containScale:1, dragging:false, startX:0, startY:0, pointerId:null }
+    }
   };
 
   function slugify(v){
@@ -68,18 +76,19 @@
   }
   function getSectionDef(){ return SECTIONS.find(s => s.key === state.section) || SECTIONS[0]; }
   function getSlotDef(key){ return BASE_SLOTS.find(s => s.key === key); }
+  function allSlotsForCurrentSection(){ return getSectionDef().slots.map(getSlotDef).filter(Boolean); }
+  function exportableSlots(){
+    const section = getSectionDef();
+    const slots = section.slots.map(getSlotDef).filter(Boolean);
+    if (section.key !== 'altro') return slots;
+    return slots.filter(slot => !!state.customFormats[slot.key]);
+  }
   function getSectionLabel(sectionKey=state.section){
-    if (sectionKey === 'altro'){
-      return (state.customSectionName || '').trim() || 'Altro';
-    }
+    if (sectionKey === 'altro') return (state.customSectionName || '').trim() || 'Altro';
     return (SECTIONS.find(s => s.key === sectionKey) || {}).label || sectionKey;
   }
-  function getSectionSlug(sectionKey=state.section){ return slugify(getSectionLabel(sectionKey)); }
-  function activeSlots(){
-    const section = getSectionDef();
-    let slotKeys = [...section.slots];
-    if (section.key === 'altro') slotKeys = slotKeys.filter(k => !!state.customFormats[k]);
-    return slotKeys.map(getSlotDef).filter(Boolean);
+  function getSectionSlug(sectionKey=state.section){
+    return slugify(getSectionLabel(sectionKey));
   }
   function humanCount(files){
     const n = (files || []).length;
@@ -133,10 +142,20 @@
     return out;
   }
 
+  function eyeIcon(hidden=false){
+    return hidden
+      ? `<span class="eye-open hidden" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 12S5.5 5.5 12 5.5 22.5 12 22.5 12 18.5 18.5 12 18.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="eye-closed" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.88 5.09A10.94 10.94 0 0 1 12 4.9c6.5 0 10.5 7.1 10.5 7.1a21.47 21.47 0 0 1-4.31 4.91" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.61 6.61A21.48 21.48 0 0 0 1.5 12s4 7.1 10.5 7.1a10.9 10.9 0 0 0 5.03-1.21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`
+      : `<span class="eye-open" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 12S5.5 5.5 12 5.5 22.5 12 22.5 12 18.5 18.5 12 18.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="eye-closed hidden" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.88 5.09A10.94 10.94 0 0 1 12 4.9c6.5 0 10.5 7.1 10.5 7.1a21.47 21.47 0 0 1-4.31 4.91" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.61 6.61A21.48 21.48 0 0 0 1.5 12s4 7.1 10.5 7.1a10.9 10.9 0 0 0 5.03-1.21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+  }
+
+  function previewName(initiative, sectionSlug, slotKey, flavor){
+    return `${initiative || 'nome-iniziativa'}-${sectionSlug || 'sezione'}-${slotKey}-${flavor}`;
+  }
+
   function renderSectionTabs(){
     if (!PlatformSectionTabs) return;
     PlatformSectionTabs.innerHTML = '';
-    if (state.view !== 'images') return;
+    if (state.view !== 'images' || state.planCrop.active) return;
     SECTIONS.forEach(section => {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -147,24 +166,20 @@
     });
   }
 
-  function eyeIcon(hidden=false){
-    return hidden
-      ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.9 5.1A11 11 0 0 1 12 4.9c6.5 0 10.5 7.1 10.5 7.1a21.4 21.4 0 0 1-4.3 4.9" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.6 6.6A21.4 21.4 0 0 0 1.5 12s4 7.1 10.5 7.1a10.8 10.8 0 0 0 5-1.2" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`
-      : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12S5.5 5.5 12 5.5 22.5 12 22.5 12 18.5 18.5 12 18.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>`;
-  }
-
-  function renderFormatCard(slot, enabled=true){
+  function renderFormatCard(slot, options={}){
+    const disabled = !!options.disabled;
+    const sectionSlug = getSectionSlug();
+    const initiative = slugify(state.platformSlug) || 'nome-iniziativa';
     return `
-      <article class="platform-format-card ${enabled ? '' : 'is-disabled'}" data-format-key="${slot.key}">
+      <article class="platform-format-card ${disabled ? 'is-disabled' : ''}" data-format-key="${slot.key}">
         <div class="platform-format-top">
           <div>
             <h4>${slot.label}</h4>
             <p class="muted">Desktop ${slot.desk[0]}×${slot.desk[1]} · Mobile ${slot.mob[0]}×${slot.mob[1]} · cover</p>
           </div>
-          <button type="button" class="platform-eye-btn" data-toggle-format="${slot.key}" aria-pressed="${enabled ? 'true' : 'false'}" title="${enabled ? 'Nascondi export formato' : 'Mostra export formato'}">
-            ${eyeIcon(!enabled)}
-          </button>
+          ${options.togglable ? `<button type="button" class="platform-eye-btn" data-toggle-format="${slot.key}" title="${disabled ? 'Mostra formato' : 'Nascondi formato'}" aria-pressed="${disabled ? 'false' : 'true'}">${eyeIcon(disabled)}</button>` : ''}
         </div>
+        <div class="platform-generated-name">${previewName(initiative, sectionSlug, slot.key, 'desktop')} · ${previewName(initiative, sectionSlug, slot.key, 'mobile')}</div>
       </article>
     `;
   }
@@ -172,8 +187,11 @@
   function renderImagesView(){
     const section = getSectionDef();
     const files = state.sectionUploads[section.key] || [];
-    const slots = activeSlots();
-    const formatCards = slots.map(slot => renderFormatCard(slot, section.key === 'altro' ? !!state.customFormats[slot.key] : true)).join('');
+    const slotsForRender = allSlotsForCurrentSection();
+    const formatCards = slotsForRender.map(slot => renderFormatCard(slot, {
+      disabled: section.key === 'altro' ? !state.customFormats[slot.key] : false,
+      togglable: section.key === 'altro'
+    })).join('');
     const mobileTxt = isMobileUploadUI() ? 'Tocca per aprire la galleria foto' : 'Clicca o trascina qui la cartella immagini';
     const previewNames = files.length ? files.slice(0,3).map(f => f.name).join(', ') : 'Puoi caricare cartelle con JPG e sottocartelle con JPG. Ogni file verrà esportato in tutti i formati attivi della sezione.';
     PlatformBody.innerHTML = `
@@ -210,25 +228,56 @@
             </div>
           </div>
         </article>
-        <div class="platform-formats-grid">
-          ${formatCards}
-        </div>
+        <div class="platform-formats-grid">${formatCards}</div>
         <div class="platform-footnote muted">Esportazione: <strong>${getSectionLabel()}</strong> → <strong>desktop/mobile</strong> → sottocartelle formato (<strong>hero</strong>, <strong>carousel</strong>, <strong>banner</strong>…). Ogni immagine caricata viene generata in tutti i formati attivi della sezione.</div>
       </div>`;
   }
 
+  function renderPlanCropView(){
+    const item = state.planCrop.items[state.planCrop.index];
+    if (!item){
+      state.planCrop.active = false;
+      showEl(BtnProcedi);
+      return renderPlansView();
+    }
+    const total = state.planCrop.items.length;
+    const isLast = state.planCrop.index === total - 1;
+    PlatformBody.innerHTML = `
+      <div class="platform-plan-crop-wrap">
+        <div class="platform-plan-card">
+          <div class="platform-crop-head">
+            <div>
+              <h4>Ritaglio preview planimetrie</h4>
+              <p class="muted">File ${state.planCrop.index + 1} di ${total} · ${item.name}. Regola il ritaglio per escludere scritte/offset indesiderati e poi vai avanti.</p>
+            </div>
+            <div class="platform-crop-counter">${state.planCrop.index + 1}/${total}</div>
+          </div>
+          <div id="PlatformPlanCropFrame" class="crop-frame platform-plan-crop-frame"><img id="PlatformPlanCropImg" alt="Anteprima ritaglio planimetria" /></div>
+          <label style="margin-top:12px">Zoom immagine</label>
+          <input type="range" id="PlatformPlanCropZoom" class="input" />
+          <div class="platform-crop-actions">
+            <button type="button" class="btn-outline" id="PlatformPlanCropReset">Ripristina</button>
+            <button type="button" class="btn-outline" id="PlatformPlanCropSkip">Salta ritaglio</button>
+            <button type="button" class="btn-primary" id="PlatformPlanCropNext">${isLast ? 'Esporta tutti' : 'Salva e successivo'}</button>
+          </div>
+        </div>
+      </div>`;
+    initPlanCropUI(item);
+  }
+
   function renderPlansView(){
+    if (state.planCrop.active) return renderPlanCropView();
     const total = state.plans.length;
     const names = total ? state.plans.slice(0,4).map(f => f.name).join(', ') : 'Accetta JPG/PNG/WEBP/TIFF/PDF anche misti. Drag & drop cartella o file supportato su desktop.';
     PlatformBody.innerHTML = `
       <div class="platform-plans-wrap">
         <div class="platform-plan-card">
           <h4>Preview planimetrie</h4>
-          <p class="muted">Output automatico JPG 850×1000 px con <strong>contain</strong>. Se il file sorgente è verticale, viene ruotato in orizzontale prima del contain per uniformare la resa finale. Il nome finale resta sempre <strong>nomefile-preview.jpg</strong>.</p>
+          <p class="muted">Output automatico JPG 850×1000 px con <strong>contain</strong>. Prima dell’export puoi ritagliare ogni file per togliere scritte e riferimenti indesiderati. Se il file sorgente è verticale, viene ruotato in orizzontale prima del crop/contain per uniformare la resa finale.</p>
           <div class="platform-upload platform-plan-upload" data-plan-drop tabindex="0" role="button" aria-label="Carica planimetrie" title="Clicca per selezionare file o trascina qui cartella/file supportato">
             <div class="platform-upload-inner platform-upload-inner--stack">
               <div class="platform-upload-copy">
-                <strong>${total ? `${total} file pronti per l'export` : 'Clicca o trascina qui cartelle / file misti JPG e PDF'}</strong>
+                <strong>${total ? `${total} file pronti per il crop/export` : 'Clicca o trascina qui cartelle / file misti JPG e PDF'}</strong>
                 <span class="muted">${names}</span>
               </div>
               <div class="platform-upload-actions platform-upload-actions--wrap">
@@ -249,14 +298,27 @@
     else renderPlansView();
   }
 
+  function updateImageNamePreviews(){
+    const sectionSlug = getSectionSlug();
+    const initiative = slugify(state.platformSlug) || 'nome-iniziativa';
+    $$('.platform-format-card').forEach(card => {
+      const key = card.dataset.formatKey;
+      const chip = $('.platform-generated-name', card);
+      if (!chip) return;
+      chip.textContent = `${previewName(initiative, sectionSlug, key, 'desktop')} · ${previewName(initiative, sectionSlug, key, 'mobile')}`;
+    });
+  }
+
   function storeSectionFiles(files){
     state.sectionUploads[state.section] = files;
     renderImagesView();
+    afterRenderBindDnD();
   }
 
   function storePlanFiles(files){
     state.plans = files;
     renderPlansView();
+    afterRenderBindDnD();
   }
 
   function pickImageSectionFiles(){
@@ -297,6 +359,8 @@
       const btn = e.target.closest('[data-platform-view]');
       if (!btn) return;
       state.view = btn.dataset.platformView;
+      state.planCrop.active = false;
+      showEl(BtnProcedi);
       render();
       afterRenderBindDnD();
     });
@@ -310,21 +374,29 @@
     });
 
     PlatformBody?.addEventListener('input', (e) => {
-      if (e.target.id === 'PlatformSlugInput') { state.platformSlug = e.target.value || ''; renderImagesView(); afterRenderBindDnD(); }
-      if (e.target.id === 'PlatformCustomSectionName') { state.customSectionName = e.target.value || ''; renderImagesView(); afterRenderBindDnD(); }
+      if (e.target.id === 'PlatformSlugInput'){
+        state.platformSlug = e.target.value || '';
+        updateImageNamePreviews();
+      }
+      if (e.target.id === 'PlatformCustomSectionName'){
+        state.customSectionName = e.target.value || '';
+        const uploadHead = $('.platform-upload-header h4', PlatformBody);
+        if (uploadHead) uploadHead.textContent = `Upload ${getSectionLabel()}`;
+        updateImageNamePreviews();
+      }
     });
 
-    PlatformBody?.addEventListener('click', (e) => {
+    PlatformBody?.addEventListener('click', async (e) => {
       const pickSection = e.target.closest('[data-section-pick]');
       if (pickSection){ e.preventDefault(); return pickImageSectionFiles(); }
       const clearSection = e.target.closest('[data-section-clear]');
-      if (clearSection){ e.preventDefault(); state.sectionUploads[state.section] = []; renderImagesView(); return afterRenderBindDnD(); }
+      if (clearSection){ e.preventDefault(); return storeSectionFiles([]); }
       const dropSection = e.target.closest('[data-section-drop]');
       if (dropSection){ e.preventDefault(); return pickImageSectionFiles(); }
       const planPick = e.target.closest('[data-plan-pick]');
       if (planPick){ e.preventDefault(); return pickPlanFiles(); }
       const planClear = e.target.closest('[data-plan-clear]');
-      if (planClear){ e.preventDefault(); state.plans = []; renderPlansView(); return afterRenderBindDnD(); }
+      if (planClear){ e.preventDefault(); return storePlanFiles([]); }
       const planDrop = e.target.closest('[data-plan-drop]');
       if (planDrop){ e.preventDefault(); return pickPlanFiles(); }
       const toggleFormat = e.target.closest('[data-toggle-format]');
@@ -332,9 +404,16 @@
         e.preventDefault();
         const key = toggleFormat.dataset.toggleFormat;
         state.customFormats[key] = !state.customFormats[key];
-        renderImagesView();
-        return afterRenderBindDnD();
+        const card = toggleFormat.closest('.platform-format-card');
+        card?.classList.toggle('is-disabled', !state.customFormats[key]);
+        toggleFormat.innerHTML = eyeIcon(!state.customFormats[key]);
+        toggleFormat.setAttribute('aria-pressed', state.customFormats[key] ? 'true' : 'false');
+        toggleFormat.title = state.customFormats[key] ? 'Nascondi formato' : 'Mostra formato';
+        return;
       }
+      if (e.target.id === 'PlatformPlanCropReset'){ e.preventDefault(); return resetPlanCrop('contain'); }
+      if (e.target.id === 'PlatformPlanCropSkip'){ e.preventDefault(); return saveAndAdvancePlanCrop(true); }
+      if (e.target.id === 'PlatformPlanCropNext'){ e.preventDefault(); return saveAndAdvancePlanCrop(false); }
     });
 
     PlatformBody?.addEventListener('keydown', (e) => {
@@ -363,6 +442,33 @@
         img.src = URL.createObjectURL(file);
       });
     }
+  }
+
+  function canvasToCanvasSource(source){
+    const c = document.createElement('canvas');
+    const sw = source.width || source.naturalWidth;
+    const sh = source.height || source.naturalHeight;
+    c.width = sw; c.height = sh;
+    const ctx = c.getContext('2d', { alpha:false });
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,sw,sh);
+    ctx.drawImage(source, 0, 0, sw, sh);
+    return c;
+  }
+
+  function rotateSourceToLandscape(source){
+    const sw = source.width || source.naturalWidth;
+    const sh = source.height || source.naturalHeight;
+    if (sw >= sh) return canvasToCanvasSource(source);
+    const c = document.createElement('canvas');
+    c.width = sh; c.height = sw;
+    const ctx = c.getContext('2d', { alpha:false });
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.translate(c.width / 2, c.height / 2);
+    ctx.rotate(Math.PI / 2);
+    ctx.drawImage(source, -sw / 2, -sh / 2, sw, sh);
+    return c;
   }
 
   function drawCoverToCanvas(bmp, W, H){
@@ -399,22 +505,30 @@
     return c;
   }
 
-  function drawPlanPreviewToCanvas(source, W=850, H=1000, bg='#ffffff'){
-    const sw = source.width || source.naturalWidth;
-    const sh = source.height || source.naturalHeight;
-    if (sh > sw){
-      const rotated = document.createElement('canvas');
-      rotated.width = sh;
-      rotated.height = sw;
-      const rctx = rotated.getContext('2d', { alpha:false });
-      rctx.fillStyle = bg;
-      rctx.fillRect(0,0,rotated.width, rotated.height);
-      rctx.translate(rotated.width / 2, rotated.height / 2);
-      rctx.rotate(Math.PI / 2);
-      rctx.drawImage(source, -sw / 2, -sh / 2, sw, sh);
-      return drawContainToCanvas(rotated, W, H, bg);
-    }
-    return drawContainToCanvas(source, W, H, bg);
+  function drawCropStateToCanvas(source, W, H, cropData){
+    if (!cropData || cropData.skipped) return drawContainToCanvas(source, W, H, '#ffffff');
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d', { alpha:false });
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,W,H);
+    const frameW = cropData.frameW || 1;
+    const frameH = cropData.frameH || 1;
+    const sx = W / frameW;
+    const sy = H / frameH;
+    const scaleOut = cropData.scale * sx;
+    const dxOut = cropData.x * sx;
+    const dyOut = cropData.y * sy;
+    const dw = source.width * scaleOut;
+    const dh = source.height * scaleOut;
+    const cx = (W / 2) + dxOut;
+    const cy = (H / 2) + dyOut;
+    const x = cx - (dw / 2);
+    const y = cy - (dh / 2);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(source, x, y, dw, dh);
+    return c;
   }
 
   async function canvasToBlob(canvas, type='image/jpeg', quality=0.9){
@@ -463,7 +577,7 @@
     ensureState();
     const files = state.sectionUploads[state.section] || [];
     const initiative = slugify(state.platformSlug);
-    const slotDefs = activeSlots();
+    const slotDefs = exportableSlots();
     if (!initiative){ alert('Inserisci il nome iniziativa.'); return; }
     if (state.section === 'altro' && !slugify(state.customSectionName)){ alert('Inserisci il nome della mini sezione Altro.'); return; }
     if (!files.length){ alert(`Carica una cartella immagini per la sezione ${getSectionLabel()}.`); return; }
@@ -484,11 +598,11 @@
         const mobCanvas = drawCoverToCanvas(bmp, slot.mob[0], slot.mob[1]);
         const deskBlob = await canvasToBlob(deskCanvas, 'image/jpeg', 0.9);
         const mobBlob = await canvasToBlob(mobCanvas, 'image/jpeg', 0.9);
-        const originalBase = slugify((file.name || '').replace(/\.[^.]+$/, '')) || `img-${pad(i+1)}`;
-        const numbered = files.length > 1 ? `-${pad(i+1)}` : '';
-        const baseName = `${initiative}-${sectionSlug}-${originalBase}${numbered}`;
-        zip.file(`PIATTAFORMA/${sectionSlug}/desktop/${slot.key}/${baseName}-desktop.jpg`, deskBlob, { binary:true });
-        zip.file(`PIATTAFORMA/${sectionSlug}/mobile/${slot.key}/${baseName}-mobile.jpg`, mobBlob, { binary:true });
+        const nn = pad(i + 1);
+        const baseDesk = `${initiative}-${sectionSlug}-${slot.key}-desktop-${nn}.jpg`;
+        const baseMob = `${initiative}-${sectionSlug}-${slot.key}-mobile-${nn}.jpg`;
+        zip.file(`PIATTAFORMA/${sectionSlug}/desktop/${slot.key}/${baseDesk}`, deskBlob, { binary:true });
+        zip.file(`PIATTAFORMA/${sectionSlug}/mobile/${slot.key}/${baseMob}`, mobBlob, { binary:true });
         done += 1;
       }
     }
@@ -496,13 +610,11 @@
     progressDone(`${getSectionLabel()} esportata.`);
   }
 
-  async function exportPlans(){
-    const files = state.plans || [];
-    if (!files.length){ alert('Carica almeno una planimetria o un PDF.'); return; }
-    progressStart('Esporto planimetrie…');
-    const zip = new JSZip();
-    let done = 0;
-    let totalUnits = files.length;
+  async function preparePlanCropItems(files){
+    const items = [];
+    progressStart('Preparo il crop delle planimetrie…');
+    let processed = 0;
+    let total = files.length;
     if (files.some(f => /\.pdf$/i.test(f.name))){
       try { if (typeof ensurePdfJs === 'function') await ensurePdfJs(); } catch {}
     }
@@ -510,37 +622,190 @@
       if (/\.pdf$/i.test(file.name)){
         if (typeof window.pdfjsLib === 'undefined') throw new Error('Il supporto PDF non è disponibile.');
         const pdf = await window.pdfjsLib.getDocument({ data: await file.arrayBuffer(), useWorkerFetch:true, isEvalSupported:false }).promise;
-        totalUnits += Math.max(0, pdf.numPages - 1);
+        total += Math.max(0, pdf.numPages - 1);
         for (let p = 1; p <= pdf.numPages; p++){
-          progressSet(Math.round((done / Math.max(totalUnits,1)) * 100), `Converto ${file.name} · pagina ${p}/${pdf.numPages}…`);
+          progressSet(Math.round((processed / Math.max(total,1)) * 100), `Preparo ${file.name} · pagina ${p}/${pdf.numPages}…`);
           const page = await pdf.getPage(p);
           const rendered = await renderPdfPage(page);
-          const finalCanvas = drawPlanPreviewToCanvas(rendered, 850, 1000, '#ffffff');
-          const blob = await canvasToBlob(finalCanvas, 'image/jpeg', 0.92);
+          const landscape = rotateSourceToLandscape(rendered);
           const base = file.name.replace(/\.pdf$/i, '');
-          const pageSuffix = pdf.numPages > 1 ? `-${pad(p)}` : '';
-          zip.file(`PIATTAFORMA/planimetrie/${base}${pageSuffix}-preview.jpg`, blob, { binary:true });
-          done += 1;
+          items.push({ name: `${base}${pdf.numPages > 1 ? '-' + pad(p) : ''}`, source: landscape, cropData: null });
+          processed += 1;
           try { page.cleanup && page.cleanup(); } catch {}
         }
         try { pdf.cleanup && pdf.cleanup(); } catch {}
         try { pdf.destroy && pdf.destroy(); } catch {}
       } else {
-        progressSet(Math.round((done / Math.max(totalUnits,1)) * 100), `Converto ${file.name}…`);
+        progressSet(Math.round((processed / Math.max(total,1)) * 100), `Preparo ${file.name}…`);
         const bmp = await loadBitmapOriented(file);
-        const finalCanvas = drawPlanPreviewToCanvas(bmp, 850, 1000, '#ffffff');
-        const blob = await canvasToBlob(finalCanvas, 'image/jpeg', 0.92);
-        const base = file.name.replace(/\.[^.]+$/,'');
-        zip.file(`PIATTAFORMA/planimetrie/${base}-preview.jpg`, blob, { binary:true });
-        done += 1;
+        const landscape = rotateSourceToLandscape(bmp);
+        const base = file.name.replace(/\.[^.]+$/, '');
+        items.push({ name: base, source: landscape, cropData: null });
+        processed += 1;
       }
     }
+    return items;
+  }
+
+  function updatePlanCropPreview(){
+    const frame = $('#PlatformPlanCropFrame');
+    const img = $('#PlatformPlanCropImg');
+    const zoom = $('#PlatformPlanCropZoom');
+    const item = state.planCrop.items[state.planCrop.index];
+    const crop = state.planCrop.crop;
+    if (!frame || !img || !item) return;
+    const rect = frame.getBoundingClientRect();
+    const frameW = Math.max(1, rect.width);
+    const frameH = Math.max(1, rect.height);
+    const iw = item.source.width;
+    const ih = item.source.height;
+    const contain = Math.min(frameW / iw, frameH / ih);
+    crop.containScale = Math.max(0.01, contain);
+    crop.minScale = crop.containScale;
+    crop.maxScale = Math.max(crop.minScale * 5, crop.minScale + 0.01);
+    const existing = item.cropData;
+    if (existing && typeof existing.scale === 'number'){
+      crop.x = existing.x || 0;
+      crop.y = existing.y || 0;
+      crop.scale = Math.max(crop.minScale, Math.min(existing.scale, crop.maxScale));
+    } else {
+      crop.x = 0; crop.y = 0; crop.scale = crop.containScale;
+    }
+    img.style.transform = `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px)) scale(${crop.scale})`;
+    if (zoom){
+      zoom.min = String(crop.minScale);
+      zoom.max = String(crop.maxScale);
+      zoom.step = String(Math.max((crop.maxScale - crop.minScale) / 200, 0.005));
+      zoom.value = String(crop.scale);
+      const min = Number(zoom.min) || 0;
+      const max = Number(zoom.max) || 1;
+      const val = Number(zoom.value) || min;
+      const pct = (max > min) ? ((val - min) / (max - min)) * 100 : 0;
+      zoom.style.setProperty('--fill', pct + '%');
+    }
+  }
+
+  function resetPlanCrop(mode='contain'){
+    const img = $('#PlatformPlanCropImg');
+    const zoom = $('#PlatformPlanCropZoom');
+    const crop = state.planCrop.crop;
+    crop.x = 0; crop.y = 0;
+    crop.scale = mode === 'contain' ? crop.containScale : crop.minScale;
+    if (img) img.style.transform = `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px)) scale(${crop.scale})`;
+    if (zoom){
+      zoom.value = String(crop.scale);
+      const min = Number(zoom.min) || 0;
+      const max = Number(zoom.max) || 1;
+      const val = Number(zoom.value) || min;
+      const pct = (max > min) ? ((val - min) / (max - min)) * 100 : 0;
+      zoom.style.setProperty('--fill', pct + '%');
+    }
+  }
+
+  function saveCurrentCrop(skipped=false){
+    const frame = $('#PlatformPlanCropFrame');
+    const item = state.planCrop.items[state.planCrop.index];
+    if (!item || !frame) return;
+    const rect = frame.getBoundingClientRect();
+    item.cropData = skipped ? { skipped:true } : {
+      skipped:false,
+      x: state.planCrop.crop.x,
+      y: state.planCrop.crop.y,
+      scale: state.planCrop.crop.scale,
+      frameW: Math.max(1, rect.width),
+      frameH: Math.max(1, rect.height)
+    };
+  }
+
+  async function saveAndAdvancePlanCrop(skipped=false){
+    saveCurrentCrop(skipped);
+    const isLast = state.planCrop.index >= state.planCrop.items.length - 1;
+    if (isLast){
+      await finalizePlanCropExport();
+      return;
+    }
+    state.planCrop.index += 1;
+    renderPlanCropView();
+  }
+
+  function initPlanCropUI(item){
+    const frame = $('#PlatformPlanCropFrame');
+    const img = $('#PlatformPlanCropImg');
+    const zoom = $('#PlatformPlanCropZoom');
+    const crop = state.planCrop.crop;
+    if (!frame || !img) return;
+    try { img.src = item.source.toDataURL('image/png'); } catch { img.src = ''; }
+    img.onload = () => requestAnimationFrame(() => updatePlanCropPreview());
+    frame.addEventListener('pointerdown', (e) => {
+      crop.dragging = true;
+      crop.startX = e.clientX;
+      crop.startY = e.clientY;
+      crop.pointerId = e.pointerId;
+      try { frame.setPointerCapture(e.pointerId); } catch {}
+    });
+    frame.addEventListener('pointermove', (e) => {
+      if (!crop.dragging) return;
+      if (crop.pointerId != null && e.pointerId !== crop.pointerId) return;
+      crop.x += (e.clientX - crop.startX);
+      crop.y += (e.clientY - crop.startY);
+      crop.startX = e.clientX;
+      crop.startY = e.clientY;
+      img.style.transform = `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px)) scale(${crop.scale})`;
+    });
+    const endPointer = (e) => {
+      if (crop.pointerId != null && e.pointerId !== crop.pointerId) return;
+      crop.dragging = false;
+      try { frame.releasePointerCapture(crop.pointerId); } catch {}
+      crop.pointerId = null;
+    };
+    frame.addEventListener('pointerup', endPointer);
+    frame.addEventListener('pointercancel', endPointer);
+    zoom?.addEventListener('input', () => {
+      const min = Number(zoom.min) || 0;
+      const max = Number(zoom.max) || 1;
+      crop.scale = Math.max(crop.minScale, Math.min(Number(zoom.value) || crop.minScale, crop.maxScale));
+      img.style.transform = `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px)) scale(${crop.scale})`;
+      const pct = (max > min) ? ((crop.scale - min) / (max - min)) * 100 : 0;
+      zoom.style.setProperty('--fill', pct + '%');
+    });
+    updatePlanCropPreview();
+  }
+
+  async function finalizePlanCropExport(){
+    progressStart('Creo ZIP planimetrie…');
+    const zip = new JSZip();
+    const items = state.planCrop.items;
+    for (let i = 0; i < items.length; i++){
+      const item = items[i];
+      progressSet(Math.round((i / Math.max(items.length,1)) * 100), `Esporto ${item.name}…`);
+      const canvas = drawCropStateToCanvas(item.source, 850, 1000, item.cropData);
+      const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
+      zip.file(`PIATTAFORMA/planimetrie/${item.name}-preview.jpg`, blob, { binary:true });
+    }
     await downloadZip(zip, `PIATTAFORMA-planimetrie-${nowStamp()}.zip`);
+    state.planCrop.active = false;
+    state.planCrop.items = [];
+    state.planCrop.index = 0;
+    showEl(BtnProcedi);
+    renderPlansView();
+    afterRenderBindDnD();
     progressDone('Planimetrie esportate.');
   }
 
+  async function startPlanCropFlow(){
+    const files = state.plans || [];
+    if (!files.length){ alert('Carica almeno una planimetria o un PDF.'); return; }
+    hideEl(BtnProcedi);
+    const items = await preparePlanCropItems(files);
+    hideEl(ActionProgressWrap);
+    state.planCrop.active = true;
+    state.planCrop.items = items;
+    state.planCrop.index = 0;
+    renderPlanCropView();
+  }
+
   window.exportPlatform = async function(){
-    if (state.view === 'plans') return exportPlans();
+    if (state.view === 'plans') return startPlanCropFlow();
     return exportImagesSection();
   };
 

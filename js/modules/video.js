@@ -9,6 +9,9 @@ const TxtFolderVideo = $('#TxtFolderVideo');
 const BtnClearVideo  = $('#BtnClearVideo');
 const VidCanvas = $('#VidCanvas');
 
+function isMobileGalleryPicker(){
+  return window.matchMedia('(max-width: 900px)').matches && (navigator.maxTouchPoints > 0 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || ''));
+}
 if (DropAreaVideo) {
   const preventV = (e)=>{ e.preventDefault(); e.stopPropagation(); };
   ['dragenter','dragover','dragleave','drop'].forEach(ev => DropAreaVideo.addEventListener(ev, preventV));

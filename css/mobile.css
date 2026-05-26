@@ -114,3 +114,7 @@
   .fattura-row{ grid-template-columns:1fr 1fr; }
   .fattura-row .fat-prod, .fattura-row .fat-total{ grid-column:1 / -1; }
 }
+
+@media (max-width: 900px){
+  :root{ --mobile-top-gap: 24px; }
+}

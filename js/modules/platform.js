@@ -273,7 +273,7 @@
       <div class="platform-plans-wrap">
         <div class="platform-plan-card">
           <h4>Preview planimetrie</h4>
-          <p class="muted">Output automatico JPG 850×1000 px con <strong>contain</strong>. Prima dell’export puoi ritagliare ogni file per togliere scritte e riferimenti indesiderati. Se il file sorgente è verticale, viene ruotato in orizzontale prima del crop/contain per uniformare la resa finale.</p>
+          <p class="muted">Output automatico JPG 850×1000 px con <strong>contain</strong>. Nei PDF, prima del crop il tool prova a disattivare automaticamente i livelli <strong>CARTIGLIO</strong> e <strong>5_TESTO</strong> quando presenti. Poi puoi ritagliare ogni file per togliere eventuali riferimenti residui. Se il file sorgente è verticale, viene ruotato in orizzontale prima del crop/contain per uniformare la resa finale.</p>
           <div class="platform-upload platform-plan-upload" data-plan-drop tabindex="0" role="button" aria-label="Carica planimetrie" title="Clicca per selezionare file o trascina qui cartella/file supportato">
             <div class="platform-upload-inner platform-upload-inner--stack">
               <div class="platform-upload-copy">
@@ -537,7 +537,7 @@
     });
   }
 
-  async function renderPdfPage(page){
+  async function renderPdfPage(page, optionalContentConfigPromise=null){
     const viewport = page.getViewport({ scale: 2.2 });
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(viewport.width));
@@ -545,8 +545,30 @@
     const ctx = canvas.getContext('2d', { alpha:false });
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0,0,canvas.width,canvas.height);
-    await page.render({ canvasContext: ctx, viewport }).promise;
+    const renderParams = { canvasContext: ctx, viewport };
+    if (optionalContentConfigPromise) renderParams.optionalContentConfigPromise = optionalContentConfigPromise;
+    await page.render(renderParams).promise;
     return canvas;
+  }
+
+  async function buildPdfOptionalContentConfigPromise(pdf, hiddenNames=['CARTIGLIO','5_TESTO']){
+    try {
+      if (!pdf || typeof pdf.getOptionalContentConfig !== 'function') return null;
+      const config = await pdf.getOptionalContentConfig();
+      if (!config || typeof config.getGroups !== 'function') return null;
+      const names = new Set((hiddenNames || []).map(v => String(v || '').trim().toUpperCase()));
+      const groups = config.getGroups() || {};
+      Object.keys(groups).forEach((id) => {
+        const g = groups[id] || {};
+        const n = String(g.name || '').trim().toUpperCase();
+        if (names.has(n) && typeof config.setVisibility === 'function') {
+          try { config.setVisibility(id, false); } catch {}
+        }
+      });
+      return Promise.resolve(config);
+    } catch {
+      return null;
+    }
   }
 
   function progressStart(label){
@@ -622,11 +644,12 @@
       if (/\.pdf$/i.test(file.name)){
         if (typeof window.pdfjsLib === 'undefined') throw new Error('Il supporto PDF non è disponibile.');
         const pdf = await window.pdfjsLib.getDocument({ data: await file.arrayBuffer(), useWorkerFetch:true, isEvalSupported:false }).promise;
+        const optionalContentConfigPromise = await buildPdfOptionalContentConfigPromise(pdf, ['CARTIGLIO','5_TESTO']);
         total += Math.max(0, pdf.numPages - 1);
         for (let p = 1; p <= pdf.numPages; p++){
           progressSet(Math.round((processed / Math.max(total,1)) * 100), `Preparo ${file.name} · pagina ${p}/${pdf.numPages}…`);
           const page = await pdf.getPage(p);
-          const rendered = await renderPdfPage(page);
+          const rendered = await renderPdfPage(page, optionalContentConfigPromise);
           const landscape = rotateSourceToLandscape(rendered);
           const base = file.name.replace(/\.pdf$/i, '');
           items.push({ name: `${base}${pdf.numPages > 1 ? '-' + pad(p) : ''}`, source: landscape, cropData: null });

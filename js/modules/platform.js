@@ -273,7 +273,7 @@
       <div class="platform-plans-wrap">
         <div class="platform-plan-card">
           <h4>Preview planimetrie</h4>
-          <p class="muted">Output automatico JPG 850×1000 px con <strong>contain</strong>. Nei PDF, prima del crop il tool verifica i livelli disponibili, prova a spegnere automaticamente <strong>CARTIGLIO</strong> e <strong>5_TESTO</strong>, poi rasterizza la tavola e applica un centraggio intelligente sulla planimetria. Infine puoi rifinire tutto con il crop manuale. Se il file sorgente è verticale, viene ruotato in orizzontale prima del crop/contain per uniformare la resa finale.</p>
+          <p class="muted">Output automatico JPG 850×1000 px con <strong>contain</strong>. Nei PDF, prima del crop il tool prova a disattivare automaticamente i livelli <strong>CARTIGLIO</strong> e <strong>5_TESTO</strong> quando presenti. Poi puoi ritagliare ogni file per togliere eventuali riferimenti residui. Se il file sorgente è verticale, viene ruotato in orizzontale prima del crop/contain per uniformare la resa finale.</p>
           <div class="platform-upload platform-plan-upload" data-plan-drop tabindex="0" role="button" aria-label="Carica planimetrie" title="Clicca per selezionare file o trascina qui cartella/file supportato">
             <div class="platform-upload-inner platform-upload-inner--stack">
               <div class="platform-upload-copy">

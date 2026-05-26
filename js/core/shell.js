@@ -15,6 +15,7 @@
   const MODE_CARDS = {
     welcome: ['WelcomeCard'],
     images: ['SlugCard','FormatCard','UploadCard'],
+    platform: ['PlatformCard'],
     digitaltool: ['DTCard','UploadCard'],
     pdf2jpg: ['UploadCard'],
     rename: ['RenameCard'],
@@ -63,6 +64,7 @@
 
     if (mode === 'qr') setPrimaryActionLabel('Genera QR');
     if (mode === 'iubenda') setPrimaryActionLabel('Genera snippet');
+    if (mode === 'platform') setPrimaryActionLabel('Esporta sezione');
  if (mode === 'fattura') setPrimaryActionLabel('Esporta PDF');
     if (mode === 'ppt') BtnProcedi?.classList.add('hidden');
 

@@ -42,6 +42,7 @@
     platformSlug: '',
     customSectionName: '',
     customFormats: Object.fromEntries(BASE_SLOTS.map(s => [s.key, true])),
+    planSettings: { width: 850, height: 1000 },
     planCrop: {
       active: false,
       items: [],
@@ -93,6 +94,32 @@
   function humanCount(files){
     const n = (files || []).length;
     return n ? `${n} file pronti` : 'Nessun file caricato';
+  }
+
+
+  function getPlanOutputSize(){
+    const w = Math.max(1, Number(state.planSettings?.width) || 850);
+    const h = Math.max(1, Number(state.planSettings?.height) || 1000);
+    return { w, h };
+  }
+
+  function rotateCanvas90(source){
+    const sw = source.width || source.naturalWidth;
+    const sh = source.height || source.naturalHeight;
+    const c = document.createElement('canvas');
+    c.width = sh;
+    c.height = sw;
+    const ctx = c.getContext('2d', { alpha:false });
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.translate(c.width / 2, c.height / 2);
+    ctx.rotate(Math.PI / 2);
+    ctx.drawImage(source, -sw / 2, -sh / 2, sw, sh);
+    return c;
+  }
+
+  function planRotateIcon(){
+    return `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4v6h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20v-6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 8a8 8 0 0 0-13.66-5.66L4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16a8 8 0 0 0 13.66 5.66L20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
 
   async function getFilesFromDataTransfer(dt, allowed='images'){
@@ -242,17 +269,21 @@
     }
     const total = state.planCrop.items.length;
     const isLast = state.planCrop.index === total - 1;
+    const { w, h } = getPlanOutputSize();
     PlatformBody.innerHTML = `
       <div class="platform-plan-crop-wrap">
         <div class="platform-plan-card">
           <div class="platform-crop-head">
             <div>
               <h4>Ritaglio preview planimetrie</h4>
-              <p class="muted">File ${state.planCrop.index + 1} di ${total} · ${item.name}. Regola il ritaglio per escludere scritte/offset indesiderati e poi vai avanti.</p>
+              <p class="muted">File ${state.planCrop.index + 1} di ${total} · ${item.name}. Regola ritaglio, rotazione e zoom per centrare la planimetria nel formato finale ${w}×${h}px e poi vai avanti.</p>
             </div>
             <div class="platform-crop-counter">${state.planCrop.index + 1}/${total}</div>
           </div>
-          <div id="PlatformPlanCropFrame" class="crop-frame platform-plan-crop-frame"><img id="PlatformPlanCropImg" alt="Anteprima ritaglio planimetria" /></div>
+          <div id="PlatformPlanCropFrame" class="crop-frame platform-plan-crop-frame" style="aspect-ratio:${w} / ${h};"><img id="PlatformPlanCropImg" alt="Anteprima ritaglio planimetria" /></div>
+          <div class="platform-crop-toolbar">
+            <button type="button" class="btn-outline platform-rotate-btn" id="PlatformPlanRotate">${planRotateIcon()}<span>Ruota 90°</span></button>
+          </div>
           <label style="margin-top:12px">Zoom immagine</label>
           <input type="range" id="PlatformPlanCropZoom" class="input" />
           <div class="platform-crop-actions">
@@ -269,11 +300,22 @@
     if (state.planCrop.active) return renderPlanCropView();
     const total = state.plans.length;
     const names = total ? state.plans.slice(0,4).map(f => f.name).join(', ') : 'Accetta JPG/PNG/WEBP/TIFF/PDF anche misti. Drag & drop cartella o file supportato su desktop.';
+    const { w, h } = getPlanOutputSize();
     PlatformBody.innerHTML = `
       <div class="platform-plans-wrap">
         <div class="platform-plan-card">
           <h4>Preview planimetrie</h4>
-          <p class="muted">Output automatico JPG 850×1000 px con <strong>contain</strong>. Nei PDF, prima del crop il tool prova a disattivare automaticamente i livelli <strong>CARTIGLIO</strong> e <strong>5_TESTO</strong> quando presenti. Poi puoi ritagliare ogni file per togliere eventuali riferimenti residui. Se il file sorgente è verticale, viene ruotato in orizzontale prima del crop/contain per uniformare la resa finale.</p>
+          <p class="muted">Imposta il formato preview personalizzato (default <strong>850×1000 px</strong>). Nei PDF il tool verifica i livelli disponibili, prova a spegnere <strong>CARTIGLIO</strong> e <strong>5_TESTO</strong>, poi rasterizza la tavola e la prepara per il ritaglio. Durante il crop puoi ruotare l’immagine di <strong>90°</strong> per volta e usare anche lo <strong>zoom-out</strong> per uniformare meglio la resa finale.</p>
+          <div class="row platform-row-gap platform-plan-settings-row">
+            <div class="form-group">
+              <label for="PlatformPlanWidth">Larghezza preview (px)</label>
+              <input id="PlatformPlanWidth" class="input" type="number" min="1" value="${w}" />
+            </div>
+            <div class="form-group">
+              <label for="PlatformPlanHeight">Altezza preview (px)</label>
+              <input id="PlatformPlanHeight" class="input" type="number" min="1" value="${h}" />
+            </div>
+          </div>
           <div class="platform-upload platform-plan-upload" data-plan-drop tabindex="0" role="button" aria-label="Carica planimetrie" title="Clicca per selezionare file o trascina qui cartella/file supportato">
             <div class="platform-upload-inner platform-upload-inner--stack">
               <div class="platform-upload-copy">
@@ -384,6 +426,12 @@
         if (uploadHead) uploadHead.textContent = `Upload ${getSectionLabel()}`;
         updateImageNamePreviews();
       }
+      if (e.target.id === 'PlatformPlanWidth'){
+        state.planSettings.width = Math.max(1, Number(e.target.value) || 850);
+      }
+      if (e.target.id === 'PlatformPlanHeight'){
+        state.planSettings.height = Math.max(1, Number(e.target.value) || 1000);
+      }
     });
 
     PlatformBody?.addEventListener('click', async (e) => {
@@ -411,6 +459,7 @@
         toggleFormat.title = state.customFormats[key] ? 'Nascondi formato' : 'Mostra formato';
         return;
       }
+      if (e.target.id === 'PlatformPlanRotate' || e.target.closest('#PlatformPlanRotate')){ e.preventDefault(); return rotateCurrentPlanCrop(); }
       if (e.target.id === 'PlatformPlanCropReset'){ e.preventDefault(); return resetPlanCrop('contain'); }
       if (e.target.id === 'PlatformPlanCropSkip'){ e.preventDefault(); return saveAndAdvancePlanCrop(true); }
       if (e.target.id === 'PlatformPlanCropNext'){ e.preventDefault(); return saveAndAdvancePlanCrop(false); }
@@ -767,8 +816,8 @@
     const ih = item.source.height;
     const contain = Math.min(frameW / iw, frameH / ih);
     crop.containScale = Math.max(0.01, contain);
-    crop.minScale = crop.containScale;
-    crop.maxScale = Math.max(crop.minScale * 5, crop.minScale + 0.01);
+    crop.minScale = Math.max(crop.containScale * 0.30, 0.01);
+    crop.maxScale = Math.max(crop.containScale * 5, crop.containScale + 0.01);
     const existing = item.cropData;
     if (existing && typeof existing.scale === 'number'){
       crop.x = existing.x || 0;
@@ -834,6 +883,14 @@
     renderPlanCropView();
   }
 
+  function rotateCurrentPlanCrop(){
+    const item = state.planCrop.items[state.planCrop.index];
+    if (!item || !item.source) return;
+    item.source = rotateCanvas90(item.source);
+    item.cropData = null;
+    renderPlanCropView();
+  }
+
   function initPlanCropUI(item){
     const frame = $('#PlatformPlanCropFrame');
     const img = $('#PlatformPlanCropImg');
@@ -884,7 +941,8 @@
     for (let i = 0; i < items.length; i++){
       const item = items[i];
       progressSet(Math.round((i / Math.max(items.length,1)) * 100), `Esporto ${item.name}…`);
-      const canvas = drawCropStateToCanvas(item.source, 850, 1000, item.cropData);
+      const { w, h } = getPlanOutputSize();
+      const canvas = drawCropStateToCanvas(item.source, w, h, item.cropData);
       const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
       zip.file(`PIATTAFORMA/planimetrie/${item.name}-preview.jpg`, blob, { binary:true });
     }

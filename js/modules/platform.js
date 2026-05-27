@@ -42,6 +42,7 @@
     platformSlug: '',
     customSectionName: '',
     customFormats: Object.fromEntries(BASE_SLOTS.map(s => [s.key, true])),
+    renameFiles: { excelFile: null, appartamentiFiles: [], previewFiles: [], summary: null },
     planSettings: { width: 850, height: 1000 },
     planCrop: {
       active: false,
@@ -118,6 +119,224 @@
     return c;
   }
 
+
+
+  function normalizeRenameCodeFromProduct(name){
+    const normalized = String(name || '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    const m = normalized.match(/(?:^|_)[A-Z]+_([A-Z])_(\d+)_(\d+)(?:_|$)/) || normalized.match(/(?:^|_)([A-Z])_(\d+)_(\d+)(?:_|$)/);
+    if (!m) return null;
+    return `${m[1]}_${parseInt(m[2], 10)}_${parseInt(m[3], 10)}`;
+  }
+
+  function extractRenameCodeFromFilename(name){
+    const base = String(name || '').replace(/\.[^.]+$/, '').toUpperCase();
+    const m = base.match(/(?:^|[^A-Z])([A-Z])\.(\d+)\.(\d+)(?:[^0-9]|$)/) || base.match(/(?:^|[^A-Z])([A-Z])_(\d+)_(\d+)(?:[^0-9]|$)/);
+    if (!m) return null;
+    return `${m[1]}_${parseInt(m[2], 10)}_${parseInt(m[3], 10)}`;
+  }
+
+  function safeOutputFilename(name, ext='.jpg'){
+    const cleaned = String(name || 'non-trovato')
+      .replace(/[\\/:*?"<>|]/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return (cleaned || 'non-trovato') + ext;
+  }
+
+  async function parseRenameWorkbook(file){
+    if (!file) throw new Error('Carica un file Excel o CSV.');
+    if (!window.XLSX) throw new Error('Libreria Excel non disponibile.');
+    const lower = String(file.name || '').toLowerCase();
+    let wb;
+    if (lower.endsWith('.csv')) {
+      wb = window.XLSX.read(await file.text(), { type: 'string' });
+    } else {
+      wb = window.XLSX.read(await file.arrayBuffer(), { type: 'array' });
+    }
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = window.XLSX.utils.sheet_to_json(ws, { defval: '' });
+    return rows;
+  }
+
+  function buildNomeProdottoMap(rows){
+    const map = new Map();
+    for (const row of rows || []){
+      const nomeProdotto = String(row['Nome prodotto'] || row['nome prodotto'] || '').trim();
+      if (!nomeProdotto) continue;
+      const code = normalizeRenameCodeFromProduct(nomeProdotto);
+      if (!code || map.has(code)) continue;
+      map.set(code, nomeProdotto);
+    }
+    return map;
+  }
+
+  function summarizeRenameInputs(){
+    const st = state.renameFiles;
+    return {
+      excel: st.excelFile ? st.excelFile.name : '',
+      appartamenti: st.appartamentiFiles.length,
+      preview: st.previewFiles.length,
+      summary: st.summary || null
+    };
+  }
+
+  function isRenameExcelFile(file){
+    return /\.(xlsx|xls|csv)$/i.test(file?.name || '');
+  }
+
+  function isRenameImageFile(file){
+    return /\.(jpe?g|png|webp|tif?f)$/i.test(file?.name || '');
+  }
+
+  async function getFilesFromDataTransferCustom(dt, predicate){
+    const out = [];
+    const addFile = (file, relPath='') => {
+      if (!file || !predicate(file)) return;
+      try { file._relPath = relPath || file.webkitRelativePath || file.name; } catch {}
+      out.push(file);
+    };
+    const items = Array.from(dt?.items || []);
+    function walkEntry(entry, prefix=''){
+      return new Promise((resolve) => {
+        if (!entry) return resolve();
+        if (entry.isFile){
+          entry.file((file) => { addFile(file, prefix + file.name); resolve(); }, () => resolve());
+          return;
+        }
+        if (entry.isDirectory){
+          const reader = entry.createReader();
+          const entries = [];
+          const readBatch = () => reader.readEntries(async (batch) => {
+            if (!batch.length){
+              for (const child of entries){ await walkEntry(child, prefix + entry.name + '/'); }
+              resolve();
+              return;
+            }
+            entries.push(...batch);
+            readBatch();
+          }, () => resolve());
+          readBatch();
+          return;
+        }
+        resolve();
+      });
+    }
+    if (items.length && items.some(it => typeof it.webkitGetAsEntry === 'function')){
+      for (const item of items){
+        const entry = item.webkitGetAsEntry && item.webkitGetAsEntry();
+        if (entry) await walkEntry(entry);
+      }
+    } else {
+      for (const file of Array.from(dt?.files || [])) addFile(file, file.webkitRelativePath || file.name);
+    }
+    return out;
+  }
+
+  function setupGenericDropzone(el, onDropFiles, predicate){
+    if (!el) return;
+    const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+    ['dragenter','dragover','dragleave','drop'].forEach(ev => el.addEventListener(ev, prevent));
+    el.addEventListener('dragenter', () => el.classList.add('drag-over'));
+    el.addEventListener('dragover', () => el.classList.add('drag-over'));
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', async (e) => {
+      el.classList.remove('drag-over');
+      const files = await getFilesFromDataTransferCustom(e.dataTransfer, predicate);
+      onDropFiles(files);
+    });
+  }
+
+  function renderRenameSummary(summary){
+    if (!summary) return '';
+    const foundTot = (summary.appartamenti?.found || 0) + (summary.preview?.found || 0);
+    const notFoundTot = (summary.appartamenti?.notFound || 0) + (summary.preview?.notFound || 0);
+    const dupTot = (summary.appartamenti?.duplicates || 0) + (summary.preview?.duplicates || 0);
+    return `
+      <div class="platform-rename-summary">
+        <div class="platform-rename-stat"><strong>Trovati</strong><span>${foundTot}</span></div>
+        <div class="platform-rename-stat"><strong>Non trovati</strong><span>${notFoundTot}</span></div>
+        <div class="platform-rename-stat"><strong>Doppioni ignorati</strong><span>${dupTot}</span></div>
+      </div>`;
+  }
+
+  function renderRenameView(){
+    const st = summarizeRenameInputs();
+    PlatformBody.innerHTML = `
+      <div class="platform-rename-wrap">
+        <div class="platform-rename-head">
+          <h4>Rinomina file</h4>
+          <p class="muted">Carica il file Excel/CSV con la colonna <strong>Nome prodotto</strong>, poi le cartelle <strong>Appartamenti</strong> e <strong>Preview</strong>. Il tool estrae il codice appartamento dal nome file, lo confronta con il valore corretto presente in <strong>Nome prodotto</strong> e restituisce uno ZIP con due cartelle finali: <strong>Appartamenti</strong> e <strong>Preview</strong>. Le preview finali usano sempre il suffisso <strong>_preview.jpg</strong>.</p>
+        </div>
+        ${renderRenameSummary(st.summary)}
+        <div class="platform-rename-grid">
+          <article class="platform-upload-big platform-upload-big--compact">
+            <div class="platform-upload-header">
+              <div>
+                <h4>Excel / CSV</h4>
+                <p class="muted">${st.excel || 'Carica un file .xlsx, .xls oppure .csv'}</p>
+              </div>
+              <div class="platform-upload-actions">
+                <button type="button" class="btn-outline platform-mini-btn" data-rename-pick="excel">Seleziona file</button>
+                <button type="button" class="btn-outline platform-mini-btn ${st.excel ? '' : 'hidden'}" data-rename-clear="excel">Svuota</button>
+              </div>
+            </div>
+            <div class="platform-upload platform-rename-dropzone" data-rename-drop="excel" tabindex="0" role="button" aria-label="Carica Excel o CSV">
+              <div class="platform-upload-inner platform-upload-inner--stack">
+                <div class="platform-upload-copy">
+                  <strong>Trascina qui il file Excel o CSV</strong>
+                  <span class="muted">Supporto: .xlsx, .xls, .csv. PDF non supportato.</span>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="platform-upload-big platform-upload-big--compact">
+            <div class="platform-upload-header">
+              <div>
+                <h4>Cartella Appartamenti</h4>
+                <p class="muted">${st.appartamenti ? `${st.appartamenti} file pronti` : 'Carica la cartella con i JPG appartamenti'}</p>
+              </div>
+              <div class="platform-upload-actions">
+                <button type="button" class="btn-outline platform-mini-btn" data-rename-pick="appartamenti">Seleziona cartella</button>
+                <button type="button" class="btn-outline platform-mini-btn ${st.appartamenti ? '' : 'hidden'}" data-rename-clear="appartamenti">Svuota</button>
+              </div>
+            </div>
+            <div class="platform-upload platform-rename-dropzone" data-rename-drop="appartamenti" tabindex="0" role="button" aria-label="Carica cartella Appartamenti">
+              <div class="platform-upload-inner platform-upload-inner--stack">
+                <div class="platform-upload-copy">
+                  <strong>Clicca o trascina qui la cartella Appartamenti</strong>
+                  <span class="muted">Il tool considera i JPG e, se trova doppioni -01 / -02 sullo stesso codice, tiene solo il primo.</span>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="platform-upload-big platform-upload-big--compact">
+            <div class="platform-upload-header">
+              <div>
+                <h4>Cartella Preview</h4>
+                <p class="muted">${st.preview ? `${st.preview} file pronti` : 'Carica la cartella con i JPG preview'}</p>
+              </div>
+              <div class="platform-upload-actions">
+                <button type="button" class="btn-outline platform-mini-btn" data-rename-pick="preview">Seleziona cartella</button>
+                <button type="button" class="btn-outline platform-mini-btn ${st.preview ? '' : 'hidden'}" data-rename-clear="preview">Svuota</button>
+              </div>
+            </div>
+            <div class="platform-upload platform-rename-dropzone" data-rename-drop="preview" tabindex="0" role="button" aria-label="Carica cartella Preview">
+              <div class="platform-upload-inner platform-upload-inner--stack">
+                <div class="platform-upload-copy">
+                  <strong>Clicca o trascina qui la cartella Preview</strong>
+                  <span class="muted">I file finali verranno rinominati come <strong>Nome prodotto_preview.jpg</strong>.</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+        <div class="platform-footnote muted">Output ZIP: cartella <strong>Appartamenti</strong>, cartella <strong>Preview</strong>, <strong>report-riepilogo.txt</strong> e <strong>report-non-trovati.txt</strong>.</div>
+      </div>`;
+  }
   function planRotateIcon(){
     return `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4v6h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20v-6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 8a8 8 0 0 0-13.66-5.66L4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16a8 8 0 0 0 13.66 5.66L20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
@@ -336,8 +555,10 @@
     if (!PlatformCard) return;
     renderSectionTabs();
     $$('.platform-switch-btn', PlatformModeSwitch || document).forEach(btn => btn.classList.toggle('active', btn.dataset.platformView === state.view));
+    if (BtnProcedi) BtnProcedi.textContent = state.view === 'rename' ? 'Rinomina ed esporta ZIP' : 'Esporta sezione';
     if (state.view === 'images') renderImagesView();
-    else renderPlansView();
+    else if (state.view === 'plans') renderPlansView();
+    else renderRenameView();
   }
 
   function updateImageNamePreviews(){
@@ -447,6 +668,20 @@
       if (planClear){ e.preventDefault(); return storePlanFiles([]); }
       const planDrop = e.target.closest('[data-plan-drop]');
       if (planDrop){ e.preventDefault(); return pickPlanFiles(); }
+      const renamePick = e.target.closest('[data-rename-pick]');
+      if (renamePick){ e.preventDefault(); return pickRenameFiles(renamePick.dataset.renamePick); }
+      const renameClear = e.target.closest('[data-rename-clear]');
+      if (renameClear){
+        e.preventDefault();
+        if (renameClear.dataset.renameClear === 'excel') state.renameFiles.excelFile = null;
+        if (renameClear.dataset.renameClear === 'appartamenti') state.renameFiles.appartamentiFiles = [];
+        if (renameClear.dataset.renameClear === 'preview') state.renameFiles.previewFiles = [];
+        state.renameFiles.summary = null;
+        renderRenameView();
+        return afterRenderBindDnD();
+      }
+      const renameDrop = e.target.closest('[data-rename-drop]');
+      if (renameDrop){ e.preventDefault(); return pickRenameFiles(renameDrop.dataset.renameDrop); }
       const toggleFormat = e.target.closest('[data-toggle-format]');
       if (toggleFormat){
         e.preventDefault();
@@ -471,12 +706,150 @@
       if (dropSection){ e.preventDefault(); pickImageSectionFiles(); }
       const planDrop = e.target.closest('[data-plan-drop]');
       if (planDrop){ e.preventDefault(); pickPlanFiles(); }
+      const renameDrop = e.target.closest('[data-rename-drop]');
+      if (renameDrop){ e.preventDefault(); pickRenameFiles(renameDrop.dataset.renameDrop); }
     });
   }
 
   function afterRenderBindDnD(){
     setupDropzone($('.platform-upload-dropzone', PlatformBody), (files) => storeSectionFiles(filterImages(files)), 'images');
     setupDropzone($('.platform-plan-upload', PlatformBody), (files) => storePlanFiles(filterPlanFiles(files)), 'plans');
+    setupGenericDropzone($('[data-rename-drop="excel"]', PlatformBody), (files) => {
+      state.renameFiles.excelFile = files[0] || null;
+      state.renameFiles.summary = null;
+      renderRenameView();
+      afterRenderBindDnD();
+    }, isRenameExcelFile);
+    setupGenericDropzone($('[data-rename-drop="appartamenti"]', PlatformBody), (files) => {
+      state.renameFiles.appartamentiFiles = files.filter(isRenameImageFile);
+      state.renameFiles.summary = null;
+      renderRenameView();
+      afterRenderBindDnD();
+    }, isRenameImageFile);
+    setupGenericDropzone($('[data-rename-drop="preview"]', PlatformBody), (files) => {
+      state.renameFiles.previewFiles = files.filter(isRenameImageFile);
+      state.renameFiles.summary = null;
+      renderRenameView();
+      afterRenderBindDnD();
+    }, isRenameImageFile);
+  }
+
+
+  function pickRenameFiles(kind){
+    const input = document.createElement('input');
+    input.type = 'file';
+    if (kind === 'excel'){
+      input.accept = '.xlsx,.xls,.csv';
+      input.multiple = false;
+      input.onchange = () => {
+        state.renameFiles.excelFile = (input.files && input.files[0]) || null;
+        state.renameFiles.summary = null;
+        renderRenameView();
+        afterRenderBindDnD();
+      };
+      input.click();
+      return;
+    }
+    input.multiple = true;
+    if (!isMobileUploadUI()) { input.webkitdirectory = true; input.directory = true; }
+    else { input.accept = 'image/*'; }
+    input.onchange = () => {
+      const files = Array.from(input.files || []).filter(isRenameImageFile);
+      if (kind === 'appartamenti') state.renameFiles.appartamentiFiles = files;
+      if (kind === 'preview') state.renameFiles.previewFiles = files;
+      state.renameFiles.summary = null;
+      renderRenameView();
+      afterRenderBindDnD();
+    };
+    input.click();
+  }
+
+  function buildRenameTextReports(summary){
+    const lines = [];
+    lines.push('RIEPILOGO RINOMINA FILE');
+    lines.push('');
+    lines.push(`Appartamenti trovati: ${summary.appartamenti.found}`);
+    lines.push(`Appartamenti non trovati: ${summary.appartamenti.notFound}`);
+    lines.push(`Appartamenti doppioni ignorati: ${summary.appartamenti.duplicates}`);
+    lines.push('');
+    lines.push(`Preview trovate: ${summary.preview.found}`);
+    lines.push(`Preview non trovate: ${summary.preview.notFound}`);
+    lines.push(`Preview doppioni ignorati: ${summary.preview.duplicates}`);
+    const missing = ['NON TROVATI', ''];
+    if (!summary.missing.length) missing.push('Nessun file non trovato.');
+    else {
+      summary.missing.forEach(row => {
+        missing.push(`[${row.bucket}] ${row.original} -> codice ${row.code || 'non letto'} non trovato nell'Excel`);
+      });
+    }
+    return {
+      riepilogo: lines.join('\n'),
+      nonTrovati: missing.join('\n')
+    };
+  }
+
+  async function exportRenameFiles(){
+    const excelFile = state.renameFiles.excelFile;
+    const appartamentiFiles = state.renameFiles.appartamentiFiles || [];
+    const previewFiles = state.renameFiles.previewFiles || [];
+    if (!excelFile) { alert('Carica il file Excel o CSV.'); return; }
+    if (!appartamentiFiles.length && !previewFiles.length) { alert('Carica almeno una cartella Appartamenti o Preview.'); return; }
+    progressStart('Leggo Excel e preparo la rinomina…');
+    const rows = await parseRenameWorkbook(excelFile);
+    const map = buildNomeProdottoMap(rows);
+    if (!map.size) throw new Error('Nel file Excel/CSV non trovo valori validi nella colonna Nome prodotto.');
+
+    const zip = new JSZip();
+    const summary = {
+      appartamenti: { found: 0, notFound: 0, duplicates: 0 },
+      preview: { found: 0, notFound: 0, duplicates: 0 },
+      missing: []
+    };
+
+    const processBucket = async (files, bucket) => {
+      const seen = new Set();
+      for (let i = 0; i < files.length; i++){
+        const file = files[i];
+        const code = extractRenameCodeFromFilename(file.name || '');
+        if (!code){
+          summary[bucket].notFound += 1;
+          summary.missing.push({ bucket, original: file.name, code: '' });
+          continue;
+        }
+        if (seen.has(code)){
+          summary[bucket].duplicates += 1;
+          continue;
+        }
+        seen.add(code);
+        const nomeProdotto = map.get(code);
+        if (!nomeProdotto){
+          summary[bucket].notFound += 1;
+          summary.missing.push({ bucket, original: file.name, code });
+          continue;
+        }
+        const ext = '.jpg';
+        const finalName = bucket === 'preview'
+          ? safeOutputFilename(`${nomeProdotto}_preview`, ext)
+          : safeOutputFilename(nomeProdotto, ext);
+        const folderName = bucket === 'preview' ? 'Preview' : 'Appartamenti';
+        zip.file(`${folderName}/${finalName}`, file, { binary: true });
+        summary[bucket].found += 1;
+      }
+    };
+
+    await processBucket(appartamentiFiles, 'appartamenti');
+    await processBucket(previewFiles, 'preview');
+
+    const reports = buildRenameTextReports(summary);
+    zip.file('report-riepilogo.txt', reports.riepilogo);
+    zip.file('report-non-trovati.txt', reports.nonTrovati);
+
+    state.renameFiles.summary = summary;
+    progressSet(95, 'Creo ZIP rinominato…');
+    await downloadZip(zip, `PIATTAFORMA-rinomina-file-${nowStamp()}.zip`);
+    progressDone('Rinomina completata.');
+    renderRenameView();
+    afterRenderBindDnD();
   }
 
   async function loadBitmapOriented(file){
@@ -970,6 +1343,7 @@
 
   window.exportPlatform = async function(){
     if (state.view === 'plans') return startPlanCropFlow();
+    if (state.view === 'rename') return exportRenameFiles();
     return exportImagesSection();
   };
 

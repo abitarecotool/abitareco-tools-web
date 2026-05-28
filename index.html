@@ -195,15 +195,22 @@
  <!-- IMMAGINI: Slug -->
  <section id="SlugCard" class="card hidden">
  <h3>Ottimizzazioni immagini</h3>
- <div class="form-group">
- <label for="TxtSlugIta">Nome file ITA*</label>
- <input id="TxtSlugIta" class="input" type="text" placeholder="es. appartamento-roma-parioli" />
+ <div id="ImagesToolSwitch" class="platform-switch image-tool-switch" role="tablist" aria-label="Mini sezione immagini">
+  <button type="button" class="platform-switch-btn active" data-images-view="site">Export sito</button>
+  <button type="button" class="platform-switch-btn" data-images-view="compress">Compressione social</button>
  </div>
- <div class="form-group">
- <label for="TxtSlugEng">Nome file ENG*</label>
- <input id="TxtSlugEng" class="input" type="text" placeholder="es. apartment-rome-parioli" />
+ <p id="ImagesModeIntro" class="muted image-mode-intro">Esporta immagini ottimizzate per il sito con slug ITA/ENG, crop manuale e naming finale nello ZIP.</p>
+ <div id="ImageSiteFields">
+  <div class="form-group">
+   <label for="TxtSlugIta">Nome file ITA*</label>
+   <input id="TxtSlugIta" class="input" type="text" placeholder="es. appartamento-roma-parioli" />
+  </div>
+  <div class="form-group">
+   <label for="TxtSlugEng">Nome file ENG*</label>
+   <input id="TxtSlugEng" class="input" type="text" placeholder="es. apartment-rome-parioli" />
+  </div>
  </div>
- </section>
+</section>
  <!-- IMMAGINI: Formato -->
  <section id="FormatCard" class="card hidden">
  <label>Formato</label>
@@ -238,7 +245,8 @@
  <p class="muted" style="margin-top:6px;line-height:1.6">Ottimizza automaticamente le immagini per l'utilizzo digitale. Carica la cartella e clicca <b>Esporta ora</b>.</p>
  </section>
 <section id="UploadCard" class="card hidden">
- <h3>Carica cartella*</h3>
+ <h3 id="ImagesUploadTitle">Carica cartella*</h3>
+ <p id="ImagesUploadHint" class="muted hidden image-upload-hint"></p>
  <div id="DropArea" class="drop" tabindex="0" role="button" aria-label="Carica cartella" title="Clicca per selezionare una cartella o trascinala qui">
  <div class="drop-inner">
  <span id="TxtFolderPath" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
@@ -247,6 +255,37 @@
  </div>
 </section>
 
+<section id="ImageCompressCard" class="card hidden image-compress-card">
+ <div class="image-compress-head">
+  <div>
+   <h3>Compressione social</h3>
+   <p class="muted image-compress-copy">Riduci il peso di JPG e PNG per social, Meta e Google mantenendo dimensioni, formato, nomi file e struttura cartelle originali.</p>
+  </div>
+  <div class="image-compress-summary">
+   <span class="muted">Totale immagini</span>
+   <strong id="ImageCompressCount">0</strong>
+  </div>
+ </div>
+ <div class="image-compress-slider-box">
+  <div class="image-compress-slider-head">
+   <label for="ImageCompressTarget">Target peso file</label>
+   <span id="ImageCompressTargetValue" class="image-compress-target-badge">Sotto 500 KB</span>
+  </div>
+  <input type="range" id="ImageCompressTarget" min="0" max="2" step="1" value="1" />
+  <div class="image-compress-scale" aria-hidden="true">
+   <span>Sotto 300 KB</span>
+   <span>Sotto 500 KB</span>
+   <span>Sotto 1 MB</span>
+  </div>
+  <p id="ImageCompressTargetNote" class="muted image-compress-note">Preset consigliato per adv/social: sotto 500 KB.</p>
+ </div>
+ <div class="image-compress-keeps">
+  <span class="image-compress-pill">Formato originale</span>
+  <span class="image-compress-pill">Dimensioni originali</span>
+  <span class="image-compress-pill">Nomi originali</span>
+  <span class="image-compress-pill">Cartelle originali</span>
+ </div>
+</section>
 <section id="ImageNamePreviewCard" class="card hidden image-naming-preview">
  <div class="platform-upload-big platform-upload-big--compact">
   <div class="platform-upload-header">

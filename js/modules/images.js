@@ -2,6 +2,7 @@
 // Modulo isolato (evita collisioni di variabili tra script classici)
 (function(){
   'use strict';
+
   /* --------- CROP MANUALE (SOLO SE 1 IMMAGINE) --------- */
   const ImageCropCard = document.getElementById('ImageCropCard');
   const CropFrame     = document.getElementById('CropFrame');
@@ -24,6 +25,9 @@
   };
 
   function clamp(v, a, b){ return Math.min(b, Math.max(a, v)); }
+  function escapeHtml(value){
+    return String(value ?? '').replace(/[&<>"']/g, s => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[s]));
+  }
   function updateZoomTrack(){
     if (!CropZoom) return;
     const min = Number(CropZoom.min) || 0;
@@ -106,15 +110,26 @@
     resetCrop('cover');
   });
 
-  // --- Formato + Slug ---
-  const TxtSlugIta = $('#TxtSlugIta');
-  const TxtSlugEng = $('#TxtSlugEng');
-  const Fmt1920    = $('#FmtSite1920');
-  const FmtShare   = $('#FmtSiteShare');
-  const FmtCustom  = $('#FmtSiteCustom');
-  const CustomRow  = $('#CustomSizeRow');
-  const CustomW    = $('#CustomW');
-  const CustomH    = $('#CustomH');
+  // --- DOM principale immagini ---
+  const TxtSlugIta       = $('#TxtSlugIta');
+  const TxtSlugEng       = $('#TxtSlugEng');
+  const Fmt1920          = $('#FmtSite1920');
+  const FmtShare         = $('#FmtSiteShare');
+  const FmtCustom        = $('#FmtSiteCustom');
+  const FormatCard       = $('#FormatCard');
+  const ImageSiteFields  = $('#ImageSiteFields');
+  const ImagesToolSwitch = $('#ImagesToolSwitch');
+  const ImagesModeIntro  = $('#ImagesModeIntro');
+  const ImagesUploadTitle= $('#ImagesUploadTitle');
+  const ImagesUploadHint = $('#ImagesUploadHint');
+  const ImageCompressCard= $('#ImageCompressCard');
+  const ImageCompressCount = $('#ImageCompressCount');
+  const ImageCompressTarget = $('#ImageCompressTarget');
+  const ImageCompressTargetValue = $('#ImageCompressTargetValue');
+  const ImageCompressTargetNote  = $('#ImageCompressTargetNote');
+  const CustomRow        = $('#CustomSizeRow');
+  const CustomW          = $('#CustomW');
+  const CustomH          = $('#CustomH');
 
   // Preview naming elements
   const NamePreviewCard    = $('#ImageNamePreviewCard');
@@ -124,6 +139,110 @@
   const namePreviewExpandedByGroup = Object.create(null);
   const namePreviewEnabledByGroup  = Object.create(null);
 
+  // Mini-sezioni immagini
+  let imageSubMode = 'site';
+  const SOCIAL_TARGETS = [
+    { label: 'Sotto 300 KB', bytes: 300 * 1024, desc: 'Preset leggero per visual molto semplici.' },
+    { label: 'Sotto 500 KB', bytes: 500 * 1024, desc: 'Preset consigliato per adv/social.' },
+    { label: 'Sotto 1 MB',   bytes: 1024 * 1024, desc: 'Preset più fedele, con peso comunque controllato.' }
+  ];
+
+  function onlyImageRecords(){
+    return Array.isArray(picked)
+      ? picked.filter(p => p?.file && /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name || ''))
+      : [];
+  }
+  function onlyCompressibleRecords(){
+    return Array.isArray(picked)
+      ? picked.filter(p => p?.file && /\.(jpe?g|png)$/i.test(p.file.name || ''))
+      : [];
+  }
+  function getLeafFolder(relPath){
+    const p = String(relPath || '').replace(/\\/g, '/');
+    if (!p.includes('/')) return '';
+    const folder = p.slice(0, p.lastIndexOf('/'));
+    const parts = folder.split('/').filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : '';
+  }
+  function splitSlugParts(v){
+    return String(v || '').split('-').map(s => s.trim()).filter(Boolean);
+  }
+  function containsFolderSegment(baseSlug, folderSlug){
+    const baseParts = splitSlugParts(baseSlug);
+    const folderParts = splitSlugParts(folderSlug);
+    if (!baseParts.length || !folderParts.length) return false;
+    for (let i = 0; i <= baseParts.length - folderParts.length; i++) {
+      let ok = true;
+      for (let j = 0; j < folderParts.length; j++) {
+        if (baseParts[i + j] !== folderParts[j]) { ok = false; break; }
+      }
+      if (ok) return true;
+    }
+    return false;
+  }
+  function buildExportBase(slugBase, folderSlug){
+    const base = slugify(slugBase || '');
+    const folder = slugify(folderSlug || '');
+    if (!base) return folder;
+    if (!folder) return base;
+    return containsFolderSegment(base, folder) ? base : `${base}-${folder}`;
+  }
+  function previewGroupKeyFromLeaf(leaf){
+    return leaf ? (slugify(leaf) || leaf) : '__ROOT__';
+  }
+  function previewGroupEnabled(key){
+    return namePreviewEnabledByGroup[key] !== false;
+  }
+  function ensurePreviewGroupState(keys){
+    for (const key of keys || []) {
+      if (!(key in namePreviewEnabledByGroup)) namePreviewEnabledByGroup[key] = true;
+      if (!(key in namePreviewExpandedByGroup)) namePreviewExpandedByGroup[key] = false;
+    }
+  }
+  function eyeIcon(hidden=false){
+    return hidden
+      ? `<span class="eye-open hidden" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 12S5.5 5.5 12 5.5 22.5 12 22.5 12 18.5 18.5 12 18.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="eye-closed" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.88 5.09A10.94 10.94 0 0 1 12 4.9c6.5 0 10.5 7.1 10.5 7.1a21.47 21.47 0 0 1-4.31 4.91" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.61 6.61A21.48 21.48 0 0 0 1.5 12s4 7.1 10.5 7.1a10.9 10.9 0 0 0 5.03-1.21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`
+      : `<span class="eye-open" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 12S5.5 5.5 12 5.5 22.5 12 22.5 12 18.5 18.5 12 18.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="eye-closed hidden" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.88 5.09A10.94 10.94 0 0 1 12 4.9c6.5 0 10.5 7.1 10.5 7.1a21.47 21.47 0 0 1-4.31 4.91" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.61 6.61A21.48 21.48 0 0 0 1.5 12s4 7.1 10.5 7.1a10.9 10.9 0 0 0 5.03-1.21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+  }
+  function getSocialTarget(){
+    const idx = Math.max(0, Math.min(SOCIAL_TARGETS.length - 1, Number(ImageCompressTarget?.value) || 0));
+    return SOCIAL_TARGETS[idx];
+  }
+  function updateSocialTargetUI(){
+    if (!ImageCompressTarget) return;
+    const idx = Math.max(0, Math.min(SOCIAL_TARGETS.length - 1, Number(ImageCompressTarget.value) || 0));
+    const preset = SOCIAL_TARGETS[idx];
+    const pct = ((idx) / Math.max(SOCIAL_TARGETS.length - 1, 1)) * 100;
+    ImageCompressTarget.style.setProperty('--fill', pct + '%');
+    if (ImageCompressTargetValue) ImageCompressTargetValue.textContent = preset.label;
+    if (ImageCompressTargetNote) ImageCompressTargetNote.textContent = preset.desc;
+  }
+  function updateUploadCardCopy(){
+    if (!ImagesUploadTitle || !ImagesUploadHint) return;
+    if (imageSubMode === 'compress') {
+      ImagesUploadTitle.textContent = 'Carica cartella JPG / PNG*';
+      ImagesUploadHint.textContent = 'Drag & drop o upload cartella. Il tool mantiene nomi, formato e struttura originale e alleggerisce solo il peso dei file.';
+      showEl(ImagesUploadHint);
+    } else {
+      ImagesUploadTitle.textContent = 'Carica cartella*';
+      ImagesUploadHint.textContent = '';
+      hideEl(ImagesUploadHint);
+    }
+  }
+  function setImagesSubMode(mode){
+    imageSubMode = (mode === 'compress') ? 'compress' : 'site';
+    Array.from((ImagesToolSwitch || document).querySelectorAll('.platform-switch-btn')).forEach(btn => btn.classList.toggle('active', btn.dataset.imagesView === imageSubMode));
+    if (ImagesModeIntro) {
+      ImagesModeIntro.textContent = imageSubMode === 'compress'
+        ? 'Comprimi JPG e PNG per social, adv e campaign delivery mantenendo percorso cartelle, nomi file e formato originale.'
+        : 'Esporta immagini ottimizzate per il sito con slug ITA/ENG, crop manuale e naming finale nello ZIP.';
+    }
+    if (ImageSiteFields) imageSubMode === 'site' ? showEl(ImageSiteFields) : hideEl(ImageSiteFields);
+    if (FormatCard) imageSubMode === 'site' ? showEl(FormatCard) : hideEl(FormatCard);
+    updateUploadCardCopy();
+    refreshImageSectionUI();
+  }
+
   function toggleCustomRow(){
     if (!FmtCustom || !CustomRow) return;
     FmtCustom.checked ? showEl(CustomRow) : hideEl(CustomRow);
@@ -132,7 +251,6 @@
     r?.addEventListener('change', toggleCustomRow);
     r?.addEventListener('click', toggleCustomRow);
   });
-
   function getSelectedFormat(){
     if (FmtCustom?.checked){
       return {
@@ -143,11 +261,9 @@
     if (FmtShare?.checked) return { w:1200, h:630 };
     return { w:1920, h:1080 };
   }
-
   function isSitePreset(){
     return !!(Fmt1920 && Fmt1920.checked && !(FmtShare && FmtShare.checked) && !(FmtCustom && FmtCustom.checked));
   }
-
   function getSiteOutputSize(iw, ih){
     if (!iw || !ih) return { w:1920, h:1080 };
     if (iw > ih) return { w:1920, h:1080 };
@@ -155,7 +271,6 @@
     const w = Math.max(1, Math.round(h * (iw / ih)));
     return { w, h };
   }
-
   function updateCropFrameRatio(){
     if (!CropFrame) return;
     const { w, h } = getSelectedFormat();
@@ -185,62 +300,6 @@
   });
 
   // --------- PREVIEW NAMING ---------
-  function escapeHtml(value){
-    return String(value ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
-  }
-  function onlyImageRecords(){
-    return Array.isArray(picked)
-      ? picked.filter(p => p?.file && /\.(jpe?g|png|tif?f|webp)$/i.test(p.file.name || ''))
-      : [];
-  }
-  function getLeafFolder(relPath){
-    const p = String(relPath || '').replace(/\\/g, '/');
-    if (!p.includes('/')) return '';
-    const folder = p.slice(0, p.lastIndexOf('/'));
-    const parts = folder.split('/').filter(Boolean);
-    return parts.length ? parts[parts.length - 1] : '';
-  }
-  function splitSlugParts(v){
-    return String(v || '').split('-').map(s => s.trim()).filter(Boolean);
-  }
-  function containsFolderSegment(baseSlug, folderSlug){
-    const baseParts = splitSlugParts(baseSlug);
-    const folderParts = splitSlugParts(folderSlug);
-    if (!baseParts.length || !folderParts.length) return false;
-    for (let i = 0; i <= baseParts.length - folderParts.length; i++){
-      let ok = true;
-      for (let j = 0; j < folderParts.length; j++){
-        if (baseParts[i + j] !== folderParts[j]) { ok = false; break; }
-      }
-      if (ok) return true;
-    }
-    return false;
-  }
-  function buildExportBase(slugBase, folderSlug){
-    const base = slugify(slugBase || '');
-    const folder = slugify(folderSlug || '');
-    if (!base) return folder;
-    if (!folder) return base;
-    return containsFolderSegment(base, folder) ? base : `${base}-${folder}`;
-  }
-  function previewGroupKeyFromLeaf(leaf){
-    return leaf ? (slugify(leaf) || leaf) : '__ROOT__';
-  }
-  function previewGroupEnabled(key){
-    return namePreviewEnabledByGroup[key] !== false;
-  }
-  function ensurePreviewGroupState(keys){
-    for (const key of keys || []){
-      if (!(key in namePreviewEnabledByGroup)) namePreviewEnabledByGroup[key] = true;
-      if (!(key in namePreviewExpandedByGroup)) namePreviewExpandedByGroup[key] = false;
-    }
-  }
-  function eyeIcon(hidden=false){
-    return hidden
-      ? `<span class="eye-open hidden" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 12S5.5 5.5 12 5.5 22.5 12 22.5 12 18.5 18.5 12 18.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="eye-closed" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.88 5.09A10.94 10.94 0 0 1 12 4.9c6.5 0 10.5 7.1 10.5 7.1a21.47 21.47 0 0 1-4.31 4.91" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.61 6.61A21.48 21.48 0 0 0 1.5 12s4 7.1 10.5 7.1a10.9 10.9 0 0 0 5.03-1.21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`
-      : `<span class="eye-open" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 12S5.5 5.5 12 5.5 22.5 12 22.5 12 18.5 18.5 12 18.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="eye-closed hidden" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.88 5.09A10.94 10.94 0 0 1 12 4.9c6.5 0 10.5 7.1 10.5 7.1a21.47 21.47 0 0 1-4.31 4.91" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.61 6.61A21.48 21.48 0 0 0 1.5 12s4 7.1 10.5 7.1a10.9 10.9 0 0 0 5.03-1.21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
-  }
-
   function buildNamePreviewModel(folderMap = {}){
     const slugIta = slugify(TxtSlugIta?.value);
     const slugEng = slugify(TxtSlugEng?.value);
@@ -258,7 +317,7 @@
       .map(([groupKey, payload]) => {
         const safeLeafIta = payload.leafIta || '';
         const leafEng = safeLeafIta ? (folderMap[String(safeLeafIta).trim().toLowerCase()] || safeLeafIta) : '';
-        const recs = payload.recs.slice().sort((a,b)=> (a.relPath || a.file.name).localeCompare((b.relPath || b.file.name), undefined, { numeric:true }));
+        const recs = payload.recs.slice().sort((a,b) => (a.relPath || a.file.name).localeCompare((b.relPath || b.file.name), undefined, { numeric:true }));
         const baseIta = buildExportBase(slugIta, safeLeafIta);
         const baseEng = buildExportBase(slugEng, leafEng);
         const expanded = !!namePreviewExpandedByGroup[groupKey];
@@ -283,7 +342,6 @@
     if (!folderMapCachePromise) folderMapCachePromise = loadFolderMap();
     try { return await folderMapCachePromise; } catch { return {}; }
   }
-
   function renderPreviewCards(models){
     if (!NamePreviewGrid) return;
     if (!models.length){
@@ -322,9 +380,8 @@
         </article>`;
     }).join('');
   }
-
   async function renderNamePreview(){
-    if (!NamePreviewCard || currentMode !== 'images') {
+    if (!NamePreviewCard || currentMode !== 'images' || imageSubMode !== 'site') {
       try { hideEl(NamePreviewCard); } catch {}
       return;
     }
@@ -352,35 +409,171 @@
     renderPreviewCards(models);
   }
 
-  [TxtSlugIta, TxtSlugEng].forEach(el => {
-    el?.addEventListener('input', () => { renderNamePreview(); });
-    el?.addEventListener('change', () => { renderNamePreview(); });
-  });
-  NamePreviewGrid?.addEventListener('click', (e) => {
-    const toggleBtn = e.target.closest('[data-naming-toggle]');
-    if (toggleBtn){
-      const key = toggleBtn.dataset.namingToggle || '__ROOT__';
-      namePreviewEnabledByGroup[key] = !previewGroupEnabled(key);
-      renderNamePreview();
+  // --------- COMPRESSIONE SOCIAL ---------
+  function renderCompressSummary(){
+    if (!ImageCompressCard) return;
+    if (currentMode !== 'images' || imageSubMode !== 'compress') {
+      hideEl(ImageCompressCard);
       return;
     }
-    const expandBtn = e.target.closest('[data-naming-expand]');
-    if (expandBtn){
-      const key = expandBtn.dataset.namingExpand || '__ROOT__';
-      namePreviewExpandedByGroup[key] = true;
-      renderNamePreview();
+    const records = onlyCompressibleRecords();
+    showEl(ImageCompressCard);
+    if (ImageCompressCount) ImageCompressCount.textContent = String(records.length || 0);
+    updateSocialTargetUI();
+  }
+  function normalizeZipPath(v){
+    const p = String(v || '').replace(/\\/g, '/').replace(/^\/+/, '');
+    return p || 'file';
+  }
+  function getRecordZipPath(rec){
+    return normalizeZipPath(rec?.relPath || rec?.file?.webkitRelativePath || rec?.file?.name || 'file');
+  }
+  function makeStampForSocial(){
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  }
+  function canvasToBlobLocal(canvas, type='image/jpeg', quality=0.92){
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Impossibile generare il file.')), type, quality);
+    });
+  }
+  async function rasterizeFileToCanvas(file){
+    const bmp = await loadBitmapOriented(file);
+    const canvas = document.createElement('canvas');
+    canvas.width = bmp.width;
+    canvas.height = bmp.height;
+    const ctx = canvas.getContext('2d', { alpha: true });
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  }
+  function posterizeCanvas(sourceCanvas, levels){
+    const canvas = document.createElement('canvas');
+    canvas.width = sourceCanvas.width;
+    canvas.height = sourceCanvas.height;
+    const ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: true });
+    ctx.drawImage(sourceCanvas, 0, 0);
+    try {
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = img.data;
+      const steps = Math.max(2, levels - 1);
+      for (let i = 0; i < data.length; i += 4){
+        data[i]   = Math.round((data[i]   / 255) * steps) * (255 / steps);
+        data[i+1] = Math.round((data[i+1] / 255) * steps) * (255 / steps);
+        data[i+2] = Math.round((data[i+2] / 255) * steps) * (255 / steps);
+      }
+      ctx.putImageData(img, 0, 0);
+    } catch {}
+    return canvas;
+  }
+  async function compressJpegToTarget(file, targetBytes){
+    const canvas = await rasterizeFileToCanvas(file);
+    let bestBlob = null;
+    let low = 0.18;
+    let high = 0.92;
+    let lastBlob = null;
+    for (let i = 0; i < 8; i++){
+      const q = (low + high) / 2;
+      const blob = await canvasToBlobLocal(canvas, 'image/jpeg', q);
+      lastBlob = blob;
+      if (blob.size <= targetBytes){
+        bestBlob = blob;
+        low = q;
+      } else {
+        high = q;
+      }
     }
-  });
-  document.getElementById('BtnClearPath')?.addEventListener('click', () => {
-    Object.keys(namePreviewExpandedByGroup).forEach(k => delete namePreviewExpandedByGroup[k]);
-    Object.keys(namePreviewEnabledByGroup).forEach(k => delete namePreviewEnabledByGroup[k]);
-    setTimeout(() => { renderNamePreview(); }, 0);
-  });
+    if (bestBlob) return { blob: bestBlob, hitTarget: true, changed: true };
+    const fallbackQualities = [0.16, 0.13, 0.10, 0.08, 0.06];
+    let smallest = lastBlob;
+    for (const q of fallbackQualities){
+      const blob = await canvasToBlobLocal(canvas, 'image/jpeg', q);
+      if (!smallest || blob.size < smallest.size) smallest = blob;
+      if (blob.size <= targetBytes) return { blob, hitTarget: true, changed: true };
+    }
+    return { blob: smallest, hitTarget: !!(smallest && smallest.size <= targetBytes), changed: true };
+  }
+  async function compressPngBestEffort(file, targetBytes){
+    const canvas = await rasterizeFileToCanvas(file);
+    let best = await canvasToBlobLocal(canvas, 'image/png');
+    if (best.size <= targetBytes) return { blob: best, hitTarget: true, changed: best.size !== file.size };
+    const levelsList = [128, 96, 64, 48, 32, 24, 16];
+    for (const levels of levelsList){
+      const qCanvas = posterizeCanvas(canvas, levels);
+      const blob = await canvasToBlobLocal(qCanvas, 'image/png');
+      if (blob.size < best.size) best = blob;
+      if (best.size <= targetBytes) break;
+    }
+    return { blob: best, hitTarget: best.size <= targetBytes, changed: best.size !== file.size };
+  }
+  async function compressSingleFile(rec, targetBytes){
+    const file = rec.file;
+    if (!file) return { blob: null, hitTarget: false, changed: false };
+    if (file.size <= targetBytes) return { blob: file, hitTarget: true, changed: false };
+    if (/\.jpe?g$/i.test(file.name || '')) return compressJpegToTarget(file, targetBytes);
+    if (/\.png$/i.test(file.name || ''))   return compressPngBestEffort(file, targetBytes);
+    return { blob: file, hitTarget: false, changed: false };
+  }
+  async function exportCompressedSocial(){
+    const records = onlyCompressibleRecords();
+    if (!records.length){
+      alert('Carica una cartella con file JPG o PNG.');
+      return;
+    }
+    const preset = getSocialTarget();
+    const zip = new JSZip();
+    let processed = 0;
+    let alreadyOk = 0;
+    let optimized = 0;
+    let missedTarget = 0;
+    showEl(ActionProgressWrap);
+    ActionProgress.value = 0;
+    ActionProgressLabel.textContent = 'Compressione social in corso…';
+    for (const rec of records){
+      const out = await compressSingleFile(rec, preset.bytes);
+      if (out.changed) optimized += 1;
+      if (!out.changed && out.hitTarget) alreadyOk += 1;
+      if (!out.hitTarget) missedTarget += 1;
+      zip.file(getRecordZipPath(rec), out.blob || rec.file, { binary: true });
+      processed += 1;
+      ActionProgress.value = Math.round((processed / Math.max(records.length, 1)) * 100);
+      ActionProgressLabel.textContent = `Compressione social… ${processed}/${records.length}`;
+    }
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `SOCIAL_COMPRESS-${makeStampForSocial()}.zip`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    hideEl(ActionProgressWrap);
+    if (missedTarget > 0){
+      alert(`Compressione completata. ${missedTarget} file non sono scesi sotto il target scelto mantenendo formato e dimensioni originali.`);
+    }
+  }
+
+  function refreshImageSectionUI(){
+    updateUploadCardCopy();
+    if (currentMode !== 'images') {
+      try { hideEl(ImageCropCard); } catch {}
+      try { hideEl(NamePreviewCard); } catch {}
+      try { hideEl(ImageCompressCard); } catch {}
+      return;
+    }
+    if (imageSubMode === 'compress') {
+      try { hideEl(ImageCropCard); } catch {}
+      try { hideEl(NamePreviewCard); } catch {}
+      renderCompressSummary();
+      return;
+    }
+    renderCompressSummary();
+    renderNamePreview();
+  }
 
   // --------- LOGICA SINGLE vs BATCH (crop solo in modalità Immagini) ---------
   function handleCropUI(){
-    try { renderNamePreview(); } catch {}
-    if (currentMode !== 'images') {
+    refreshImageSectionUI();
+    if (currentMode !== 'images' || imageSubMode !== 'site') {
       try { hideEl(ImageCropCard); } catch {}
       return;
     }
@@ -407,7 +600,7 @@
     }
   }
 
-  // --------- EXPORT HELPERS ---------
+  // --------- EXPORT HELPERS SITO ---------
   function drawCoverToCanvas(bmp, W, H){
     const c = document.createElement('canvas');
     c.width = W; c.height = H;
@@ -464,7 +657,6 @@
       return drawCoverToCanvas(bmp, W, H);
     }
   }
-
   async function loadFolderMap(){
     try {
       const res = await fetch('./assets/folder_map.csv', { cache:'no-store' });
@@ -486,7 +678,6 @@
       return map;
     } catch { return {}; }
   }
-
   async function loadBitmapOriented(file){
     try {
       return await createImageBitmap(file, { imageOrientation: 'from-image' });
@@ -494,8 +685,7 @@
       return await loadImageBitmap(file);
     }
   }
-
-  async function exportImages(){
+  async function exportSiteImages(){
     const slugIta = slugify(TxtSlugIta?.value);
     const slugEng = slugify(TxtSlugEng?.value);
     if (!slugIta || !slugEng){ alert('Compila i campi ITA e ENG.'); return; }
@@ -511,7 +701,6 @@
       if (!groups.has(folder)) groups.set(folder, []);
       groups.get(folder).push(rec);
     }
-
     const exportGroups = Array.from(groups.entries()).filter(([relFolder]) => {
       const parts = String(relFolder || '').split('/').filter(Boolean);
       const leaf = parts.length ? parts[parts.length - 1] : '';
@@ -524,7 +713,9 @@
     }
 
     const zip = new JSZip();
-    showEl(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Esportazione in corso…';
+    showEl(ActionProgressWrap);
+    ActionProgress.value = 0;
+    ActionProgressLabel.textContent = 'Esportazione in corso…';
     const total = exportGroups.reduce((sum, [, recs]) => sum + recs.length, 0);
     let processed = 0;
 
@@ -555,7 +746,7 @@
           W = o.w;
           H = o.h;
         }
-        const useCrop = (currentMode === 'images' && images.length === 1 && ImageCropCard && !ImageCropCard.classList.contains('hidden'));
+        const useCrop = (currentMode === 'images' && imageSubMode === 'site' && images.length === 1 && ImageCropCard && !ImageCropCard.classList.contains('hidden'));
         const canvas = useCrop
           ? drawCroppedToCanvas(bmp, W, H)
           : ((sitePreset && bmp.width <= bmp.height) ? drawContainToCanvas(bmp, W, H) : drawCoverToCanvas(bmp, W, H));
@@ -582,9 +773,51 @@
     hideEl(ActionProgressWrap);
   }
 
+  async function exportImages(){
+    if (imageSubMode === 'compress') return exportCompressedSocial();
+    return exportSiteImages();
+  }
+
+  ImagesToolSwitch?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-images-view]');
+    if (!btn) return;
+    setImagesSubMode(btn.dataset.imagesView);
+  });
+  [TxtSlugIta, TxtSlugEng].forEach(el => {
+    el?.addEventListener('input', () => { if (imageSubMode === 'site') renderNamePreview(); });
+    el?.addEventListener('change', () => { if (imageSubMode === 'site') renderNamePreview(); });
+  });
+  NamePreviewGrid?.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('[data-naming-toggle]');
+    if (toggleBtn){
+      const key = toggleBtn.dataset.namingToggle || '__ROOT__';
+      namePreviewEnabledByGroup[key] = !previewGroupEnabled(key);
+      renderNamePreview();
+      return;
+    }
+    const expandBtn = e.target.closest('[data-naming-expand]');
+    if (expandBtn){
+      const key = expandBtn.dataset.namingExpand || '__ROOT__';
+      namePreviewExpandedByGroup[key] = true;
+      renderNamePreview();
+    }
+  });
+  ImageCompressTarget?.addEventListener('input', updateSocialTargetUI);
+  ImageCompressTarget?.addEventListener('change', updateSocialTargetUI);
+  document.getElementById('BtnClearPath')?.addEventListener('click', () => {
+    Object.keys(namePreviewExpandedByGroup).forEach(k => delete namePreviewExpandedByGroup[k]);
+    Object.keys(namePreviewEnabledByGroup).forEach(k => delete namePreviewEnabledByGroup[k]);
+    setTimeout(() => {
+      renderNamePreview();
+      renderCompressSummary();
+    }, 0);
+  });
+
   try { toggleCustomRow(); } catch {}
   try { updateCropFrameRatio(); } catch {}
-  try { renderNamePreview(); } catch {}
+  try { updateSocialTargetUI(); } catch {}
+  try { setImagesSubMode('site'); } catch {}
+  try { refreshImageSectionUI(); } catch {}
 
   window.handleCropUI = handleCropUI;
   window.toggleCustomRow = toggleCustomRow;
@@ -592,6 +825,8 @@
   window.updateCropFrameRatio = updateCropFrameRatio;
   window.exportImages = exportImages;
   window.renderImageNamePreview = renderNamePreview;
+  window.renderImageCompressSummary = renderCompressSummary;
+  window.setImagesSubMode = setImagesSubMode;
 
   [Fmt1920, FmtShare, FmtCustom].forEach(r => {
     r?.addEventListener('change', () => { try { handleCropUI(); } catch {} });

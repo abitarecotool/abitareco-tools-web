@@ -192,7 +192,6 @@
   box-shadow:0 2px 10px rgba(0,0,0,.18);
   cursor:pointer;
 }
-
 @media (max-width: 1120px){
   .platform-formats-grid{ grid-template-columns:1fr; }
 }
@@ -215,8 +214,6 @@
   .platform-crop-actions .btn-outline{ width:100%; }
   .platform-eye-btn{ width:42px; height:42px; justify-content:center; padding-left:0; }
 }
-
-
 .platform-plan-settings-row{ margin:4px 0 12px; }
 .platform-crop-toolbar{ display:flex; justify-content:flex-end; margin-top:10px; }
 .platform-rotate-btn{ display:inline-flex; align-items:center; gap:8px; }
@@ -225,8 +222,6 @@
 .platform-crop-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:14px; flex-wrap:wrap; }
 @media (max-width: 900px){ .platform-crop-toolbar{ justify-content:flex-end; } }
 @media (max-width: 680px){ .platform-crop-toolbar{ justify-content:stretch; } .platform-rotate-btn{ width:100%; justify-content:center; } }
-
-
 .platform-rename-wrap{ margin-top:18px; }
 .platform-rename-head{ margin-bottom:12px; }
 .platform-rename-grid{

@@ -18,7 +18,7 @@
  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
  <link rel="stylesheet" href="./css/styles.css" />
  <link rel="stylesheet" href="./css/modules/images.css" />
- <link rel="stylesheet" href="./css/modules/platform.css?v=20260527_platform8" />
+ <link rel="stylesheet" href="./css/modules/platform.css?v=20260526_platform7" />
  <link rel="stylesheet" href="./css/modules/cropzoom.css" />
  <link rel="stylesheet" href="./css/modules/bv.css" />
  <link rel="stylesheet" href="./css/modules/bv_3d.css" />
@@ -26,6 +26,24 @@
  <link rel="stylesheet" href="./css/modules/welcome.css?v=20260506v4" />
  <link rel="stylesheet" href="./css/modules/fattura.css?v=20260520v5" />
  <link rel="stylesheet" href="./css/mobile.css?v=20260526_mob5" />
+
+ <style id="ImageNamingPreviewStyles">
+  .image-naming-preview{ margin-top:16px; }
+  .image-naming-preview .platform-upload-header{ margin-bottom:12px; }
+  .image-naming-preview .platform-format-card{ min-height:100%; }
+  .image-naming-preview .image-naming-summary{ margin:0; line-height:1.6; }
+  .image-naming-preview .image-naming-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; flex-wrap:wrap; }
+  .image-naming-preview .image-naming-meta{ display:flex; flex-direction:column; gap:4px; }
+  .image-naming-preview .image-naming-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; margin-top:16px; }
+  .image-naming-preview .image-naming-card{ display:flex; flex-direction:column; gap:14px; }
+  .image-naming-preview .image-naming-badge{ display:inline-flex; align-items:center; justify-content:center; padding:8px 12px; border-radius:999px; background:rgba(196,22,43,.08); color:var(--red); border:1px solid rgba(196,22,43,.12); font:700 12px/1 var(--font); }
+  .image-naming-preview .image-naming-block{ display:flex; flex-direction:column; gap:8px; }
+  .image-naming-preview .image-naming-block strong{ font-size:13px; letter-spacing:.02em; color:var(--navy); }
+  .image-naming-preview .image-naming-chiplist{ display:flex; flex-wrap:wrap; gap:8px; }
+  .image-naming-preview .image-naming-chip{ font-size:12px; line-height:1.3; }
+  .image-naming-preview .image-naming-more{ margin-top:-4px; }
+  @media (max-width: 1120px){ .image-naming-preview .image-naming-grid{ grid-template-columns:1fr; } }
+ </style>
 </head>
  <body>
  <!-- AUTH PRELOADER (2s) -->
@@ -88,8 +106,7 @@
  <ul id="SideMenu" class="menu">
  <li data-mode="images" data-icon="./assets/icons/icon-sito.png" data-icon-active="./assets/icons/icon-sito-selected.png">
  <span class="mi"><img alt="" /></span><span class="txt">Immagini</span>
- </li>
- 
+ </li>   
  <li data-mode="platform" data-icon="./assets/icons/icon-piattaforma.png" data-icon-active="./assets/icons/icon-piattaforma-selected.png">
  <span class="mi"><img alt="" /></span><span class="txt">Piattaforma</span>
  </li>
@@ -209,10 +226,27 @@
  <button id="BtnClearPath" class="btn-small hidden" title="Rimuovi cartella" type="button">✕</button>
  </div>
  </div>
- </section>
+</section>
+
+<section id="ImageNamePreviewCard" class="card hidden image-naming-preview">
+ <div class="platform-upload-big platform-upload-big--compact">
+  <div class="platform-upload-header">
+   <div>
+    <h4>Anteprima nomi esportazione</h4>
+    <p id="ImageNamePreviewSummary" class="muted image-naming-summary">Carica una cartella immagini per vedere la preview dei nomi finali.</p>
+   </div>
+   <button id="ImageNamePreviewToggle" type="button" class="btn-outline hidden" aria-expanded="false">Mostra tutti</button>
+  </div>
+  <div class="image-naming-toolbar">
+   <div class="image-naming-meta">
+    <div id="ImageNamePreviewEmpty" class="muted">La preview si aggiorna in tempo reale quando carichi file o modifichi gli slug.</div>
+   </div>
+  </div>
+  <div id="ImageNamePreviewGrid" class="image-naming-grid"></div>
+ </div>
+</section>
  <!-- DIGITAL TOOL -->
- <!-- RENAME -->
- 
+ <!-- RENAME -->   
 <section id="PlatformCard" class="card hidden">
  <div class="platform-head">
   <div>
@@ -224,7 +258,6 @@
   <div class="platform-switch" id="PlatformModeSwitch" role="tablist" aria-label="Tipologia export piattaforma">
    <button type="button" class="platform-switch-btn active" data-platform-view="images">Immagini</button>
    <button type="button" class="platform-switch-btn" data-platform-view="plans">Planimetrie</button>
-   <button type="button" class="platform-switch-btn" data-platform-view="rename">Rinomina file</button>
   </div>
   <div id="PlatformSectionTabs" class="platform-section-tabs" aria-label="Sezioni piattaforma"></div>
  </div>
@@ -590,7 +623,6 @@
  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
  <script src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
  <!-- App scripts (split) -->
  <script src="./js/core/permissions.js?v=20260518_fixprod2"></script>
  <script src="./js/core/auth.js?v=20260522_login7"></script>
@@ -604,7 +636,7 @@
  <script src="./js/modules/images.js"></script>
  <script src="./js/modules/digitaltool.js"></script>
  <script src="./js/modules/pdf2jpg.js?v=20260525_oomfix1"></script>
- <script src="./js/modules/platform.js?v=20260527_platform8"></script>
+ <script src="./js/modules/platform.js?v=20260526_platform7"></script>
  <script src="./js/modules/rename.js"></script>
  <script src="./js/modules/video.js?v=20260526_mobilepick3"></script>
  <script src="./js/modules/watermark.js?v=20260525_mobilepick2"></script>

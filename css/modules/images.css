@@ -29,7 +29,8 @@
 }
 
 /* Slider zoom – stile Abitare (rosso + track grigio) */
-#CropZoom{
+#CropZoom,
+input#CropZoom.input{
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
@@ -38,18 +39,31 @@
   padding: 0;
   border-radius: 999px;
   outline: none;
-  box-shadow: none;
+  box-shadow: none !important;
   background: linear-gradient(
     to right,
     var(--red) 0 var(--fill, 0%),
     var(--gray-200) var(--fill, 0%) 100%
-  );
+  ) !important;
+}
+
+#CropZoom::-webkit-slider-runnable-track{
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+#CropZoom::-moz-range-track{
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
 }
 
 #CropZoom::-webkit-slider-thumb{
   -webkit-appearance: none;
   width: 18px;
   height: 18px;
+  margin-top: -5px;
   border-radius: 999px;
   background: var(--red);
   border: 2px solid var(--white);
@@ -158,13 +172,24 @@
   padding: 0;
   border-radius: 999px;
   outline:none;
-  box-shadow:none;
-  background: linear-gradient(to right, var(--red) 0 var(--fill, 50%), var(--gray-200) var(--fill, 50%) 100%);
+  box-shadow:none !important;
+  background: linear-gradient(to right, var(--red) 0 var(--fill, 50%), var(--gray-200) var(--fill, 50%) 100%) !important;
+}
+#ImageCompressTarget::-webkit-slider-runnable-track{
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+#ImageCompressTarget::-moz-range-track{
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
 }
 #ImageCompressTarget::-webkit-slider-thumb{
   -webkit-appearance: none;
   width: 18px;
   height: 18px;
+  margin-top: -5px;
   border-radius: 999px;
   background: var(--red);
   border: 2px solid var(--white);

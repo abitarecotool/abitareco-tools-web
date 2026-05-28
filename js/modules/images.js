@@ -35,6 +35,7 @@
     const val = Number(CropZoom.value) || min;
     const pct = (max > min) ? ((val - min) / (max - min)) * 100 : 0;
     CropZoom.style.setProperty('--fill', pct + '%');
+    CropZoom.style.background = `linear-gradient(to right, var(--red) 0 ${pct}%, var(--gray-200) ${pct}% 100%)`;
   }
   function updateCrop(){
     if (!CropImg) return;
@@ -214,6 +215,7 @@
     const preset = SOCIAL_TARGETS[idx];
     const pct = ((idx) / Math.max(SOCIAL_TARGETS.length - 1, 1)) * 100;
     ImageCompressTarget.style.setProperty('--fill', pct + '%');
+    ImageCompressTarget.style.background = `linear-gradient(to right, var(--red) 0 ${pct}%, var(--gray-200) ${pct}% 100%)`;
     if (ImageCompressTargetValue) ImageCompressTargetValue.textContent = preset.label;
     if (ImageCompressTargetNote) ImageCompressTargetNote.textContent = preset.desc;
   }

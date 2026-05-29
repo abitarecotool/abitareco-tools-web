@@ -36,7 +36,7 @@
   .image-naming-preview .image-naming-meta{ display:flex; flex-direction:column; gap:4px; }
   .image-naming-preview .image-naming-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; margin-top:16px; }
   .image-naming-preview .image-naming-card{ display:flex; flex-direction:column; gap:14px; }
-  .image-naming-preview .image-naming-badge{ display:inline-flex; align-items:center; justify-content:center; padding:8px 12px; border-radius:999px; background:rgba(196,22,43,.08); color:var(--red); border:1px solid rgba(196,22,43,.12); font:700 12px/1 var(--font); }
+  .image-naming-preview .image-naming-badge{ display:inline-flex; align-items:center; justify-content:center; padding:8px 12px; border-radius:999px; background:rgba(34,197,94,.08); color:#16a34a; border:1px solid rgba(34,197,94,.18); font:700 12px/1 var(--font); }
   .image-naming-preview .image-naming-block{ display:flex; flex-direction:column; gap:8px; }
   .image-naming-preview .image-naming-block strong{ font-size:13px; letter-spacing:.02em; color:var(--navy); }
   .image-naming-preview .image-naming-chiplist{ display:flex; flex-wrap:wrap; gap:8px; }
@@ -45,9 +45,11 @@
   @media (max-width: 1120px){ .image-naming-preview .image-naming-grid{ grid-template-columns:1fr; } }
 
   .image-naming-preview .image-naming-summary strong{ color:var(--navy); }
-  .image-naming-preview .image-naming-card.is-disabled{ opacity:.58; filter:saturate(.72); }
+  .image-naming-preview .image-naming-card{ background:rgba(34,197,94,.03); border-color:rgba(34,197,94,.16); }
+  .image-naming-preview .image-naming-card .platform-generated-name{ background:rgba(34,197,94,.08); color:#16a34a; border:1px solid rgba(34,197,94,.18); }
+  .image-naming-preview .image-naming-card.is-disabled{ opacity:.5; filter:none; background:rgba(196,22,43,.025); border-color:rgba(196,22,43,.08); }
   .image-naming-preview .image-naming-card.is-disabled .platform-generated-name,
-  .image-naming-preview .image-naming-card.is-disabled .image-naming-badge{ opacity:.85; }
+  .image-naming-preview .image-naming-card.is-disabled .image-naming-badge{ opacity:1; background:rgba(196,22,43,.035); color:rgba(196,22,43,.42); border-color:rgba(196,22,43,.10); }
   .image-naming-preview .image-naming-actions{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-top:2px; }
   .image-naming-preview .image-naming-link{
     appearance:none;

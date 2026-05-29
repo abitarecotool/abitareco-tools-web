@@ -599,7 +599,6 @@
           requestAnimationFrame(() => {
             try { refreshCropConstraints(); } catch {}
             try { resetCrop('cover'); } catch {}
-            try { updateZoomTrack(); } catch {}
           });
         });
       };

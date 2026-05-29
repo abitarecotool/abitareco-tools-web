@@ -28,14 +28,21 @@
   function escapeHtml(value){
     return String(value ?? '').replace(/[&<>"']/g, s => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[s]));
   }
+  function paintRangeFill(slider, pct){
+    if (!slider) return;
+    const safe = Math.max(0, Math.min(100, Number(pct) || 0));
+    slider.style.setProperty('--fill', safe + '%');
+    const gradient = `linear-gradient(to right, var(--red) 0 ${safe}%, var(--gray-200) ${safe}% 100%)`;
+    slider.style.background = gradient;
+    slider.style.backgroundImage = gradient;
+  }
   function updateZoomTrack(){
     if (!CropZoom) return;
     const min = Number(CropZoom.min) || 0;
     const max = Number(CropZoom.max) || 1;
     const val = Number(CropZoom.value) || min;
     const pct = (max > min) ? ((val - min) / (max - min)) * 100 : 0;
-    CropZoom.style.setProperty('--fill', pct + '%');
-    CropZoom.style.background = `linear-gradient(to right, var(--red) 0 ${pct}%, var(--gray-200) ${pct}% 100%)`;
+    paintRangeFill(CropZoom, pct);
   }
   function updateCrop(){
     if (!CropImg) return;
@@ -214,8 +221,7 @@
     const idx = Math.max(0, Math.min(SOCIAL_TARGETS.length - 1, Number(ImageCompressTarget.value) || 0));
     const preset = SOCIAL_TARGETS[idx];
     const pct = ((idx) / Math.max(SOCIAL_TARGETS.length - 1, 1)) * 100;
-    ImageCompressTarget.style.setProperty('--fill', pct + '%');
-    ImageCompressTarget.style.background = `linear-gradient(to right, var(--red) 0 ${pct}%, var(--gray-200) ${pct}% 100%)`;
+    paintRangeFill(ImageCompressTarget, pct);
     if (ImageCompressTargetValue) ImageCompressTargetValue.textContent = preset.label;
     if (ImageCompressTargetNote) ImageCompressTargetNote.textContent = preset.desc;
   }
@@ -593,6 +599,7 @@
           requestAnimationFrame(() => {
             try { refreshCropConstraints(); } catch {}
             try { resetCrop('cover'); } catch {}
+            try { updateZoomTrack(); } catch {}
           });
         });
       };

@@ -6,6 +6,14 @@
   const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
   const showEl = (el) => el && el.classList.remove('hidden');
   const hideEl = (el) => el && el.classList.add('hidden');
+  function paintPlanRangeFill(slider, pct){
+    if (!slider) return;
+    const safe = Math.max(0, Math.min(100, Number(pct) || 0));
+    slider.style.setProperty('--fill', safe + '%');
+    const gradient = `linear-gradient(to right, var(--red) 0 ${safe}%, var(--gray-200) ${safe}% 100%)`;
+    slider.style.background = gradient;
+    slider.style.backgroundImage = gradient;
+  }
 
   const PlatformCard = $('#PlatformCard');
   const PlatformModeSwitch = $('#PlatformModeSwitch');
@@ -1209,7 +1217,7 @@
       const max = Number(zoom.max) || 1;
       const val = Number(zoom.value) || min;
       const pct = (max > min) ? ((val - min) / (max - min)) * 100 : 0;
-      zoom.style.setProperty('--fill', pct + '%');
+      paintPlanRangeFill(zoom, pct);
     }
   }
 
@@ -1226,7 +1234,7 @@
       const max = Number(zoom.max) || 1;
       const val = Number(zoom.value) || min;
       const pct = (max > min) ? ((val - min) / (max - min)) * 100 : 0;
-      zoom.style.setProperty('--fill', pct + '%');
+      paintPlanRangeFill(zoom, pct);
     }
   }
 
@@ -1302,7 +1310,7 @@
       crop.scale = Math.max(crop.minScale, Math.min(Number(zoom.value) || crop.minScale, crop.maxScale));
       img.style.transform = `translate(calc(-50% + ${crop.x}px), calc(-50% + ${crop.y}px)) scale(${crop.scale})`;
       const pct = (max > min) ? ((crop.scale - min) / (max - min)) * 100 : 0;
-      zoom.style.setProperty('--fill', pct + '%');
+      paintPlanRangeFill(zoom, pct);
     });
     updatePlanCropPreview();
   }

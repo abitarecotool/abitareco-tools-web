@@ -164,19 +164,41 @@
   margin-top:14px;
   flex-wrap:wrap;
 }
-#PlatformPlanCropZoom{
+#PlatformPlanCropZoom,
+input#PlatformPlanCropZoom.input{
   -webkit-appearance:none;
   appearance:none;
   width:100%;
-  height:6px;
+  height:8px;
+  border:0 !important;
+  padding:0 !important;
+  margin-bottom:0;
   border-radius:999px;
   outline:none;
+  box-shadow:none !important;
+  background:linear-gradient(to right, var(--red) 0 var(--fill, 0%), var(--gray-200) var(--fill, 0%) 100%) !important;
+}
+#PlatformPlanCropZoom::-webkit-slider-runnable-track{
+  -webkit-appearance:none;
+  height:8px;
+  border-radius:999px;
   background:linear-gradient(to right, var(--red) 0 var(--fill, 0%), var(--gray-200) var(--fill, 0%) 100%);
+}
+#PlatformPlanCropZoom::-moz-range-track{
+  height:8px;
+  border-radius:999px;
+  background:var(--gray-200);
+}
+#PlatformPlanCropZoom::-moz-range-progress{
+  height:8px;
+  border-radius:999px;
+  background:var(--red);
 }
 #PlatformPlanCropZoom::-webkit-slider-thumb{
   -webkit-appearance:none;
-  width:16px;
-  height:16px;
+  width:18px;
+  height:18px;
+  margin-top:-5px;
   border-radius:999px;
   background:var(--red);
   border:2px solid var(--white);
@@ -184,8 +206,8 @@
   cursor:pointer;
 }
 #PlatformPlanCropZoom::-moz-range-thumb{
-  width:16px;
-  height:16px;
+  width:18px;
+  height:18px;
   border-radius:999px;
   background:var(--red);
   border:2px solid var(--white);

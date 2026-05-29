@@ -1066,3 +1066,25 @@ input[type="checkbox"] {
   color: var(--gray-500);
   font-weight: 600;
 }
+
+
+/* ============================================================
+   RANGE INPUT RESET — evita gli stili dei campi testo sugli slider
+   ============================================================ */
+input[type="range"].input,
+.input[type="range"]{
+  padding: 0 !important;
+  height: 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  margin-bottom: 0;
+}
+input[type="range"].input:hover,
+.input[type="range"]:hover,
+input[type="range"].input:focus,
+.input[type="range"]:focus{
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}

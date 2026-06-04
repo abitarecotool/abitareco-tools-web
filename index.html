@@ -25,7 +25,7 @@
  <link rel="stylesheet" href="./css/modules/auth.css?v=20260522_login5" />
  <link rel="stylesheet" href="./css/modules/welcome.css?v=20260506v4" />
  <link rel="stylesheet" href="./css/modules/fattura.css?v=20260520v5" />
- <link rel="stylesheet" href="./css/modules/slidebuilder.css?v=20260529_sb5" />
+ <link rel="stylesheet" href="./css/modules/slidebuilder.css?v=20260529_sb7" />
  <link rel="stylesheet" href="./css/mobile.css?v=20260526_mob5" />
 
  <style id="ImageNamingPreviewStyles">
@@ -651,7 +651,6 @@
    <h3>Slide Builder</h3>
    <p class="muted platform-intro">Crea slide PPT brandizzate Abitare Co. con grafici, timeline e tabelle, senza passare da Excel per l’impaginazione finale.</p>
   </div>
-  <div class="sb-admin-pill">Solo Admin</div>
  </div>
 
  <div class="sb-master-grid">
@@ -680,22 +679,24 @@
    </div>
 
    <div class="platform-upload-big sb-block">
-    <div class="platform-upload-header">
-     <div>
-      <h4>2. Dati</h4>
-      <p class="muted">Usa la griglia stile foglio dati. Puoi aggiungere righe/colonne e incollare da Excel.</p>
-     </div>
-     <div class="sb-grid-actions-top">
-      <button type="button" id="SbAddCol" class="btn-outline sb-mini-btn">+ Colonna</button>
-      <button type="button" id="SbAddRow" class="btn-outline sb-mini-btn">+ Riga</button>
-      <button type="button" id="SbPasteExcel" class="btn-outline sb-mini-btn">Incolla da Excel</button>
-      <button type="button" id="SbResetGrid" class="btn-outline sb-mini-btn">Reset</button>
-     </div>
+    <div class="sb-grid-wrap">
+      <div class="sb-grid-toolbar">
+        <div>
+          <h4 style="margin:0 0 6px 0">2. Dati</h4>
+          <div class="sb-grid-note">Scrivi direttamente nelle celle come in un piccolo foglio dati. Puoi anche incollare da Excel.</div>
+        </div>
+        <div class="sb-grid-actions-top">
+          <button type="button" id="SbAddCol" class="btn-outline sb-mini-btn">+ Colonna</button>
+          <button type="button" id="SbAddRow" class="btn-outline sb-mini-btn">+ Riga</button>
+          <button type="button" id="SbPasteExcel" class="btn-outline sb-mini-btn">Incolla da Excel</button>
+          <button type="button" id="SbResetGrid" class="btn-outline sb-mini-btn">Reset</button>
+        </div>
+      </div>
+      <div class="sb-grid-frame">
+        <table id="SbDataGrid" class="sb-data-grid" aria-label="Griglia dati Slide Builder"></table>
+      </div>
     </div>
-    <div class="sb-grid-frame">
-      <table id="SbDataGrid" class="sb-data-grid" aria-label="Griglia dati Slide Builder"></table>
-    </div>
-    <p id="SbDataHint" class="muted sb-data-hint">Per i grafici usa due colonne: Categoria / Valore. Per timeline usa Data / Titolo / Dettaglio. Per tabelle la prima riga è l’intestazione.</p>
+    <p id="SbDataHint" class="muted sb-data-hint">Grafico: usa la prima riga come intestazione (es. Categoria / Valore) e le righe sotto per i dati.</p>
    </div>
 
    <div class="platform-upload-big sb-block">
@@ -728,13 +729,12 @@
   </div>
 
   <div class="sb-right-col">
-   <div class="platform-upload-big sb-block sb-sticky">
+   <div class="platform-upload-big sb-preview-card sb-sticky">
     <div class="platform-upload-header">
      <div>
       <h4>4. Preview slide</h4>
       <p class="muted">Anteprima live della slide PPT prima dell’export.</p>
      </div>
-     <div class="platform-generated-name">Palette Abitare Co. default</div>
     </div>
     <div class="sb-preview-device">
       <div class="sb-preview-slide">
@@ -743,7 +743,7 @@
         <div id="SbPreviewCanvas" class="sb-preview-canvas"></div>
         <div class="sb-preview-footer">
           <div id="SbPreviewFoot" class="sb-preview-foot"></div>
-          <div class="sb-preview-logo">Abitare <span>co.</span></div>
+          <img id="SbPreviewLogoImg" class="sb-preview-logo-img" src="./assets/logo.png" alt="Abitare Co.">
         </div>
       </div>
     </div>
@@ -819,7 +819,7 @@
  <script src="./js/modules/ppt.js"></script>
  <script src="./js/modules/fattura.js?v=20260520v5"></script>
  <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js"></script>
- <script src="./js/modules/slidebuilder.js?v=20260529_sb5"></script>
+ <script src="./js/modules/slidebuilder.js?v=20260529_sb7"></script>
  <script src="./js/core/actionbar.js?v=20260520v5"></script>
 <script src="./js/app.js"></script>
 <!-- WELCOME · HELP DRAWER (solo UI, no AI) -->

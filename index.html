@@ -25,6 +25,7 @@
  <link rel="stylesheet" href="./css/modules/auth.css?v=20260522_login5" />
  <link rel="stylesheet" href="./css/modules/welcome.css?v=20260506v4" />
  <link rel="stylesheet" href="./css/modules/fattura.css?v=20260520v5" />
+ <link rel="stylesheet" href="./css/modules/slidebuilder.css?v=20260529_sb4" />
  <link rel="stylesheet" href="./css/mobile.css?v=20260526_mob5" />
 
  <style id="ImageNamingPreviewStyles">
@@ -157,6 +158,9 @@
  </li>
  <li data-mode="iubenda" data-icon="./assets/icons/icon-iubenda.png" data-icon-active="./assets/icons/icon-iubenda-selected.png">
  <span class="mi"><img alt="" /></span><span class="txt">Iubenda</span>
+ </li>
+ <li data-mode="slidebuilder" data-icon="./assets/icons/icon-slidebuilder.png" data-icon-active="./assets/icons/icon-slidebuilder-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">Slide Builder</span>
  </li>
  <li data-mode="ppt" data-icon="./assets/icons/icon-ppt.png" data-icon-active="./assets/icons/icon-ppt-selected.png">
  <span class="mi"><img alt="" /></span><span class="txt">Template PPT</span>
@@ -640,6 +644,92 @@
  <button id="IubCopyBtn" type="button" class="btn-outline" style="min-width:150px; height:40px; flex:0 0 auto">Copia codice</button>
  </div>
 </section>
+<!-- SLIDE BUILDER -->
+<section id="SlideBuilderCard" class="card hidden slidebuilder-card">
+ <div class="sb-head">
+  <div class="sb-title-wrap">
+   <h3>Slide Builder</h3>
+   <p>Crea una slide PPT già brandizzata Abitare Co. con grafici, timeline o tabelle pronte per la presentazione.</p>
+  </div>
+  <div class="sb-badge">Admin only · v1 launch</div>
+ </div>
+ <div class="sb-grid">
+  <div>
+   <div class="sb-panel">
+    <h4>1. Tipo contenuto</h4>
+    <div class="sb-type-switch">
+     <button type="button" class="sb-switch-btn active" data-type="graph">Grafico</button>
+     <button type="button" class="sb-switch-btn" data-type="timeline">Timeline</button>
+     <button type="button" class="sb-switch-btn" data-type="table">Tabella</button>
+    </div>
+   </div>
+   <div class="sb-panel" id="SbChartPanel">
+    <h4>2. Tipo grafico</h4>
+    <div class="sb-chart-switch">
+     <button type="button" class="sb-switch-btn active" data-chart="bar">Barre</button>
+     <button type="button" class="sb-switch-btn" data-chart="line">Linea</button>
+     <button type="button" class="sb-switch-btn" data-chart="pie">Torta</button>
+     <button type="button" class="sb-switch-btn" data-chart="doughnut">Doughnut</button>
+    </div>
+   </div>
+   <div class="sb-panel">
+    <h4>3. Testi slide</h4>
+    <div class="sb-row">
+     <div>
+      <label for="SbTitle">Titolo</label>
+      <input id="SbTitle" class="input" type="text" value="Inserire qui il titolo" />
+     </div>
+     <div>
+      <label for="SbSource">Fonte</label>
+      <input id="SbSource" class="input" type="text" value="inserire qui fonte." />
+     </div>
+    </div>
+    <div>
+     <label for="SbDescription">Descrizione breve</label>
+     <input id="SbDescription" class="input" type="text" value="Inserire piccola descrizione" />
+    </div>
+   </div>
+   <div class="sb-panel">
+    <div class="sb-meta">
+     <h4>4. Dati</h4>
+     <div class="sb-badge">Palette Abitare Co. default</div>
+    </div>
+    <textarea id="SbData" class="sb-textarea"></textarea>
+    <div id="SbDataHelp" class="sb-help"></div>
+   </div>
+  </div>
+  <div class="sb-preview-wrap">
+   <div class="sb-panel">
+    <div class="sb-meta">
+     <h4>Preview slide</h4>
+     <div class="sb-badge">Layout grafico v1</div>
+    </div>
+    <div class="sb-preview-stage">
+     <div class="sb-preview-slide">
+      <div id="SbPreviewTitle" class="sb-preview-title"></div>
+      <div id="SbPreviewDescription" class="sb-preview-desc"></div>
+      <div class="sb-preview-content">
+       <div id="SbPreviewSvg" class="sb-preview-svg"></div>
+       <div id="SbPreviewTable" class="sb-preview-table hidden"></div>
+      </div>
+      <div class="sb-preview-footer">
+       <div id="SbPreviewFootnote" class="sb-preview-footnote"></div>
+       <div class="sb-preview-logo">Abitare <b>co.</b></div>
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="sb-panel">
+    <h4>Indicatori rapidi</h4>
+    <div id="SbKpis" class="sb-kpis"></div>
+   </div>
+   <div class="sb-panel">
+    <h4>Template di riferimento</h4>
+    <p class="sb-empty">Il file <code>./assets/ppt/slidebuilder/template-slide-grafico.pptx</code> è incluso nel pacchetto GitHub come riferimento ufficiale del layout slide. La v1 genera la slide direttamente via codice per tenere stabile l'export.</p>
+   </div>
+  </div>
+ </div>
+</section>
 <!-- TEMPLATE PPT -->
 <section id="PptFontsCard" class="card hidden">
  <h3>Font ufficiali</h3>
@@ -706,6 +796,8 @@
  <script src="./js/modules/iubenda.js"></script>
  <script src="./js/modules/ppt.js"></script>
  <script src="./js/modules/fattura.js?v=20260520v5"></script>
+ <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js"></script>
+ <script src="./js/modules/slidebuilder.js?v=20260529_sb4"></script>
  <script src="./js/core/actionbar.js?v=20260520v5"></script>
 <script src="./js/app.js"></script>
 <!-- WELCOME · HELP DRAWER (solo UI, no AI) -->

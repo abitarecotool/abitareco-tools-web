@@ -21,6 +21,7 @@
     bv: 'Genera BV con anteprima 3D.',
     qr: 'Crea QR con parametri UTM.',
     iubenda: 'Genera snippet pulito e copiabile.',
+    slidebuilder: 'Crea slide PPT con grafici, timeline e tabelle brandizzate.',
     ppt: 'Template e font ufficiali.'
   };
 

@@ -25,8 +25,9 @@
     qr: ['QrCard'],
     iubenda: ['IubendaCard'],
     ppt: ['PptFontsCard','PptCorporateCard','PptAdvisorCard','PptMarketingCard'],
- fattura: ['FatturaCard']
- };
+    slidebuilder: ['SlideBuilderCard'],
+    fattura: ['FatturaCard']
+  };
 
   function initSidebarIcons(){
     $$('#SideMenu li').forEach(li => {
@@ -65,7 +66,8 @@
     if (mode === 'qr') setPrimaryActionLabel('Genera QR');
     if (mode === 'iubenda') setPrimaryActionLabel('Genera snippet');
     if (mode === 'platform') setPrimaryActionLabel('Esporta sezione');
- if (mode === 'fattura') setPrimaryActionLabel('Esporta PDF');
+    if (mode === 'slidebuilder') setPrimaryActionLabel('Esporta PPT');
+    if (mode === 'fattura') setPrimaryActionLabel('Esporta PDF');
     if (mode === 'ppt') BtnProcedi?.classList.add('hidden');
 
     showCards(mode);

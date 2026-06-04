@@ -25,7 +25,7 @@
  <link rel="stylesheet" href="./css/modules/auth.css?v=20260522_login5" />
  <link rel="stylesheet" href="./css/modules/welcome.css?v=20260506v4" />
  <link rel="stylesheet" href="./css/modules/fattura.css?v=20260520v5" />
- <link rel="stylesheet" href="./css/modules/slidebuilder.css?v=20260529_sb9" />
+ <link rel="stylesheet" href="./css/modules/slidebuilder.css?v=20260529_sb10" />
  <link rel="stylesheet" href="./css/mobile.css?v=20260526_mob5" />
 
  <style id="ImageNamingPreviewStyles">
@@ -646,105 +646,70 @@
 </section>
 <!-- SLIDE BUILDER -->
 <section id="SlideBuilderCard" class="card hidden slidebuilder-card">
- <div class="platform-head sb-headline">
-  <div>
-   <h3>Slide Builder</h3>
-   <p class="muted platform-intro">Crea slide PPT brandizzate Abitare Co. con grafici, timeline e tabelle, senza passare da Excel per l’impaginazione finale.</p>
-  </div>
- </div>
+  <h3>Slide Builder</h3>
+  <p class="form-section-sub">Genera una slide PPT brandizzata a partire da un foglio dati compilabile o incollato da Excel.</p>
 
- <div class="sb-master-grid">
-  <div class="sb-left-col">
-   <div class="platform-upload-big sb-block">
-    <div class="platform-upload-header">
-     <div>
-      <h4>1. Testi della slide</h4>
-      <p class="muted">Compila prima i contenuti base che finiranno nel layout PPT.</p>
-     </div>
-    </div>
-    <div class="sb-form-grid">
-     <div class="form-group sb-span-2">
-      <label for="SbTitle">Titolo</label>
-      <input id="SbTitle" class="input" type="text" placeholder="Titolo slide" />
-     </div>
-     <div class="form-group sb-span-2">
+  <div class="form-group">
+    <label for="SbTitle">Titolo</label>
+    <input id="SbTitle" class="input" type="text" placeholder="Titolo slide" />
+  </div>
+
+  <div class="row sb-meta-row">
+    <div class="form-group">
       <label for="SbDescription">Descrizione breve</label>
       <input id="SbDescription" class="input" type="text" placeholder="Sottotitolo / descrizione breve" />
-     </div>
-     <div class="form-group sb-span-2">
+    </div>
+    <div class="form-group">
       <label for="SbSource">Fonte</label>
       <input id="SbSource" class="input" type="text" placeholder="Es. Immobiliare.it / CRM interno / Osservatorio ..." />
-     </div>
     </div>
-   </div>
+  </div>
 
-   <div class="platform-upload-big sb-block">
-    <div class="sb-grid-wrap">
-      <div class="sb-grid-toolbar">
-        <div>
-          <h4 style="margin:0 0 6px 0">2. Dati</h4>
-          <div class="sb-grid-note">Compila o incolla direttamente da Excel nel foglio qui sotto usando Ctrl/Cmd+V o il menu Incolla del mouse.</div>
-        </div>
-        <div class="sb-grid-actions-top">
-          <button type="button" id="SbResetGrid" class="btn-outline sb-mini-btn">Reset</button>
-        </div>
+  <div class="form-group">
+    <label>Dati</label>
+    <div class="sb-sheet-shell">
+      <div class="sb-sheet-head">
+        <span class="muted">Puoi scrivere direttamente nelle celle oppure incollare da Excel con Ctrl/Cmd+V o dal menu Incolla del mouse.</span>
+        <button type="button" id="SbResetGrid" class="btn-outline sb-reset-btn">Reset</button>
       </div>
-      <div class="sb-grid-frame">
-        <table id="SbDataGrid" class="sb-data-grid" aria-label="Griglia dati Slide Builder"></table>
+      <div id="SbSheetWrap" class="sb-sheet-wrap">
+        <table id="SbDataGrid" class="sb-data-grid" aria-label="Foglio dati Slide Builder"></table>
       </div>
     </div>
-    <p id="SbDataHint" class="muted sb-data-hint">Grafico: usa la prima riga come intestazione (es. Categoria / Valore) e le righe sotto per i dati.</p>
-   </div>
+    <p id="SbDataHint" class="muted sb-data-hint"></p>
+  </div>
 
-   <div class="platform-upload-big sb-block">
-    <div class="platform-upload-header">
-     <div>
-      <h4>3. Contenuto e stile</h4>
-      <p class="muted">Scegli cosa vuoi generare e poi il tipo di visual.</p>
-     </div>
-    </div>
-    <div class="sb-switch-stack">
-      <div>
-       <label class="sb-switch-label">Tipo contenuto</label>
-       <div class="platform-switch sb-switch-group" id="SbTypeSwitch" role="tablist" aria-label="Tipo contenuto">
+  <div class="sb-toolbar-block">
+    <div>
+      <label class="sb-switch-label">Tipo contenuto</label>
+      <div class="platform-switch sb-switch-group" id="SbTypeSwitch" role="tablist" aria-label="Tipo contenuto">
         <button type="button" class="platform-switch-btn active" data-type="graph">Grafico</button>
         <button type="button" class="platform-switch-btn" data-type="timeline">Timeline</button>
         <button type="button" class="platform-switch-btn" data-type="table">Tabella</button>
-       </div>
       </div>
-      <div id="SbChartTypeWrap">
-       <label class="sb-switch-label">Tipo grafico</label>
-       <div class="platform-switch sb-switch-group" id="SbChartSwitch" role="tablist" aria-label="Tipo grafico">
+    </div>
+
+    <div id="SbChartTypeWrap">
+      <label class="sb-switch-label">Tipo grafico</label>
+      <div class="platform-switch sb-switch-group" id="SbChartSwitch" role="tablist" aria-label="Tipo grafico">
         <button type="button" class="platform-switch-btn active" data-chart="bar">Barre</button>
         <button type="button" class="platform-switch-btn" data-chart="line">Linea</button>
         <button type="button" class="platform-switch-btn" data-chart="pie">Torta</button>
         <button type="button" class="platform-switch-btn" data-chart="doughnut">Doughnut</button>
-       </div>
       </div>
     </div>
-   </div>
   </div>
 
-  <div class="sb-right-col">
-   <div class="platform-upload-big sb-preview-card sb-sticky">
-    <div class="platform-upload-header">
-     <div>
-      <h4>4. Preview dati</h4>
-      <p class="muted">Anteprima del solo visual scelto (grafico / timeline / tabella).</p>
-     </div>
+  <div class="sb-preview-box">
+    <div class="sb-preview-top">
+      <h4>Preview dati</h4>
+      <img id="SbPreviewLogoImg" class="sb-preview-logo-img" src="./assets/logo.png" alt="Abitare Co." />
     </div>
-    <div class="sb-preview-device">
-      <div class="sb-preview-visual">
-        <div id="SbPreviewCanvas" class="sb-preview-canvas"></div>
-        <div class="sb-preview-logo-wrap">
-          <img id="SbPreviewLogoImg" class="sb-preview-logo-img" src="./assets/logo.png" alt="Abitare Co.">
-        </div>
-      </div>
+    <div class="sb-preview-stage">
+      <div id="SbPreviewCanvas" class="sb-preview-canvas"></div>
     </div>
     <div class="sb-quick-stats" id="SbQuickStats"></div>
-   </div>
   </div>
- </div>
 </section>
 <!-- TEMPLATE PPT -->
 <section id="PptFontsCard" class="card hidden">
@@ -813,9 +778,9 @@
  <script src="./js/modules/ppt.js"></script>
  <script src="./js/modules/fattura.js?v=20260520v5"></script>
  <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js"></script>
- <script src="./js/modules/slidebuilder.js?v=20260529_sb9"></script>
+ <script src="./js/modules/slidebuilder.js?v=20260529_sb10"></script>
  <script src="./js/core/actionbar.js?v=20260520v5"></script>
-<script src="./js/app.js"></script>
+<script src="./js/app.js?v=20260529_sb10"></script>
 <!-- WELCOME · HELP DRAWER (solo UI, no AI) -->
 <div id="WelcomeHelpOverlay" class="welcome-help-overlay hidden" aria-hidden="true"></div>
 <aside id="WelcomeHelpDrawer" class="welcome-help-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="WelcomeHelpTitle" aria-hidden="true">

@@ -6,28 +6,20 @@
   const COLORS = { red:'C4162B', burgundy:'4C1428', rose:'E9A0A7', tortora:'EAE3DA', black:'1A171B', grayDark:'787878', grayLight:'E8E8E8', bg:'F3F1EF' };
   const PALETTE = [COLORS.red, COLORS.burgundy, COLORS.rose, COLORS.tortora, COLORS.black, COLORS.grayDark];
   const PRESETS = {
-    graph: [['Categoria','Valore'],['',''],['',''],['','']],
-    timeline: [['Data','Titolo','Dettaglio'],['','',''],['','',''],['','','']],
-    table: [['Colonna 1','Colonna 2','Colonna 3'],['','',''],['','',''],['','','']]
+    graph: [['Categoria','Valore'],['',''],['',''],['',''],['','']],
+    timeline: [['Data','Titolo','Dettaglio'],['','',''],['','',''],['','',''],['','','']],
+    table: [['Colonna 1','Colonna 2','Colonna 3'],['','',''],['','',''],['','',''],['','','']]
   };
   let state = { type:'graph', chartType:'bar', grid: JSON.parse(JSON.stringify(PRESETS.graph)) };
 
-  function currentUser(){ try { return window.Auth && typeof window.Auth.current === 'function' ? window.Auth.current() : null; } catch(e){ return null; } }
-  function isAdmin(){ const user = currentUser(); return !!(user && user.role === 'admin'); }
   function hasCard(){ return !!document.getElementById('SlideBuilderCard'); }
+  function currentUser(){ try { return window.Auth && typeof window.Auth.current === 'function' ? window.Auth.current() : null; } catch (e) { return null; } }
+  function isAdmin(){ const user = currentUser(); return !!(user && user.role === 'admin'); }
   function notify(msg, isError){ try { if (typeof window.showToast === 'function') return window.showToast(msg, isError ? 'error' : 'ok'); } catch(e){} if (isError) console.error(msg); else console.log(msg); }
   function esc(text){ return String(text == null ? '' : text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function num(v){ const cleaned = String(v == null ? '' : v).replace(/\./g,'').replace(',', '.').replace(/%/g,'').trim(); const n = Number(cleaned); return Number.isFinite(n) ? n : 0; }
   function clonePreset(type){ return JSON.parse(JSON.stringify(PRESETS[type])); }
   function sidebarLogo(){ return document.getElementById('SidebarLogo')?.getAttribute('src') || './assets/logo.png'; }
-
-  function gridFromDom(){
-    const rows = [];
-    Array.from(document.querySelectorAll('#SbDataGrid tbody tr')).forEach(tr => {
-      rows.push(Array.from(tr.querySelectorAll('input[data-cell]')).map(inp => inp.value || ''));
-    });
-    if (rows.length) state.grid = rows;
-  }
 
   function colLabel(i){
     let n = i + 1;
@@ -38,6 +30,14 @@
       n = Math.floor((n - 1) / 26);
     }
     return out;
+  }
+
+  function gridFromDom(){
+    const rows = [];
+    Array.from(document.querySelectorAll('#SbDataGrid tbody tr')).forEach(tr => {
+      rows.push(Array.from(tr.querySelectorAll('input[data-cell]')).map(inp => inp.value || ''));
+    });
+    if (rows.length) state.grid = rows;
   }
 
   function updateHint(){
@@ -56,14 +56,14 @@
     for (let c = 0; c < maxCols; c++) {
       thead += '<th class="sb-col-head"><input value="' + colLabel(c) + '" disabled></th>';
     }
-    thead += '<th class="sb-col-head is-right"></th></tr></thead>';
+    thead += '</tr></thead>';
     let tbody = '<tbody>';
     state.grid.forEach((row, rIdx) => {
       tbody += '<tr><th class="sb-row-head">' + (rIdx + 1) + '</th>';
       for (let c = 0; c < maxCols; c++) {
         tbody += '<td><input data-cell="1" data-r="' + rIdx + '" data-c="' + c + '" value="' + esc(row[c] || '') + '"></td>';
       }
-      tbody += '<td class="sb-actions-cell"><button type="button" class="sb-trash-btn" data-del-row="' + rIdx + '" title="Elimina riga">✕</button></td></tr>';
+      tbody += '</tr>';
     });
     tbody += '</tbody>';
     table.innerHTML = thead + tbody;
@@ -71,36 +71,20 @@
     refreshPreview();
   }
 
-  function addRow(){
-    const cols = Math.max.apply(null, state.grid.map(r => r.length).concat([2]));
-    state.grid.push(Array.from({ length: cols }, () => ''));
-    buildGrid();
-  }
+  function resetGrid(){ state.grid = clonePreset(state.type); buildGrid(); }
 
-  function addCol(){
-    state.grid = state.grid.map(row => row.concat(''));
-    buildGrid();
-  }
-
-  function deleteRow(idx){
-    if (state.grid.length <= 1) return;
-    state.grid.splice(idx, 1);
-    if (!state.grid.length) state.grid = [['','']];
-    buildGrid();
-  }
-
-  async function pasteFromExcel(){
+  async function pasteFromClipboard(){
     try {
       const text = await navigator.clipboard.readText();
       if (!text) return;
-      const rows = text.replaceAll('','').split('
+      const rows = text.replace(//g,'').split('
 ').filter(Boolean).map(line => line.split('	'));
       if (!rows.length) return;
       state.grid = rows;
       buildGrid();
       notify('Dati incollati dalla clipboard.');
     } catch (err) {
-      notify('Clipboard non accessibile. Copia da Excel e riprova cliccando il bottone.', true);
+      // no-op: user can still paste with Ctrl/Cmd+V directly inside the first selected cell
     }
   }
 
@@ -145,7 +129,7 @@
     if(rInner<=0) return 'M '+cx+' '+cy+' L '+outerStart.x+' '+outerStart.y+' A '+rOuter+' '+rOuter+' 0 '+largeArc+' 0 '+outerEnd.x+' '+outerEnd.y+' Z';
     return ['M '+outerStart.x+' '+outerStart.y,'A '+rOuter+' '+rOuter+' 0 '+largeArc+' 0 '+outerEnd.x+' '+outerEnd.y,'L '+innerStart.x+' '+innerStart.y,'A '+rInner+' '+rInner+' 0 '+largeArc+' 1 '+innerEnd.x+' '+innerEnd.y,'Z'].join(' ');
   }
-  function svgDataUri(svg){ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg); }
+  function svgDataUri(svg){ return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); }
 
   function renderBar(labels,values){
     const W=1080,H=520,left=70,right=16,top=22,bottom=80,plotW=W-left-right,plotH=H-top-bottom,max=Math.max.apply(null, values.concat([1])),gap=labels.length?plotW/labels.length:80,bw=Math.min(84,gap*0.58);
@@ -259,34 +243,62 @@
     notify('PPT esportato con successo.');
   }
 
+  function bindPasteOnGrid(){
+    const table = $('#SbDataGrid');
+    if (!table) return;
+    table.addEventListener('paste', function(e){
+      const target = e.target;
+      if (!target || !target.matches('input[data-cell]')) return;
+      const text = (e.clipboardData || window.clipboardData).getData('text');
+      if (!text) return;
+      const startRow = Number(target.dataset.r || 0);
+      const startCol = Number(target.dataset.c || 0);
+      const rows = text.replace(//g,'').split('
+').filter(Boolean).map(line => line.split('	'));
+      if (!rows.length) return;
+      e.preventDefault();
+      const neededRows = startRow + rows.length;
+      while (state.grid.length < neededRows) state.grid.push(Array.from({ length: Math.max(state.grid[0]?.length || 2, startCol + rows[0].length) }, () => ''));
+      const neededCols = startCol + Math.max.apply(null, rows.map(r => r.length));
+      state.grid = state.grid.map(r => {
+        const copy = r.slice();
+        while (copy.length < neededCols) copy.push('');
+        return copy;
+      });
+      rows.forEach((r, rIdx) => {
+        r.forEach((cell, cIdx) => {
+          state.grid[startRow + rIdx][startCol + cIdx] = cell;
+        });
+      });
+      buildGrid();
+    });
+  }
+
   function bind(){
     const card=document.getElementById('SlideBuilderCard');
     if(!card || card.dataset.bound==='1') return;
     card.dataset.bound='1';
     buildGrid();
+    bindPasteOnGrid();
     const logo=$('#SbPreviewLogoImg');
     if(logo) logo.src=sidebarLogo();
-    card.addEventListener('input', e=>{
-      if(e.target.matches('#SbTitle, #SbDescription, #SbSource, #SbDataGrid input[data-cell]')) refreshPreview();
-    });
+    card.addEventListener('input', e=>{ if(e.target.matches('#SbTitle, #SbDescription, #SbSource, #SbDataGrid input[data-cell]')) refreshPreview(); });
     card.addEventListener('click', async e=>{
       const typeBtn=e.target.closest('#SbTypeSwitch .platform-switch-btn');
       if(typeBtn){ setType(typeBtn.dataset.type); return; }
       const chartBtn=e.target.closest('#SbChartSwitch .platform-switch-btn');
       if(chartBtn){ setChart(chartBtn.dataset.chart); return; }
-      const delBtn=e.target.closest('[data-del-row]');
-      if(delBtn){ deleteRow(Number(delBtn.dataset.delRow)); return; }
-      if(e.target.id==='SbAddRow'){ addRow(); return; }
-      if(e.target.id==='SbAddCol'){ addCol(); return; }
-      if(e.target.id==='SbPasteExcel'){ await pasteFromExcel(); return; }
-      if(e.target.id==='SbResetGrid'){ state.grid = clonePreset(state.type); buildGrid(); return; }
+      if(e.target.id==='SbResetGrid'){ resetGrid(); return; }
     });
     window.exportSlideBuilderPpt = exportPpt;
     refreshPreview();
   }
 
-  function clonePreset(type){ return JSON.parse(JSON.stringify(PRESETS[type])); }
+  function init(){
+    if(!hasCard()) return;
+    if(!isAdmin()) return;
+    bind();
+  }
 
-  function init(){ if(!hasCard()) return; if(!isAdmin()) return; bind(); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

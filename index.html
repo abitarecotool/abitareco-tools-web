@@ -25,7 +25,7 @@
  <link rel="stylesheet" href="./css/modules/auth.css?v=20260522_login5" />
  <link rel="stylesheet" href="./css/modules/welcome.css?v=20260506v4" />
  <link rel="stylesheet" href="./css/modules/fattura.css?v=20260520v5" />
- <link rel="stylesheet" href="./css/modules/slidebuilder.css?v=20260529_sb4" />
+ <link rel="stylesheet" href="./css/modules/slidebuilder.css?v=20260529_sb5" />
  <link rel="stylesheet" href="./css/mobile.css?v=20260526_mob5" />
 
  <style id="ImageNamingPreviewStyles">
@@ -646,86 +646,108 @@
 </section>
 <!-- SLIDE BUILDER -->
 <section id="SlideBuilderCard" class="card hidden slidebuilder-card">
- <div class="sb-head">
-  <div class="sb-title-wrap">
-   <h3>Slide Builder</h3>
-   <p>Crea una slide PPT già brandizzata Abitare Co. con grafici, timeline o tabelle pronte per la presentazione.</p>
-  </div>
-  <div class="sb-badge">Admin only · v1 launch</div>
- </div>
- <div class="sb-grid">
+ <div class="platform-head sb-headline">
   <div>
-   <div class="sb-panel">
-    <h4>1. Tipo contenuto</h4>
-    <div class="sb-type-switch">
-     <button type="button" class="sb-switch-btn active" data-type="graph">Grafico</button>
-     <button type="button" class="sb-switch-btn" data-type="timeline">Timeline</button>
-     <button type="button" class="sb-switch-btn" data-type="table">Tabella</button>
-    </div>
-   </div>
-   <div class="sb-panel" id="SbChartPanel">
-    <h4>2. Tipo grafico</h4>
-    <div class="sb-chart-switch">
-     <button type="button" class="sb-switch-btn active" data-chart="bar">Barre</button>
-     <button type="button" class="sb-switch-btn" data-chart="line">Linea</button>
-     <button type="button" class="sb-switch-btn" data-chart="pie">Torta</button>
-     <button type="button" class="sb-switch-btn" data-chart="doughnut">Doughnut</button>
-    </div>
-   </div>
-   <div class="sb-panel">
-    <h4>3. Testi slide</h4>
-    <div class="sb-row">
+   <h3>Slide Builder</h3>
+   <p class="muted platform-intro">Crea slide PPT brandizzate Abitare Co. con grafici, timeline e tabelle, senza passare da Excel per l’impaginazione finale.</p>
+  </div>
+  <div class="sb-admin-pill">Solo Admin</div>
+ </div>
+
+ <div class="sb-master-grid">
+  <div class="sb-left-col">
+   <div class="platform-upload-big sb-block">
+    <div class="platform-upload-header">
      <div>
+      <h4>1. Testi della slide</h4>
+      <p class="muted">Compila prima i contenuti base che finiranno nel layout PPT.</p>
+     </div>
+    </div>
+    <div class="sb-form-grid">
+     <div class="form-group sb-span-2">
       <label for="SbTitle">Titolo</label>
-      <input id="SbTitle" class="input" type="text" value="Inserire qui il titolo" />
+      <input id="SbTitle" class="input" type="text" value="Inserire qui il titolo" placeholder="Titolo slide" />
      </div>
-     <div>
+     <div class="form-group sb-span-2">
+      <label for="SbDescription">Descrizione breve</label>
+      <input id="SbDescription" class="input" type="text" value="Inserire piccola descrizione" placeholder="Sottotitolo / descrizione breve" />
+     </div>
+     <div class="form-group sb-span-2">
       <label for="SbSource">Fonte</label>
-      <input id="SbSource" class="input" type="text" value="inserire qui fonte." />
+      <input id="SbSource" class="input" type="text" value="inserire qui fonte." placeholder="Es. Immobiliare.it / CRM interno / Osservatorio ..." />
      </div>
-    </div>
-    <div>
-     <label for="SbDescription">Descrizione breve</label>
-     <input id="SbDescription" class="input" type="text" value="Inserire piccola descrizione" />
     </div>
    </div>
-   <div class="sb-panel">
-    <div class="sb-meta">
-     <h4>4. Dati</h4>
-     <div class="sb-badge">Palette Abitare Co. default</div>
+
+   <div class="platform-upload-big sb-block">
+    <div class="platform-upload-header">
+     <div>
+      <h4>2. Dati</h4>
+      <p class="muted">Usa la griglia stile foglio dati. Puoi aggiungere righe/colonne e incollare da Excel.</p>
+     </div>
+     <div class="sb-grid-actions-top">
+      <button type="button" id="SbAddCol" class="btn-outline sb-mini-btn">+ Colonna</button>
+      <button type="button" id="SbAddRow" class="btn-outline sb-mini-btn">+ Riga</button>
+      <button type="button" id="SbPasteExcel" class="btn-outline sb-mini-btn">Incolla da Excel</button>
+      <button type="button" id="SbResetGrid" class="btn-outline sb-mini-btn">Reset</button>
+     </div>
     </div>
-    <textarea id="SbData" class="sb-textarea"></textarea>
-    <div id="SbDataHelp" class="sb-help"></div>
+    <div class="sb-grid-frame">
+      <table id="SbDataGrid" class="sb-data-grid" aria-label="Griglia dati Slide Builder"></table>
+    </div>
+    <p id="SbDataHint" class="muted sb-data-hint">Per i grafici usa due colonne: Categoria / Valore. Per timeline usa Data / Titolo / Dettaglio. Per tabelle la prima riga è l’intestazione.</p>
+   </div>
+
+   <div class="platform-upload-big sb-block">
+    <div class="platform-upload-header">
+     <div>
+      <h4>3. Contenuto e stile</h4>
+      <p class="muted">Scegli cosa vuoi generare e poi il tipo di visual.</p>
+     </div>
+    </div>
+    <div class="sb-switch-stack">
+      <div>
+       <label class="sb-switch-label">Tipo contenuto</label>
+       <div class="platform-switch sb-switch-group" id="SbTypeSwitch" role="tablist" aria-label="Tipo contenuto">
+        <button type="button" class="platform-switch-btn active" data-type="graph">Grafico</button>
+        <button type="button" class="platform-switch-btn" data-type="timeline">Timeline</button>
+        <button type="button" class="platform-switch-btn" data-type="table">Tabella</button>
+       </div>
+      </div>
+      <div id="SbChartTypeWrap">
+       <label class="sb-switch-label">Tipo grafico</label>
+       <div class="platform-switch sb-switch-group" id="SbChartSwitch" role="tablist" aria-label="Tipo grafico">
+        <button type="button" class="platform-switch-btn active" data-chart="bar">Barre</button>
+        <button type="button" class="platform-switch-btn" data-chart="line">Linea</button>
+        <button type="button" class="platform-switch-btn" data-chart="pie">Torta</button>
+        <button type="button" class="platform-switch-btn" data-chart="doughnut">Doughnut</button>
+       </div>
+      </div>
+    </div>
    </div>
   </div>
-  <div class="sb-preview-wrap">
-   <div class="sb-panel">
-    <div class="sb-meta">
-     <h4>Preview slide</h4>
-     <div class="sb-badge">Layout grafico v1</div>
-    </div>
-    <div class="sb-preview-stage">
-     <div class="sb-preview-slide">
-      <div id="SbPreviewTitle" class="sb-preview-title"></div>
-      <div id="SbPreviewDescription" class="sb-preview-desc"></div>
-      <div class="sb-preview-content">
-       <div id="SbPreviewSvg" class="sb-preview-svg"></div>
-       <div id="SbPreviewTable" class="sb-preview-table hidden"></div>
-      </div>
-      <div class="sb-preview-footer">
-       <div id="SbPreviewFootnote" class="sb-preview-footnote"></div>
-       <div class="sb-preview-logo">Abitare <b>co.</b></div>
-      </div>
+
+  <div class="sb-right-col">
+   <div class="platform-upload-big sb-block sb-sticky">
+    <div class="platform-upload-header">
+     <div>
+      <h4>4. Preview slide</h4>
+      <p class="muted">Anteprima live della slide PPT prima dell’export.</p>
      </div>
+     <div class="platform-generated-name">Palette Abitare Co. default</div>
     </div>
-   </div>
-   <div class="sb-panel">
-    <h4>Indicatori rapidi</h4>
-    <div id="SbKpis" class="sb-kpis"></div>
-   </div>
-   <div class="sb-panel">
-    <h4>Template di riferimento</h4>
-    <p class="sb-empty">Il file <code>./assets/ppt/slidebuilder/template-slide-grafico.pptx</code> è incluso nel pacchetto GitHub come riferimento ufficiale del layout slide. La v1 genera la slide direttamente via codice per tenere stabile l'export.</p>
+    <div class="sb-preview-device">
+      <div class="sb-preview-slide">
+        <div id="SbPreviewTitle" class="sb-preview-title"></div>
+        <div id="SbPreviewDescription" class="sb-preview-description"></div>
+        <div id="SbPreviewCanvas" class="sb-preview-canvas"></div>
+        <div class="sb-preview-footer">
+          <div id="SbPreviewFoot" class="sb-preview-foot"></div>
+          <div class="sb-preview-logo">Abitare <span>co.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-quick-stats" id="SbQuickStats"></div>
    </div>
   </div>
  </div>
@@ -797,7 +819,7 @@
  <script src="./js/modules/ppt.js"></script>
  <script src="./js/modules/fattura.js?v=20260520v5"></script>
  <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js"></script>
- <script src="./js/modules/slidebuilder.js?v=20260529_sb4"></script>
+ <script src="./js/modules/slidebuilder.js?v=20260529_sb5"></script>
  <script src="./js/core/actionbar.js?v=20260520v5"></script>
 <script src="./js/app.js"></script>
 <!-- WELCOME · HELP DRAWER (solo UI, no AI) -->

@@ -6,11 +6,11 @@
 
   const ROWS = 60;
   const COLS = 29; // A..AC
-  const DEFAULT_ROW_HEIGHT = 18;
+  const DEFAULT_ROW_HEIGHT = 20;
   const DEFAULT_COL_WIDTH = 64;
-  const MIN_ROW_HEIGHT = 14;
+  const MIN_ROW_HEIGHT = 20;
   const MAX_ROW_HEIGHT = 64;
-  const MIN_COL_WIDTH = 42;
+  const MIN_COL_WIDTH = 64;
   const MAX_COL_WIDTH = 180;
 
   const COLORS = {
@@ -20,7 +20,7 @@
     tortora: 'EAE3DA',
     black: '1A171B',
     grayDark: '787878',
-    bg: 'F3F1EF',
+    bg: 'FFFFFF',
     gridStroke: 'D4D7DD',
     headerBg: '5F6673',
     headerBorder: '778091',
@@ -308,6 +308,30 @@
     const encoded = btoa(unescape(encodeURIComponent(svg)));
     return 'data:image/svg+xml;base64,' + encoded;
   }
+  function svgToPngData(svg, width, height){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+          URL.revokeObjectURL(url);
+          resolve(canvas.toDataURL('image/png'));
+        } catch (err) {
+          URL.revokeObjectURL(url);
+          reject(err);
+        }
+      };
+      img.onerror = err => { URL.revokeObjectURL(url); reject(err || new Error('Errore conversione SVG')); };
+      img.src = url;
+    });
+  }
   function renderBar(labels, values){
     const W = 1240, H = 380, left = 68, right = 18, top = 16, bottom = 52;
     const plotW = W - left - right;
@@ -407,16 +431,6 @@
     while (out.length > 1 && measureTextApprox(out + '…', fontPx) > maxWidth) out = out.slice(0, -1);
     return out + '…';
   }
-  function measureTextApprox(text, px){
-    return String(text || '').length * (px * 0.55);
-  }
-  function truncateSvgText(text, maxWidth, fontPx){
-    const raw = String(text == null ? '' : text).split('\n').join(' ');
-    if (measureTextApprox(raw, fontPx) <= maxWidth) return raw;
-    let out = raw;
-    while (out.length > 1 && measureTextApprox(out + '…', fontPx) > maxWidth) out = out.slice(0, -1);
-    return out + '…';
-  }
   function renderTableShell(headers, rows){
     const safeHeaders = (headers || []).slice(0, 8);
     const safeRows = (rows || []).slice(0, 12).map(r => r.slice(0, safeHeaders.length));
@@ -424,21 +438,21 @@
     const cols = Math.max(safeHeaders.length, 1);
     const rowCount = safeRows.length + 1;
     const cellW = (W - padX * 2) / cols;
-    const cellH = Math.min(28, (H - padY * 2) / Math.max(rowCount, 2));
+    const cellH = Math.min(30, (H - padY * 2) / Math.max(rowCount, 2));
     let out = '<rect x="0" y="0" width="' + W + '" height="' + H + '" rx="14" fill="#FFFFFF" opacity="0.94" />';
     for (let c = 0; c < cols; c += 1) {
       const x = padX + c * cellW;
       out += '<rect x="' + x.toFixed(1) + '" y="' + padY + '" width="' + cellW.toFixed(1) + '" height="' + cellH.toFixed(1) + '" fill="#4C1428" stroke="rgba(26,23,27,.08)" />';
-      const txt = truncateSvgText(safeHeaders[c] || '', cellW - 14, 10);
-      out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (padY + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="10" font-weight="700" fill="#FFFFFF">' + esc(txt) + '</text>';
+      const txt = truncateSvgText(safeHeaders[c] || '', cellW - 14, 11);
+      out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (padY + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="11" font-weight="700" fill="#FFFFFF">' + esc(txt) + '</text>';
     }
     safeRows.forEach((row, rIdx) => {
       const y = padY + cellH * (rIdx + 1);
       for (let c = 0; c < cols; c += 1) {
         const x = padX + c * cellW;
         out += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + cellW.toFixed(1) + '" height="' + cellH.toFixed(1) + '" fill="#FFFFFF" stroke="rgba(26,23,27,.08)" />';
-        const txt = truncateSvgText(row[c] || '', cellW - 14, 9.5);
-        out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (y + cellH/2 + 3.5).toFixed(1) + '" font-family="Manrope" font-size="9.5" fill="#1A171B">' + esc(txt) + '</text>';
+        const txt = truncateSvgText(row[c] || '', cellW - 14, 10);
+        out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (y + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="10" fill="#1A171B">' + esc(txt) + '</text>';
       }
     });
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '">' + out + '</svg>';
@@ -538,7 +552,7 @@
     pptx.theme = { headFontFace: 'PP Pangaia Semibold', bodyFontFace: 'Manrope', lang: 'it-IT' };
 
     const slide = pptx.addSlide();
-    slide.background = { color: 'F7F6F4' };
+    slide.background = { color: 'FFFFFF' };
 
     slide.addText(parseTitleRuns(title), {
       x: 2.18, y: 0.68, w: 8.95, h: 0.84,
@@ -552,6 +566,8 @@
       fontFace: 'Manrope', fontSize: 12, color: COLORS.burgundy, margin: 0
     });
 
+    const area = { x: 0.78, y: 2.08, w: 11.65, h: 4.0 };
+
     if (state.type === 'graph') {
       const parsed = parseGraph();
       if (!parsed.labels.length) throw new Error('Inserisci almeno una categoria e un valore nel foglio dati.');
@@ -559,15 +575,23 @@
       if (state.chartType === 'line') svg = renderLine(parsed.labels, parsed.values);
       if (state.chartType === 'pie') svg = renderPie(parsed.labels, parsed.values, false);
       if (state.chartType === 'doughnut') svg = renderPie(parsed.labels, parsed.values, true);
-      slide.addImage({ data: svgToPptSvgData(svg), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
+      const pngData = await svgToPngData(svg, 1800, 560);
+      slide.addImage({ data: pngData, x: area.x, y: area.y, w: area.w, h: area.h });
+      slide.addImage({ data: svgToPptSvgData(svg), x: area.x, y: area.y, w: area.w, h: area.h });
     } else if (state.type === 'timeline') {
       const items = parseTimeline();
       if (!items.length) throw new Error('Inserisci almeno una milestone nel foglio dati.');
-      slide.addImage({ data: svgToPptSvgData(renderTimeline(items)), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
+      const svg = renderTimeline(items);
+      const pngData = await svgToPngData(svg, 1800, 560);
+      slide.addImage({ data: pngData, x: area.x, y: area.y, w: area.w, h: area.h });
+      slide.addImage({ data: svgToPptSvgData(svg), x: area.x, y: area.y, w: area.w, h: area.h });
     } else {
       const t = parseTable();
       if (!t.headers.length || !t.rows.length) throw new Error('Compila il foglio dati della tabella.');
-      slide.addImage({ data: svgToPptSvgData(renderTableShell(t.headers, t.rows)), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
+      const svg = renderTableShell(t.headers, t.rows);
+      const pngData = await svgToPngData(svg, 1800, 560);
+      slide.addImage({ data: pngData, x: area.x, y: area.y, w: area.w, h: area.h });
+      slide.addImage({ data: svgToPptSvgData(svg), x: area.x, y: area.y, w: area.w, h: area.h });
     }
 
     slide.addText('© 2026 Abitare Co. | All rights reserved. Fonte: ' + source, {

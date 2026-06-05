@@ -6,12 +6,12 @@
 
   const ROWS = 60;
   const COLS = 29; // A..AC
-  const DEFAULT_ROW_HEIGHT = 24;
-  const DEFAULT_COL_WIDTH = 102;
-  const MIN_ROW_HEIGHT = 20;
-  const MAX_ROW_HEIGHT = 120;
-  const MIN_COL_WIDTH = 64;
-  const MAX_COL_WIDTH = 320;
+  const DEFAULT_ROW_HEIGHT = 20;
+  const DEFAULT_COL_WIDTH = 88;
+  const MIN_ROW_HEIGHT = 18;
+  const MAX_ROW_HEIGHT = 96;
+  const MIN_COL_WIDTH = 54;
+  const MAX_COL_WIDTH = 240;
 
   const COLORS = {
     red: 'C4162B',
@@ -302,7 +302,7 @@
     return ['M ' + outerStart.x + ' ' + outerStart.y, 'A ' + rOuter + ' ' + rOuter + ' 0 ' + largeArc + ' 0 ' + outerEnd.x + ' ' + outerEnd.y, 'L ' + innerStart.x + ' ' + innerStart.y, 'A ' + rInner + ' ' + rInner + ' 0 ' + largeArc + ' 1 ' + innerEnd.x + ' ' + innerEnd.y, 'Z'].join(' ');
   }
   function renderBar(labels, values){
-    const W = 1240, H = 400, left = 72, right = 18, top = 18, bottom = 60;
+    const W = 1240, H = 380, left = 68, right = 18, top = 16, bottom = 54;
     const plotW = W - left - right;
     const plotH = H - top - bottom;
     const max = Math.max.apply(null, values.concat([1]));
@@ -327,7 +327,7 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '"><rect width="100%" height="100%" fill="transparent" />' + out + '<line x1="' + left + '" y1="' + (top + plotH) + '" x2="' + (W - right) + '" y2="' + (top + plotH) + '" stroke="#9F9A95" stroke-width="1.1" /></svg>';
   }
   function renderLine(labels, values){
-    const W = 1240, H = 400, left = 72, right = 18, top = 18, bottom = 60;
+    const W = 1240, H = 380, left = 68, right = 18, top = 16, bottom = 54;
     const plotW = W - left - right;
     const plotH = H - top - bottom;
     const max = Math.max.apply(null, values.concat([1]));
@@ -352,7 +352,7 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '"><rect width="100%" height="100%" fill="transparent" />' + out + '</svg>';
   }
   function renderPie(labels, values, doughnut){
-    const W = 1240, H = 400, cx = 270, cy = 200, rOuter = 132, rInner = doughnut ? 76 : 0;
+    const W = 1240, H = 380, cx = 260, cy = 190, rOuter = 124, rInner = doughnut ? 70 : 0;
     const total = values.reduce((a, b) => a + b, 0) || 1;
     let angle = 0, out = '', legend = '';
     labels.forEach((label, i) => {
@@ -373,7 +373,7 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '"><rect width="100%" height="100%" fill="transparent" />' + out + legend + '</svg>';
   }
   function renderTimeline(items){
-    const W = 1240, H = 400, startX = 110, endX = 1120, centerY = 206, gap = items.length > 1 ? (endX - startX) / (items.length - 1) : 0;
+    const W = 1240, H = 380, startX = 110, endX = 1120, centerY = 194, gap = items.length > 1 ? (endX - startX) / (items.length - 1) : 0;
     let out = '<line x1="' + startX + '" y1="' + centerY + '" x2="' + endX + '" y2="' + centerY + '" stroke="#D5CEC7" stroke-width="7" stroke-linecap="round" />';
     items.forEach((item, i) => {
       const x = startX + gap * i;
@@ -385,7 +385,7 @@
       out += '<circle cx="' + x + '" cy="' + centerY + '" r="11" fill="' + color + '" stroke="#fff" stroke-width="4" />';
       out += '<rect x="' + (x - 105) + '" y="' + boxY + '" rx="14" width="210" height="100" fill="#fff" stroke="#E3DDD6" />';
       out += '<text x="' + (x - 88) + '" y="' + (boxY + 24) + '" font-family="Manrope" font-size="14" font-weight="700" fill="#C4162B">' + esc(item.date) + '</text>';
-      out += '<text x="' + (x - 88) + '" y="' + (boxY + 48) + '" font-family="PPPangaia-Semibold, PP Pangaia, Georgia, serif" font-size="18" font-weight="600" fill="#4C1428">' + esc(item.title) + '</text>';
+      out += '<text x="' + (x - 88) + '" y="' + (boxY + 48) + '" font-family="PP Pangaia Semibold, PP Pangaia, Georgia, serif" font-size="18" font-weight="600" fill="#4C1428">' + esc(item.title) + '</text>';
       out += '<text x="' + (x - 88) + '" y="' + (boxY + 72) + '" font-family="Manrope" font-size="11.5" fill="#1A171B">' + esc(item.detail) + '</text>';
     });
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '"><rect width="100%" height="100%" fill="transparent" />' + out + '</svg>';
@@ -462,16 +462,40 @@
     let idx = 0;
     let match;
     while ((match = regex.exec(raw))) {
-      if (match.index > idx) runs.push({ text: raw.slice(idx, match.index), options: { fontFace: 'PPPangaia-Semibold', color: COLORS.burgundy, bold: true } });
-      runs.push({ text: match[1], options: { fontFace: 'PPPangaia-SemiboldItalic', color: COLORS.red, italic: false, bold: true } });
+      if (match.index > idx) runs.push({ text: raw.slice(idx, match.index), options: { fontFace: 'PP Pangaia Semibold', color: COLORS.burgundy, bold: true } });
+      runs.push({ text: match[1], options: { fontFace: 'PP Pangaia Italic', color: COLORS.red, italic: false, bold: true } });
       idx = regex.lastIndex;
     }
-    if (idx < raw.length) runs.push({ text: raw.slice(idx), options: { fontFace: 'PPPangaia-Semibold', color: COLORS.burgundy, bold: true } });
-    if (!runs.length) runs.push({ text: raw, options: { fontFace: 'PPPangaia-Semibold', color: COLORS.burgundy, bold: true } });
+    if (idx < raw.length) runs.push({ text: raw.slice(idx), options: { fontFace: 'PP Pangaia Semibold', color: COLORS.burgundy, bold: true } });
+    if (!runs.length) runs.push({ text: raw, options: { fontFace: 'PP Pangaia Semibold', color: COLORS.burgundy, bold: true } });
     return runs;
   }
   function graphSeriesData(parsed){
     return [{ name: 'Serie 1', labels: parsed.labels, values: parsed.values }];
+  }
+function svgToPngData(svg, width, height){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+          URL.revokeObjectURL(url);
+          resolve(canvas.toDataURL('image/png'));
+        } catch (err) {
+          URL.revokeObjectURL(url);
+          reject(err);
+        }
+      };
+      img.onerror = err => { URL.revokeObjectURL(url); reject(err || new Error('Errore conversione SVG')); };
+      img.src = url;
+    });
   }
   async function exportPpt(){
     if (!window.PptxGenJS) throw new Error('Libreria PPT non caricata.');
@@ -481,15 +505,13 @@
     const source = ($('#SbSource')?.value || '').trim() || 'inserire qui fonte.';
 
     const pptx = new window.PptxGenJS();
-    const ChartType = (window.PptxGenJS && window.PptxGenJS.ChartType) || {};
-
     pptx.layout = 'LAYOUT_WIDE';
     pptx.author = 'Abitare Co.';
     pptx.company = 'Abitare Co.';
     pptx.subject = 'Slide Builder';
     pptx.title = decodeMarkup(title).replace(/<\/?i>/g, '');
     pptx.lang = 'it-IT';
-    pptx.theme = { headFontFace: 'PPPangaia-Semibold', bodyFontFace: 'Manrope', lang: 'it-IT' };
+    pptx.theme = { headFontFace: 'PP Pangaia Semibold', bodyFontFace: 'Manrope', lang: 'it-IT' };
 
     const slide = pptx.addSlide();
     slide.background = { color: 'F7F6F4' };
@@ -497,7 +519,7 @@
     slide.addText(parseTitleRuns(title), {
       x: 2.18, y: 0.68, w: 8.95, h: 0.84,
       align: 'center', valign: 'mid',
-      fontFace: 'PPPangaia-Semibold', fontSize: 48,
+      fontFace: 'PP Pangaia Semibold', fontSize: 48,
       color: COLORS.burgundy, margin: 0, breakLine: false, fit: 'shrink'
     });
     slide.addText(description, {
@@ -509,98 +531,36 @@
     if (state.type === 'graph') {
       const parsed = parseGraph();
       if (!parsed.labels.length) throw new Error('Inserisci almeno una categoria e un valore nel foglio dati.');
-
-      const common = {
-        x: 0.85, y: 2.05, w: 11.25, h: 4.05,
-        showTitle: false,
-        showLegend: true,
-        legendPos: 'r',
-        legendFontFace: 'Manrope',
-        legendFontSize: 10,
-        chartColors: PALETTE,
-        fontFace: 'Manrope',
-        fontSize: 10,
-        showValue: true,
-        showCategoryName: false,
-        showPercent: state.chartType === 'pie' || state.chartType === 'doughnut',
-        showLeaderLines: true,
-        valAxisTitle: '',
-        catAxisTitle: '',
-        valAxisLabelFontFace: 'Manrope',
-        catAxisLabelFontFace: 'Manrope',
-        valAxisLabelFontSize: 9,
-        catAxisLabelFontSize: 9,
-        catAxisLabelColor: '4C1428',
-        valAxisLabelColor: '4C1428',
-        dataLabelColor: '4C1428',
-        dataLabelPosition: 'bestFit',
-        varyColors: true,
-        transparency: 0,
-        showBorder: false,
-        shadow: false,
-        roundedCorners: false
-      };
-
-      if (state.chartType === 'bar') {
-        slide.addChart(ChartType.bar || 'bar', graphSeriesData(parsed), {
-          ...common,
-          catAxisLabelRotate: 0,
-          showValue: true,
-          showLegend: false,
-          gapWidthPct: 42,
-          valGridLine: { color: 'DED7D1', pt: 1 },
-          valAxisMinVal: 0,
-          showCatName: true
-        });
-      } else if (state.chartType === 'line') {
-        slide.addChart(ChartType.line || 'line', graphSeriesData(parsed), {
-          ...common,
-          showLegend: false,
-          lineSize: 2.5,
-          lineDataSymbol: 'circle',
-          lineDataSymbolSize: 6,
-          smoothLine: false,
-          valGridLine: { color: 'DED7D1', pt: 1 },
-          valAxisMinVal: 0
-        });
-      } else if (state.chartType === 'pie') {
-        slide.addChart(ChartType.pie || 'pie', graphSeriesData(parsed), {
-          ...common,
-          x: 0.95, y: 2.15, w: 10.95, h: 3.95,
-          holeSize: 0,
-          showLegend: true,
-          showPercent: true,
-          showValue: false,
-          dataLabelPosition: 'bestFit'
-        });
-      } else if (state.chartType === 'doughnut') {
-        slide.addChart(ChartType.doughnut || 'doughnut', graphSeriesData(parsed), {
-          ...common,
-          x: 0.95, y: 2.15, w: 10.95, h: 3.95,
-          holeSize: 58,
-          showLegend: true,
-          showPercent: true,
-          showValue: false,
-          dataLabelPosition: 'bestFit'
-        });
-      }
+      let svg = renderBar(parsed.labels, parsed.values);
+      if (state.chartType === 'line') svg = renderLine(parsed.labels, parsed.values);
+      if (state.chartType === 'pie') svg = renderPie(parsed.labels, parsed.values, false);
+      if (state.chartType === 'doughnut') svg = renderPie(parsed.labels, parsed.values, true);
+      const pngData = await svgToPngData(svg, 1800, 560);
+      slide.addImage({ data: pngData, x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
     } else if (state.type === 'timeline') {
       const items = parseTimeline();
       if (!items.length) throw new Error('Inserisci almeno una milestone nel foglio dati.');
       const svg = renderTimeline(items);
-      const imgData = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-      slide.addImage({ data: imgData, x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
+      const pngData = await svgToPngData(svg, 1800, 560);
+      slide.addImage({ data: pngData, x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
     } else {
       const t = parseTable();
       if (!t.headers.length || !t.rows.length) throw new Error('Compila il foglio dati della tabella.');
-      slide.addTable([t.headers].concat(t.rows), {
-        x: 0.78, y: 2.08, w: 11.65, h: 4.1,
-        border: { type: 'solid', color: 'D8D1CA', pt: 0.75 },
-        fontFace: 'Manrope', fontSize: 10.5,
-        color: COLORS.black, fill: 'FBFBFC',
-        fillHeader: COLORS.burgundy, colorHeader: 'FFFFFF', boldHeader: true,
-        margin: 0.08, rowH: 0.28, autoFit: true, valign: 'mid'
-      });
+      const html = renderTableShell(t.headers, t.rows);
+      const wrap = document.createElement('div');
+      wrap.style.position = 'fixed';
+      wrap.style.left = '-99999px';
+      wrap.style.top = '0';
+      wrap.style.width = '1600px';
+      wrap.style.background = '#F7F6F4';
+      wrap.innerHTML = html;
+      document.body.appendChild(wrap);
+      const shell = wrap.firstElementChild;
+      const body = shell.outerHTML;
+      const serialized = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="700"><foreignObject width="100%" height="100%">' + body + '</foreignObject></svg>';
+      const pngData = await svgToPngData(serialized, 1600, 700);
+      document.body.removeChild(wrap);
+      slide.addImage({ data: pngData, x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
     }
 
     slide.addText('© 2026 Abitare Co. | All rights reserved. Fonte: ' + source, {
@@ -617,7 +577,7 @@
     await pptx.writeFile({ fileName: safeName + '.pptx' });
     notify('PPT esportato con successo.');
   }
-  function clearRange(range){
+function clearRange(range){
     const r = normalizeRange(range);
     for (let rr = r.r1; rr <= r.r2; rr += 1) {
       for (let cc = r.c1; cc <= r.c2; cc += 1) updateCellValue(rr, cc, '');

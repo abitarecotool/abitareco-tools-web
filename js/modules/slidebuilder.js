@@ -112,6 +112,128 @@
   function inputSelector(r, c){ return 'textarea[data-r="' + r + '"][data-c="' + c + '"]'; }
   function getCell(r, c){ return document.querySelector(cellSelector(r, c)); }
   function getInput(r, c){ return document.querySelector(inputSelector(r, c)); }
+
+  function getRawCellValue(r, c){
+    return String((state.grid[r] && state.grid[r][c]) || '');
+  }
+  function cellRef(r, c){
+    return colLabel(c) + String(r + 1);
+  }
+  function coordsFromRef(ref){
+    const m = String(ref || '').toUpperCase().match(/^([A-Z]{1,3})(\d{1,4})$/);
+    if (!m) return null;
+    let col = 0;
+    for (let i = 0; i < m[1].length; i += 1) col = col * 26 + (m[1].charCodeAt(i) - 64);
+    return { r: Number(m[2]) - 1, c: col - 1 };
+  }
+  function splitFormulaArgs(text){
+    const out = [];
+    let cur = '';
+    let depth = 0;
+    for (const ch of String(text || '')) {
+      if (ch === '(') depth += 1;
+      if (ch === ')') depth = Math.max(0, depth - 1);
+      if ((ch === ';' || ch === ',') && depth === 0) {
+        out.push(cur.trim());
+        cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    if (cur.trim() || !out.length) out.push(cur.trim());
+    return out.filter(Boolean);
+  }
+  function numericValuesFromArg(arg, stack){
+    const token = String(arg || '').trim();
+    if (!token) return [];
+    const range = token.match(/^([A-Z]{1,3}\d{1,4}):([A-Z]{1,3}\d{1,4})$/i);
+    if (range) {
+      const a = coordsFromRef(range[1]);
+      const b = coordsFromRef(range[2]);
+      if (!a || !b) return [];
+      const vals = [];
+      for (let r = Math.min(a.r, b.r); r <= Math.max(a.r, b.r); r += 1) {
+        for (let c = Math.min(a.c, b.c); c <= Math.max(a.c, b.c); c += 1) {
+          const n = toNumber(getComputedCellValue(r, c, stack));
+          if (Number.isFinite(n)) vals.push(n);
+        }
+      }
+      return vals;
+    }
+    const ref = coordsFromRef(token);
+    if (ref) {
+      const n = toNumber(getComputedCellValue(ref.r, ref.c, stack));
+      return Number.isFinite(n) ? [n] : [];
+    }
+    const num = toNumber(token);
+    if (Number.isFinite(num)) return [num];
+    return [];
+  }
+  function evaluateFormula(raw, stack){
+    const expr = String(raw || '').trim().slice(1).trim();
+    const fn = expr.match(/^([A-Z\.À-ÿ_]+)\((.*)\)$/i);
+    if (fn) {
+      const name = fn[1].toUpperCase();
+      const args = splitFormulaArgs(fn[2]);
+      const nums = args.flatMap(arg => numericValuesFromArg(arg, stack));
+      if (name === 'SOMMA' || name === 'SUM') return nums.reduce((a, b) => a + b, 0);
+      if (name === 'MEDIA' || name === 'AVERAGE') return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
+      if (name === 'MAX') return nums.length ? Math.max(...nums) : 0;
+      if (name === 'MIN') return nums.length ? Math.min(...nums) : 0;
+      if (name === 'CONTA.NUMERI' || name === 'COUNT') return nums.length;
+    }
+    const refOnly = coordsFromRef(expr);
+    if (refOnly) return getComputedCellValue(refOnly.r, refOnly.c, stack);
+    const safeExpr = expr.replace(/\b([A-Z]{1,3}\d{1,4})\b/g, (m) => {
+      const coords = coordsFromRef(m);
+      if (!coords) return '0';
+      const n = toNumber(getComputedCellValue(coords.r, coords.c, stack));
+      return Number.isFinite(n) ? String(n) : '0';
+    }).replace(/,/g, '.');
+    if (/^[0-9+\-*/().\s]+$/.test(safeExpr)) {
+      try {
+        const val = Function('return (' + safeExpr + ')')();
+        return Number.isFinite(val) ? val : raw;
+      } catch (e) {
+        return raw;
+      }
+    }
+    return raw;
+  }
+  function getComputedCellValue(r, c, inherited){
+    const raw = getRawCellValue(r, c);
+    if (!raw.startsWith('=')) return raw;
+    const stack = inherited || new Set();
+    const key = r + ':' + c;
+    if (stack.has(key)) return '#CIRC';
+    stack.add(key);
+    const out = evaluateFormula(raw, stack);
+    stack.delete(key);
+    return out;
+  }
+  function displayCellValue(r, c){
+    const value = getComputedCellValue(r, c);
+    return value == null ? '' : String(value);
+  }
+  function renderedCellValue(r, c){
+    const raw = getRawCellValue(r, c);
+    if (state.active.r === r && state.active.c === c) return raw;
+    return raw.startsWith('=') ? displayCellValue(r, c) : raw;
+  }
+  function refreshVisibleGridValues(){
+    Array.from(document.querySelectorAll('#SbDataGrid textarea[data-cell]')).forEach(inp => {
+      const r = Number(inp.dataset.r || 0);
+      const c = Number(inp.dataset.c || 0);
+      const next = renderedCellValue(r, c);
+      if (document.activeElement !== inp && inp.value !== next) inp.value = next;
+    });
+  }
+  function refreshFormulaBar(){
+    const nameBox = $('#SbNameBox');
+    const formulaInput = $('#SbFormulaInput');
+    if (nameBox) nameBox.value = cellRef(state.active.r, state.active.c);
+    if (formulaInput && document.activeElement !== formulaInput) formulaInput.value = getRawCellValue(state.active.r, state.active.c);
+  }
   function setSelection(r1, c1, r2, c2, focus){
     state.selection = {
       r1: clamp(r1, 0, ROWS - 1),
@@ -125,6 +247,8 @@
       if (el) el.focus({ preventScroll: false });
     }
     applySelectionClasses();
+    refreshFormulaBar();
+    refreshVisibleGridValues();
   }
   function focusCell(r, c, extend){
     const rr = clamp(r, 0, ROWS - 1);
@@ -135,7 +259,7 @@
   function updateHint(){
     const hint = $('#SbDataHint');
     if (!hint) return;
-    if (state.type === 'graph') hint.textContent = 'Per il grafico usa la colonna A come etichetta e la colonna B come valore. Invio scende, Shift+Invio va a capo. Puoi selezionare, ridimensionare e trascinare come in Excel.';
+    if (state.type === 'graph') hint.textContent = 'Per il grafico usa la colonna A come etichetta e la colonna B come valore. Usa la barra formule per valori e formule tipo =SOMMA(B2:B10).';
     else if (state.type === 'timeline') hint.textContent = 'Per la timeline usa le colonne A / B / C come Data / Titolo / Dettaglio. La prima riga è l’intestazione.';
     else hint.textContent = 'Per la tabella usa la prima riga come intestazione e le righe successive come dati. Puoi cambiare altezza righe e larghezza colonne trascinando gli header.';
   }
@@ -188,13 +312,14 @@
     }
   }
   function syncGridFromDom(){
-    const rows = [];
-    Array.from(document.querySelectorAll('#SbDataGrid tbody tr')).forEach(tr => {
-      rows.push(Array.from(tr.querySelectorAll('textarea[data-cell]')).map(inp => inp.value || ''));
-    });
-    if (rows.length) {
-      state.grid = rows;
-      ensureGridSize();
+    const formulaInput = $('#SbFormulaInput');
+    const activeInput = getInput(state.active.r, state.active.c);
+    if (formulaInput && document.activeElement === formulaInput) {
+      state.grid[state.active.r][state.active.c] = formulaInput.value || '';
+      return;
+    }
+    if (activeInput && document.activeElement === activeInput) {
+      state.grid[state.active.r][state.active.c] = activeInput.value || '';
     }
   }
   function buildGrid(){
@@ -220,7 +345,7 @@
         + '<button type="button" class="sb-row-resizer" data-r="' + r + '" tabindex="-1" aria-label="Ridimensiona riga ' + (r + 1) + '"></button>'
         + '</th>';
       for (let c = 0; c < COLS; c += 1) {
-        const value = state.grid[r] && state.grid[r][c] ? state.grid[r][c] : '';
+        const value = renderedCellValue(r, c);
         const label = colLabel(c) + String(r + 1);
         const colW = state.colWidths[c];
         tbody += '<td class="sb-cell" data-r="' + r + '" data-c="' + c + '" style="width:' + colW + 'px;min-width:' + colW + 'px;height:' + rowH + 'px;min-height:' + rowH + 'px">'
@@ -234,6 +359,8 @@
     table.innerHTML = thead + tbody;
     updateHint();
     applySelectionClasses();
+    refreshFormulaBar();
+    refreshVisibleGridValues();
     schedulePreview();
   }
   function resetGrid(){
@@ -266,10 +393,10 @@
   }
   function parseGraph(){
     syncGridFromDom();
-    const bodyRows = state.grid.slice(1).filter(r => String(r[0] || '').trim() || String(r[1] || '').trim());
-    const labels = bodyRows.map(r => String(r[0] || '').trim()).filter(Boolean);
+    const bodyRows = state.grid.slice(1).map((r, idx) => ({ label: String(getComputedCellValue(idx + 1, 0)).trim(), value: getComputedCellValue(idx + 1, 1) })).filter(r => r.label || String(r.value || '').trim());
+    const labels = bodyRows.map(r => r.label).filter(Boolean);
     const values = bodyRows.map(r => {
-      const n = toNumber(r[1]);
+      const n = toNumber(r.value);
       return Number.isFinite(n) ? n : 0;
     }).slice(0, labels.length);
     return { labels, values };
@@ -277,13 +404,13 @@
   function parseTimeline(){
     syncGridFromDom();
     return state.grid.slice(1)
-      .map(r => ({ date: String(r[0] || '').trim(), title: String(r[1] || '').trim(), detail: String(r[2] || '').trim() }))
+      .map((r, idx) => ({ date: String(getComputedCellValue(idx + 1, 0)).trim(), title: String(getComputedCellValue(idx + 1, 1)).trim(), detail: String(getComputedCellValue(idx + 1, 2)).trim() }))
       .filter(x => x.date || x.title || x.detail);
   }
   function parseTable(){
     syncGridFromDom();
-    const headers = state.grid[0] || [];
-    const rows = state.grid.slice(1).filter(r => r.some(v => String(v || '').trim()));
+    const headers = Array.from({ length: (state.grid[0] || []).length }, (_, c) => String(getComputedCellValue(0, c)).trim());
+    const rows = state.grid.slice(1).map((r, idx) => r.map((_, c) => String(getComputedCellValue(idx + 1, c)))).filter(r => r.some(v => String(v || '').trim()));
     let usedCols = headers.length;
     while (usedCols > 1 && !String(headers[usedCols - 1] || '').trim()) usedCols -= 1;
     return { headers: headers.slice(0, usedCols), rows: rows.map(r => r.slice(0, usedCols)) };
@@ -862,10 +989,20 @@ function clearRange(range){
       const r = Number(input.dataset.r);
       const c = Number(input.dataset.c);
       state.active = { r, c };
+      const raw = getRawCellValue(r, c);
+      if (raw.startsWith('=')) input.value = raw;
       const range = currentRange();
       const inside = r >= range.r1 && r <= range.r2 && c >= range.c1 && c <= range.c2;
       if (!inside) setSelection(r, c, r, c, false);
-      else applySelectionClasses();
+      else { applySelectionClasses(); refreshFormulaBar(); }
+    });
+    card.addEventListener('focusout', function(e){
+      const input = e.target.closest('textarea[data-cell]');
+      if (!input) return;
+      const r = Number(input.dataset.r);
+      const c = Number(input.dataset.c);
+      const raw = getRawCellValue(r, c);
+      if (raw.startsWith('=')) input.value = displayCellValue(r, c);
     });
 
     card.addEventListener('input', function(e){
@@ -875,6 +1012,7 @@ function clearRange(range){
         return;
       }
       updateCellValue(Number(input.dataset.r), Number(input.dataset.c), input.value);
+      refreshFormulaBar();
       schedulePreview();
     });
 
@@ -938,6 +1076,36 @@ function clearRange(range){
     bindGridInteraction();
     bindGlobalExportInterceptor();
 
+    const formulaInput = $('#SbFormulaInput');
+    const fxPreset = $('#SbFxPreset');
+    if (formulaInput && !formulaInput.dataset.bound) {
+      formulaInput.dataset.bound = '1';
+      formulaInput.addEventListener('input', function(){
+        updateCellValue(state.active.r, state.active.c, formulaInput.value || '');
+        const activeInput = getInput(state.active.r, state.active.c);
+        if (activeInput && document.activeElement !== activeInput) activeInput.value = formulaInput.value || '';
+        schedulePreview();
+      });
+      formulaInput.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const next = getInput(state.active.r, state.active.c);
+          if (next) next.focus();
+        }
+      });
+    }
+    if (fxPreset && !fxPreset.dataset.bound) {
+      fxPreset.dataset.bound = '1';
+      fxPreset.addEventListener('change', function(){
+        if (!fxPreset.value) return;
+        const preset = '=' + fxPreset.value + '(';
+        updateCellValue(state.active.r, state.active.c, preset);
+        const activeInput = getInput(state.active.r, state.active.c);
+        if (activeInput) { activeInput.value = preset; activeInput.focus(); }
+        refreshFormulaBar();
+        schedulePreview();
+      });
+    }
     card.addEventListener('click', function(e){
       const typeBtn = e.target.closest('#SbTypeSwitch .platform-switch-btn');
       if (typeBtn) { setType(typeBtn.dataset.type); return; }

@@ -671,7 +671,19 @@
     <label>Dati</label>
     <div class="sb-sheet-shell">
       <div class="sb-sheet-head">
-        <span class="muted">Puoi scrivere direttamente nelle celle oppure incollare da Excel con Ctrl/Cmd+V o dal menu Incolla del mouse.</span>
+        <div class="sb-formula-row" aria-label="Barra formule">
+          <input id="SbNameBox" class="sb-name-box" type="text" value="A1" readonly aria-label="Riferimento cella" />
+          <select id="SbFxPreset" class="sb-fx-preset" aria-label="Funzioni rapide">
+            <option value="">Funzioni</option>
+            <option value="SOMMA">SOMMA</option>
+            <option value="MEDIA">MEDIA</option>
+            <option value="MAX">MAX</option>
+            <option value="MIN">MIN</option>
+            <option value="CONTA.NUMERI">CONTA.NUMERI</option>
+          </select>
+          <span class="sb-fx-badge">fx</span>
+          <input id="SbFormulaInput" class="sb-formula-input" type="text" placeholder="Scrivi valore o formula, es. =SOMMA(B1:B10)" aria-label="Formula cella attiva" />
+        </div>
         <button type="button" id="SbResetGrid" class="btn-outline sb-reset-btn">Reset</button>
       </div>
       <div id="SbSheetWrap" class="sb-sheet-wrap">

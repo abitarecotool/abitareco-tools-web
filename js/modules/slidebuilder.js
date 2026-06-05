@@ -12,6 +12,8 @@
   const MAX_ROW_HEIGHT = 64;
   const MIN_COL_WIDTH = 64;
   const MAX_COL_WIDTH = 180;
+  const SHEET_MIN_HEIGHT = 248;
+  const SHEET_MAX_HEIGHT = 528;
 
   const COLORS = {
     red: 'C4162B',
@@ -44,6 +46,7 @@
     fillBase: null,
     fillPreview: null,
     resizing: null,
+    sheetResize: null,
     previewTick: 0
   };
 
@@ -327,9 +330,9 @@
     const table = $('#SbDataGrid');
     if (!table) return;
 
-    let thead = '<thead><tr><th class="sb-corner" aria-label="Seleziona tutto"></th>';
+    let thead = '<thead><tr><th class="sb-corner" aria-label="Seleziona tutto" style="height:26px;min-height:26px"></th>';
     for (let c = 0; c < COLS; c += 1) {
-      thead += '<th class="sb-col-head" data-c="' + c + '" style="width:' + state.colWidths[c] + 'px;min-width:' + state.colWidths[c] + 'px">'
+      thead += '<th class="sb-col-head" data-c="' + c + '" style="width:' + state.colWidths[c] + 'px;min-width:' + state.colWidths[c] + 'px;height:26px;min-height:26px">'
         + '<span>' + colLabel(c) + '</span>'
         + '<button type="button" class="sb-col-resizer" data-c="' + c + '" tabindex="-1" aria-label="Ridimensiona colonna ' + colLabel(c) + '"></button>'
         + '</th>';
@@ -368,6 +371,7 @@
     state.rowHeights = Array.from({ length: ROWS }, () => DEFAULT_ROW_HEIGHT);
     state.colWidths = Array.from({ length: COLS }, () => DEFAULT_COL_WIDTH);
     buildGrid();
+    const wrap = $('#SbSheetWrap'); if (wrap) wrap.style.height = SHEET_MIN_HEIGHT + 'px';
     focusCell(0, 0, false);
   }
   function setType(type){
@@ -1051,6 +1055,43 @@ function clearRange(range){
       }
     });
   }
+
+  function ensureSheetWrapResizer(){
+    const wrap = $('#SbSheetWrap');
+    if (!wrap) return;
+    wrap.style.minHeight = SHEET_MIN_HEIGHT + 'px';
+    wrap.style.maxHeight = SHEET_MAX_HEIGHT + 'px';
+    if (!wrap.style.height) wrap.style.height = SHEET_MIN_HEIGHT + 'px';
+    let handle = wrap.querySelector('.sb-sheet-resizer');
+    if (!handle) {
+      handle = document.createElement('div');
+      handle.className = 'sb-sheet-resizer';
+      handle.setAttribute('aria-hidden', 'true');
+      wrap.appendChild(handle);
+    }
+    if (!handle.dataset.bound) {
+      handle.dataset.bound = '1';
+      handle.addEventListener('mousedown', function(e){
+        e.preventDefault();
+        state.sheetResize = { startY: e.clientY, startH: wrap.getBoundingClientRect().height };
+        document.body.classList.add('sb-is-resizing-sheet');
+      });
+    }
+    if (!document.body.dataset.sbSheetResizeBound) {
+      document.body.dataset.sbSheetResizeBound = '1';
+      document.addEventListener('mousemove', function(e){
+        if (!state.sheetResize) return;
+        const next = clamp(state.sheetResize.startH + (e.clientY - state.sheetResize.startY), SHEET_MIN_HEIGHT, SHEET_MAX_HEIGHT);
+        wrap.style.height = next + 'px';
+      });
+      document.addEventListener('mouseup', function(){
+        if (!state.sheetResize) return;
+        state.sheetResize = null;
+        document.body.classList.remove('sb-is-resizing-sheet');
+      });
+    }
+  }
+
   function bindGlobalExportInterceptor(){
     const btn = document.getElementById('BtnProcedi');
     if (!btn || btn.dataset.slidebuilderCapture === '1') return;
@@ -1072,6 +1113,7 @@ function clearRange(range){
     card.dataset.bound = '1';
 
     buildGrid();
+    ensureSheetWrapResizer();
     bindPasteOnGrid();
     bindGridInteraction();
     bindGlobalExportInterceptor();
@@ -1103,6 +1145,7 @@ function clearRange(range){
         const activeInput = getInput(state.active.r, state.active.c);
         if (activeInput) { activeInput.value = preset; activeInput.focus(); }
         refreshFormulaBar();
+        fxPreset.value = '';
         schedulePreview();
       });
     }

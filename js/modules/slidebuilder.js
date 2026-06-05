@@ -6,12 +6,12 @@
 
   const ROWS = 60;
   const COLS = 29; // A..AC
-  const DEFAULT_ROW_HEIGHT = 20;
-  const DEFAULT_COL_WIDTH = 88;
-  const MIN_ROW_HEIGHT = 18;
-  const MAX_ROW_HEIGHT = 96;
-  const MIN_COL_WIDTH = 54;
-  const MAX_COL_WIDTH = 240;
+  const DEFAULT_ROW_HEIGHT = 18;
+  const DEFAULT_COL_WIDTH = 76;
+  const MIN_ROW_HEIGHT = 16;
+  const MAX_ROW_HEIGHT = 88;
+  const MIN_COL_WIDTH = 48;
+  const MAX_COL_WIDTH = 220;
 
   const COLORS = {
     red: 'C4162B',
@@ -302,7 +302,7 @@
     return ['M ' + outerStart.x + ' ' + outerStart.y, 'A ' + rOuter + ' ' + rOuter + ' 0 ' + largeArc + ' 0 ' + outerEnd.x + ' ' + outerEnd.y, 'L ' + innerStart.x + ' ' + innerStart.y, 'A ' + rInner + ' ' + rInner + ' 0 ' + largeArc + ' 1 ' + innerEnd.x + ' ' + innerEnd.y, 'Z'].join(' ');
   }
   function renderBar(labels, values){
-    const W = 1240, H = 380, left = 68, right = 18, top = 16, bottom = 54;
+    const W = 1240, H = 380, left = 68, right = 18, top = 18, bottom = 54;
     const plotW = W - left - right;
     const plotH = H - top - bottom;
     const max = Math.max.apply(null, values.concat([1]));
@@ -327,7 +327,7 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '"><rect width="100%" height="100%" fill="transparent" />' + out + '<line x1="' + left + '" y1="' + (top + plotH) + '" x2="' + (W - right) + '" y2="' + (top + plotH) + '" stroke="#9F9A95" stroke-width="1.1" /></svg>';
   }
   function renderLine(labels, values){
-    const W = 1240, H = 380, left = 68, right = 18, top = 16, bottom = 54;
+    const W = 1240, H = 380, left = 68, right = 18, top = 18, bottom = 54;
     const plotW = W - left - right;
     const plotH = H - top - bottom;
     const max = Math.max.apply(null, values.concat([1]));
@@ -505,6 +505,8 @@ function svgToPngData(svg, width, height){
     const source = ($('#SbSource')?.value || '').trim() || 'inserire qui fonte.';
 
     const pptx = new window.PptxGenJS();
+    const ChartType = (window.PptxGenJS && window.PptxGenJS.ChartType) || {};
+
     pptx.layout = 'LAYOUT_WIDE';
     pptx.author = 'Abitare Co.';
     pptx.company = 'Abitare Co.';
@@ -531,12 +533,94 @@ function svgToPngData(svg, width, height){
     if (state.type === 'graph') {
       const parsed = parseGraph();
       if (!parsed.labels.length) throw new Error('Inserisci almeno una categoria e un valore nel foglio dati.');
-      let svg = renderBar(parsed.labels, parsed.values);
-      if (state.chartType === 'line') svg = renderLine(parsed.labels, parsed.values);
-      if (state.chartType === 'pie') svg = renderPie(parsed.labels, parsed.values, false);
-      if (state.chartType === 'doughnut') svg = renderPie(parsed.labels, parsed.values, true);
-      const pngData = await svgToPngData(svg, 1800, 560);
-      slide.addImage({ data: pngData, x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
+      const maxValue = Math.max.apply(null, parsed.values.concat([1]));
+      const majorUnit = Math.max(1, Math.round(maxValue / 4));
+      const common = {
+        x: 0.78, y: 2.08, w: 11.65, h: 4.0,
+        showTitle: false,
+        showLegend: false,
+        chartColors: PALETTE,
+        varyColors: true,
+        fontFace: 'Manrope',
+        fontSize: 10,
+        showValue: true,
+        showCategoryName: false,
+        dataLabelColor: '4C1428',
+        dataLabelPosition: 'outEnd',
+        valAxisTitle: '',
+        catAxisTitle: '',
+        valAxisMinVal: 0,
+        valAxisMaxVal: maxValue,
+        valAxisMajorUnit: majorUnit,
+        valAxisLabelFontFace: 'Manrope',
+        valAxisLabelFontSize: 9,
+        valAxisLabelColor: '787878',
+        catAxisLabelFontFace: 'Manrope',
+        catAxisLabelFontSize: 9,
+        catAxisLabelColor: '4C1428',
+        valGridLine: { color: 'DED7D1', pt: 1 },
+        showBorder: false,
+        showValueBox: false,
+        shadow: false
+      };
+      if (state.chartType === 'bar') {
+        slide.addChart(ChartType.bar || 'bar', graphSeriesData(parsed), {
+          ...common,
+          gapWidthPct: 55,
+          overlap: 0,
+          roundedCorners: true,
+          showCatName: true
+        });
+      } else if (state.chartType === 'line') {
+        slide.addChart(ChartType.line || 'line', graphSeriesData(parsed), {
+          ...common,
+          lineSize: 2.5,
+          lineDataSymbol: 'circle',
+          lineDataSymbolSize: 5,
+          smoothLine: false
+        });
+      } else if (state.chartType === 'pie') {
+        slide.addChart(ChartType.pie || 'pie', graphSeriesData(parsed), {
+          x: 0.78, y: 2.08, w: 11.65, h: 4.0,
+          showTitle: false,
+          showLegend: true,
+          legendPos: 'r',
+          legendFontFace: 'Manrope',
+          legendFontSize: 10,
+          chartColors: PALETTE,
+          varyColors: true,
+          fontFace: 'Manrope',
+          fontSize: 10,
+          showPercent: true,
+          showValue: false,
+          showLeaderLines: true,
+          dataLabelColor: '4C1428',
+          dataLabelPosition: 'bestFit',
+          showBorder: false,
+          shadow: false
+        });
+      } else if (state.chartType === 'doughnut') {
+        slide.addChart(ChartType.doughnut || 'doughnut', graphSeriesData(parsed), {
+          x: 0.78, y: 2.08, w: 11.65, h: 4.0,
+          showTitle: false,
+          showLegend: true,
+          legendPos: 'r',
+          legendFontFace: 'Manrope',
+          legendFontSize: 10,
+          chartColors: PALETTE,
+          varyColors: true,
+          fontFace: 'Manrope',
+          fontSize: 10,
+          showPercent: true,
+          showValue: false,
+          showLeaderLines: true,
+          holeSize: 58,
+          dataLabelColor: '4C1428',
+          dataLabelPosition: 'bestFit',
+          showBorder: false,
+          shadow: false
+        });
+      }
     } else if (state.type === 'timeline') {
       const items = parseTimeline();
       if (!items.length) throw new Error('Inserisci almeno una milestone nel foglio dati.');
@@ -546,21 +630,14 @@ function svgToPngData(svg, width, height){
     } else {
       const t = parseTable();
       if (!t.headers.length || !t.rows.length) throw new Error('Compila il foglio dati della tabella.');
-      const html = renderTableShell(t.headers, t.rows);
-      const wrap = document.createElement('div');
-      wrap.style.position = 'fixed';
-      wrap.style.left = '-99999px';
-      wrap.style.top = '0';
-      wrap.style.width = '1600px';
-      wrap.style.background = '#F7F6F4';
-      wrap.innerHTML = html;
-      document.body.appendChild(wrap);
-      const shell = wrap.firstElementChild;
-      const body = shell.outerHTML;
-      const serialized = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="700"><foreignObject width="100%" height="100%">' + body + '</foreignObject></svg>';
-      const pngData = await svgToPngData(serialized, 1600, 700);
-      document.body.removeChild(wrap);
-      slide.addImage({ data: pngData, x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
+      slide.addTable([t.headers].concat(t.rows), {
+        x: 0.78, y: 2.08, w: 11.65, h: 4.0,
+        border: { type: 'solid', color: 'D8D1CA', pt: 0.75 },
+        fontFace: 'Manrope', fontSize: 10.2,
+        color: COLORS.black, fill: 'FBFBFC',
+        fillHeader: COLORS.burgundy, colorHeader: 'FFFFFF', boldHeader: true,
+        margin: 0.08, rowH: 0.28, autoFit: true, valign: 'mid'
+      });
     }
 
     slide.addText('© 2026 Abitare Co. | All rights reserved. Fonte: ' + source, {

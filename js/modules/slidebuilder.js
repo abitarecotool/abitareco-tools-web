@@ -7,11 +7,11 @@
   const ROWS = 60;
   const COLS = 29; // A..AC
   const DEFAULT_ROW_HEIGHT = 18;
-  const DEFAULT_COL_WIDTH = 76;
-  const MIN_ROW_HEIGHT = 16;
-  const MAX_ROW_HEIGHT = 88;
-  const MIN_COL_WIDTH = 48;
-  const MAX_COL_WIDTH = 220;
+  const DEFAULT_COL_WIDTH = 64;
+  const MIN_ROW_HEIGHT = 14;
+  const MAX_ROW_HEIGHT = 64;
+  const MIN_COL_WIDTH = 42;
+  const MAX_COL_WIDTH = 180;
 
   const COLORS = {
     red: 'C4162B',
@@ -301,8 +301,11 @@
     if (rInner <= 0) return 'M ' + cx + ' ' + cy + ' L ' + outerStart.x + ' ' + outerStart.y + ' A ' + rOuter + ' ' + rOuter + ' 0 ' + largeArc + ' 0 ' + outerEnd.x + ' ' + outerEnd.y + ' Z';
     return ['M ' + outerStart.x + ' ' + outerStart.y, 'A ' + rOuter + ' ' + rOuter + ' 0 ' + largeArc + ' 0 ' + outerEnd.x + ' ' + outerEnd.y, 'L ' + innerStart.x + ' ' + innerStart.y, 'A ' + rInner + ' ' + rInner + ' 0 ' + largeArc + ' 1 ' + innerEnd.x + ' ' + innerEnd.y, 'Z'].join(' ');
   }
+  function svgDataUri(svg){
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
   function renderBar(labels, values){
-    const W = 1240, H = 380, left = 68, right = 18, top = 18, bottom = 54;
+    const W = 1240, H = 380, left = 68, right = 18, top = 16, bottom = 52;
     const plotW = W - left - right;
     const plotH = H - top - bottom;
     const max = Math.max.apply(null, values.concat([1]));
@@ -327,7 +330,7 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '"><rect width="100%" height="100%" fill="transparent" />' + out + '<line x1="' + left + '" y1="' + (top + plotH) + '" x2="' + (W - right) + '" y2="' + (top + plotH) + '" stroke="#9F9A95" stroke-width="1.1" /></svg>';
   }
   function renderLine(labels, values){
-    const W = 1240, H = 380, left = 68, right = 18, top = 18, bottom = 54;
+    const W = 1240, H = 380, left = 68, right = 18, top = 16, bottom = 52;
     const plotW = W - left - right;
     const plotH = H - top - bottom;
     const max = Math.max.apply(null, values.concat([1]));
@@ -352,7 +355,7 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '"><rect width="100%" height="100%" fill="transparent" />' + out + '</svg>';
   }
   function renderPie(labels, values, doughnut){
-    const W = 1240, H = 380, cx = 260, cy = 190, rOuter = 124, rInner = doughnut ? 70 : 0;
+    const W = 1240, H = 380, cx = 260, cy = 190, rOuter = 122, rInner = doughnut ? 68 : 0;
     const total = values.reduce((a, b) => a + b, 0) || 1;
     let angle = 0, out = '', legend = '';
     labels.forEach((label, i) => {
@@ -390,10 +393,42 @@
     });
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '"><rect width="100%" height="100%" fill="transparent" />' + out + '</svg>';
   }
+  function measureTextApprox(text, px){
+    return String(text || '').length * (px * 0.55);
+  }
+  function truncateSvgText(text, maxWidth, fontPx){
+    const raw = String(text == null ? '' : text).replace(/
+/g, ' ');
+    if (measureTextApprox(raw, fontPx) <= maxWidth) return raw;
+    let out = raw;
+    while (out.length > 1 && measureTextApprox(out + '…', fontPx) > maxWidth) out = out.slice(0, -1);
+    return out + '…';
+  }
   function renderTableShell(headers, rows){
-    const head = '<tr>' + headers.map(h => '<th>' + esc(h).replace(/\n/g, '<br>') + '</th>').join('') + '</tr>';
-    const body = rows.map(r => '<tr>' + headers.map((_, i) => '<td>' + esc(r[i] || '').replace(/\n/g, '<br>') + '</td>').join('') + '</tr>').join('');
-    return '<div class="sb-preview-table-shell"><table><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
+    const safeHeaders = (headers || []).slice(0, 8);
+    const safeRows = (rows || []).slice(0, 12).map(r => r.slice(0, safeHeaders.length));
+    const W = 1240, H = 380, padX = 18, padY = 18;
+    const cols = Math.max(safeHeaders.length, 1);
+    const rowCount = safeRows.length + 1;
+    const cellW = (W - padX * 2) / cols;
+    const cellH = Math.min(30, (H - padY * 2) / Math.max(rowCount, 2));
+    let out = '<rect x="0" y="0" width="' + W + '" height="' + H + '" rx="14" fill="#FFFFFF" opacity="0.90" />';
+    for (let c = 0; c < cols; c += 1) {
+      const x = padX + c * cellW;
+      out += '<rect x="' + x.toFixed(1) + '" y="' + padY + '" width="' + cellW.toFixed(1) + '" height="' + cellH.toFixed(1) + '" fill="#4C1428" stroke="rgba(26,23,27,.08)" />';
+      const t = truncateSvgText(safeHeaders[c] || '', cellW - 14, 11);
+      out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (padY + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="11" font-weight="700" fill="#FFFFFF">' + esc(t) + '</text>';
+    }
+    safeRows.forEach((row, rIdx) => {
+      const y = padY + cellH * (rIdx + 1);
+      for (let c = 0; c < cols; c += 1) {
+        const x = padX + c * cellW;
+        out += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + cellW.toFixed(1) + '" height="' + cellH.toFixed(1) + '" fill="#FFFFFF" stroke="rgba(26,23,27,.08)" />';
+        const t = truncateSvgText((row[c] || ''), cellW - 14, 10);
+        out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (y + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="10" fill="#1A171B">' + esc(t) + '</text>';
+      }
+    });
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '">' + out + '</svg>';
   }
   function updateStats(boxes){ const el = $('#SbQuickStats'); if (el) el.innerHTML = boxes.join(''); }
   function refreshPreview(){
@@ -473,30 +508,6 @@
   function graphSeriesData(parsed){
     return [{ name: 'Serie 1', labels: parsed.labels, values: parsed.values }];
   }
-function svgToPngData(svg, width, height){
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, width, height);
-          ctx.drawImage(img, 0, 0, width, height);
-          URL.revokeObjectURL(url);
-          resolve(canvas.toDataURL('image/png'));
-        } catch (err) {
-          URL.revokeObjectURL(url);
-          reject(err);
-        }
-      };
-      img.onerror = err => { URL.revokeObjectURL(url); reject(err || new Error('Errore conversione SVG')); };
-      img.src = url;
-    });
-  }
   async function exportPpt(){
     if (!window.PptxGenJS) throw new Error('Libreria PPT non caricata.');
 
@@ -505,8 +516,6 @@ function svgToPngData(svg, width, height){
     const source = ($('#SbSource')?.value || '').trim() || 'inserire qui fonte.';
 
     const pptx = new window.PptxGenJS();
-    const ChartType = (window.PptxGenJS && window.PptxGenJS.ChartType) || {};
-
     pptx.layout = 'LAYOUT_WIDE';
     pptx.author = 'Abitare Co.';
     pptx.company = 'Abitare Co.';
@@ -533,111 +542,19 @@ function svgToPngData(svg, width, height){
     if (state.type === 'graph') {
       const parsed = parseGraph();
       if (!parsed.labels.length) throw new Error('Inserisci almeno una categoria e un valore nel foglio dati.');
-      const maxValue = Math.max.apply(null, parsed.values.concat([1]));
-      const majorUnit = Math.max(1, Math.round(maxValue / 4));
-      const common = {
-        x: 0.78, y: 2.08, w: 11.65, h: 4.0,
-        showTitle: false,
-        showLegend: false,
-        chartColors: PALETTE,
-        varyColors: true,
-        fontFace: 'Manrope',
-        fontSize: 10,
-        showValue: true,
-        showCategoryName: false,
-        dataLabelColor: '4C1428',
-        dataLabelPosition: 'outEnd',
-        valAxisTitle: '',
-        catAxisTitle: '',
-        valAxisMinVal: 0,
-        valAxisMaxVal: maxValue,
-        valAxisMajorUnit: majorUnit,
-        valAxisLabelFontFace: 'Manrope',
-        valAxisLabelFontSize: 9,
-        valAxisLabelColor: '787878',
-        catAxisLabelFontFace: 'Manrope',
-        catAxisLabelFontSize: 9,
-        catAxisLabelColor: '4C1428',
-        valGridLine: { color: 'DED7D1', pt: 1 },
-        showBorder: false,
-        showValueBox: false,
-        shadow: false
-      };
-      if (state.chartType === 'bar') {
-        slide.addChart(ChartType.bar || 'bar', graphSeriesData(parsed), {
-          ...common,
-          gapWidthPct: 55,
-          overlap: 0,
-          roundedCorners: true,
-          showCatName: true
-        });
-      } else if (state.chartType === 'line') {
-        slide.addChart(ChartType.line || 'line', graphSeriesData(parsed), {
-          ...common,
-          lineSize: 2.5,
-          lineDataSymbol: 'circle',
-          lineDataSymbolSize: 5,
-          smoothLine: false
-        });
-      } else if (state.chartType === 'pie') {
-        slide.addChart(ChartType.pie || 'pie', graphSeriesData(parsed), {
-          x: 0.78, y: 2.08, w: 11.65, h: 4.0,
-          showTitle: false,
-          showLegend: true,
-          legendPos: 'r',
-          legendFontFace: 'Manrope',
-          legendFontSize: 10,
-          chartColors: PALETTE,
-          varyColors: true,
-          fontFace: 'Manrope',
-          fontSize: 10,
-          showPercent: true,
-          showValue: false,
-          showLeaderLines: true,
-          dataLabelColor: '4C1428',
-          dataLabelPosition: 'bestFit',
-          showBorder: false,
-          shadow: false
-        });
-      } else if (state.chartType === 'doughnut') {
-        slide.addChart(ChartType.doughnut || 'doughnut', graphSeriesData(parsed), {
-          x: 0.78, y: 2.08, w: 11.65, h: 4.0,
-          showTitle: false,
-          showLegend: true,
-          legendPos: 'r',
-          legendFontFace: 'Manrope',
-          legendFontSize: 10,
-          chartColors: PALETTE,
-          varyColors: true,
-          fontFace: 'Manrope',
-          fontSize: 10,
-          showPercent: true,
-          showValue: false,
-          showLeaderLines: true,
-          holeSize: 58,
-          dataLabelColor: '4C1428',
-          dataLabelPosition: 'bestFit',
-          showBorder: false,
-          shadow: false
-        });
-      }
+      let svg = renderBar(parsed.labels, parsed.values);
+      if (state.chartType === 'line') svg = renderLine(parsed.labels, parsed.values);
+      if (state.chartType === 'pie') svg = renderPie(parsed.labels, parsed.values, false);
+      if (state.chartType === 'doughnut') svg = renderPie(parsed.labels, parsed.values, true);
+      slide.addImage({ data: svgDataUri(svg), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
     } else if (state.type === 'timeline') {
       const items = parseTimeline();
       if (!items.length) throw new Error('Inserisci almeno una milestone nel foglio dati.');
-      const svg = renderTimeline(items);
-      const pngData = await svgToPngData(svg, 1800, 560);
-      slide.addImage({ data: pngData, x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
+      slide.addImage({ data: svgDataUri(renderTimeline(items)), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
     } else {
       const t = parseTable();
       if (!t.headers.length || !t.rows.length) throw new Error('Compila il foglio dati della tabella.');
-      slide.addTable([t.headers].concat(t.rows), {
-        x: 0.78, y: 2.08, w: 11.65, h: 4.0,
-        border: { type: 'solid', color: 'D8D1CA', pt: 0.75 },
-        fontFace: 'Manrope', fontSize: 10.2,
-        color: COLORS.black, fill: 'FBFBFC',
-        fillHeader: COLORS.burgundy, colorHeader: 'FFFFFF', boldHeader: true,
-        margin: 0.08, rowH: 0.28, autoFit: true, valign: 'mid'
-      });
+      slide.addImage({ data: svgDataUri(renderTableShell(t.headers, t.rows)), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
     }
 
     slide.addText('© 2026 Abitare Co. | All rights reserved. Fonte: ' + source, {

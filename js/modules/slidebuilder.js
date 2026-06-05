@@ -304,6 +304,10 @@
   function svgDataUri(svg){
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
+  function svgToPptSvgData(svg){
+    const encoded = btoa(unescape(encodeURIComponent(svg)));
+    return 'data:image/svg+xml;base64,' + encoded;
+  }
   function renderBar(labels, values){
     const W = 1240, H = 380, left = 68, right = 18, top = 16, bottom = 52;
     const plotW = W - left - right;
@@ -403,6 +407,16 @@
     while (out.length > 1 && measureTextApprox(out + '…', fontPx) > maxWidth) out = out.slice(0, -1);
     return out + '…';
   }
+  function measureTextApprox(text, px){
+    return String(text || '').length * (px * 0.55);
+  }
+  function truncateSvgText(text, maxWidth, fontPx){
+    const raw = String(text == null ? '' : text).split('\n').join(' ');
+    if (measureTextApprox(raw, fontPx) <= maxWidth) return raw;
+    let out = raw;
+    while (out.length > 1 && measureTextApprox(out + '…', fontPx) > maxWidth) out = out.slice(0, -1);
+    return out + '…';
+  }
   function renderTableShell(headers, rows){
     const safeHeaders = (headers || []).slice(0, 8);
     const safeRows = (rows || []).slice(0, 12).map(r => r.slice(0, safeHeaders.length));
@@ -410,21 +424,21 @@
     const cols = Math.max(safeHeaders.length, 1);
     const rowCount = safeRows.length + 1;
     const cellW = (W - padX * 2) / cols;
-    const cellH = Math.min(30, (H - padY * 2) / Math.max(rowCount, 2));
+    const cellH = Math.min(28, (H - padY * 2) / Math.max(rowCount, 2));
     let out = '<rect x="0" y="0" width="' + W + '" height="' + H + '" rx="14" fill="#FFFFFF" opacity="0.94" />';
     for (let c = 0; c < cols; c += 1) {
       const x = padX + c * cellW;
       out += '<rect x="' + x.toFixed(1) + '" y="' + padY + '" width="' + cellW.toFixed(1) + '" height="' + cellH.toFixed(1) + '" fill="#4C1428" stroke="rgba(26,23,27,.08)" />';
-      const txt = truncateSvgText(safeHeaders[c] || '', cellW - 14, 11);
-      out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (padY + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="11" font-weight="700" fill="#FFFFFF">' + esc(txt) + '</text>';
+      const txt = truncateSvgText(safeHeaders[c] || '', cellW - 14, 10);
+      out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (padY + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="10" font-weight="700" fill="#FFFFFF">' + esc(txt) + '</text>';
     }
     safeRows.forEach((row, rIdx) => {
       const y = padY + cellH * (rIdx + 1);
       for (let c = 0; c < cols; c += 1) {
         const x = padX + c * cellW;
         out += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + cellW.toFixed(1) + '" height="' + cellH.toFixed(1) + '" fill="#FFFFFF" stroke="rgba(26,23,27,.08)" />';
-        const txt = truncateSvgText(row[c] || '', cellW - 14, 10);
-        out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (y + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="10" fill="#1A171B">' + esc(txt) + '</text>';
+        const txt = truncateSvgText(row[c] || '', cellW - 14, 9.5);
+        out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (y + cellH/2 + 3.5).toFixed(1) + '" font-family="Manrope" font-size="9.5" fill="#1A171B">' + esc(txt) + '</text>';
       }
     });
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '">' + out + '</svg>';
@@ -507,7 +521,7 @@
   function graphSeriesData(parsed){
     return [{ name: 'Serie 1', labels: parsed.labels, values: parsed.values }];
   }
-    async function exportPpt(){
+      async function exportPpt(){
     if (!window.PptxGenJS) throw new Error('Libreria PPT non caricata.');
 
     const title = ($('#SbTitle')?.value || '').trim() || 'Inserire qui il titolo';
@@ -545,15 +559,15 @@
       if (state.chartType === 'line') svg = renderLine(parsed.labels, parsed.values);
       if (state.chartType === 'pie') svg = renderPie(parsed.labels, parsed.values, false);
       if (state.chartType === 'doughnut') svg = renderPie(parsed.labels, parsed.values, true);
-      slide.addImage({ data: svgDataUri(svg), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
+      slide.addImage({ data: svgToPptSvgData(svg), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
     } else if (state.type === 'timeline') {
       const items = parseTimeline();
       if (!items.length) throw new Error('Inserisci almeno una milestone nel foglio dati.');
-      slide.addImage({ data: svgDataUri(renderTimeline(items)), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
+      slide.addImage({ data: svgToPptSvgData(renderTimeline(items)), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
     } else {
       const t = parseTable();
       if (!t.headers.length || !t.rows.length) throw new Error('Compila il foglio dati della tabella.');
-      slide.addImage({ data: svgDataUri(renderTableShell(t.headers, t.rows)), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
+      slide.addImage({ data: svgToPptSvgData(renderTableShell(t.headers, t.rows)), x: 0.78, y: 2.08, w: 11.65, h: 4.0 });
     }
 
     slide.addText('© 2026 Abitare Co. | All rights reserved. Fonte: ' + source, {

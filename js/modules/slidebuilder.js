@@ -12,8 +12,8 @@
   const MAX_ROW_HEIGHT = 64;
   const MIN_COL_WIDTH = 64;
   const MAX_COL_WIDTH = 180;
-  const SHEET_MIN_HEIGHT = 248;
-  const SHEET_MAX_HEIGHT = 528;
+  const SHEET_MIN_HEIGHT = 268;
+  const SHEET_MAX_HEIGHT = 548;
 
   const COLORS = {
     red: 'C4162B',
@@ -330,9 +330,9 @@
     const table = $('#SbDataGrid');
     if (!table) return;
 
-    let thead = '<thead><tr><th class="sb-corner" aria-label="Seleziona tutto" style="height:26px;min-height:26px"></th>';
+    let thead = '<thead><tr><th class="sb-corner" aria-label="Seleziona tutto" style="height:28px;min-height:28px"></th>';
     for (let c = 0; c < COLS; c += 1) {
-      thead += '<th class="sb-col-head" data-c="' + c + '" style="width:' + state.colWidths[c] + 'px;min-width:' + state.colWidths[c] + 'px;height:26px;min-height:26px">'
+      thead += '<th class="sb-col-head" data-c="' + c + '" style="width:' + state.colWidths[c] + 'px;min-width:' + state.colWidths[c] + 'px;height:28px;min-height:28px">'
         + '<span>' + colLabel(c) + '</span>'
         + '<button type="button" class="sb-col-resizer" data-c="' + c + '" tabindex="-1" aria-label="Ridimensiona colonna ' + colLabel(c) + '"></button>'
         + '</th>';
@@ -343,7 +343,7 @@
     for (let r = 0; r < ROWS; r += 1) {
       const rowH = state.rowHeights[r];
       tbody += '<tr>'
-        + '<th class="sb-row-head" data-r="' + r + '" style="height:' + rowH + 'px;min-height:' + rowH + 'px">'
+        + '<th class="sb-row-head" data-r="' + r + '" style="height:20px;min-height:20px">'
         + '<span>' + (r + 1) + '</span>'
         + '<button type="button" class="sb-row-resizer" data-r="' + r + '" tabindex="-1" aria-label="Ridimensiona riga ' + (r + 1) + '"></button>'
         + '</th>';
@@ -351,7 +351,7 @@
         const value = renderedCellValue(r, c);
         const label = colLabel(c) + String(r + 1);
         const colW = state.colWidths[c];
-        tbody += '<td class="sb-cell" data-r="' + r + '" data-c="' + c + '" style="width:' + colW + 'px;min-width:' + colW + 'px;height:' + rowH + 'px;min-height:' + rowH + 'px">'
+        tbody += '<td class="sb-cell" data-r="' + r + '" data-c="' + c + '" style="width:' + colW + 'px;min-width:' + colW + 'px;height:20px;min-height:20px">'
           + '<textarea data-cell="1" data-r="' + r + '" data-c="' + c + '" aria-label="Cella ' + label + '" spellcheck="false">' + esc(value) + '</textarea>'
           + '<button type="button" class="sb-fill-handle" tabindex="-1" aria-label="Trascina per riempire"></button>'
           + '</td>';

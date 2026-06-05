@@ -397,8 +397,7 @@
     return String(text || '').length * (px * 0.55);
   }
   function truncateSvgText(text, maxWidth, fontPx){
-    const raw = String(text == null ? '' : text).replace(/
-/g, ' ');
+    const raw = String(text == null ? '' : text).split('\n').join(' ');
     if (measureTextApprox(raw, fontPx) <= maxWidth) return raw;
     let out = raw;
     while (out.length > 1 && measureTextApprox(out + '…', fontPx) > maxWidth) out = out.slice(0, -1);
@@ -412,20 +411,20 @@
     const rowCount = safeRows.length + 1;
     const cellW = (W - padX * 2) / cols;
     const cellH = Math.min(30, (H - padY * 2) / Math.max(rowCount, 2));
-    let out = '<rect x="0" y="0" width="' + W + '" height="' + H + '" rx="14" fill="#FFFFFF" opacity="0.90" />';
+    let out = '<rect x="0" y="0" width="' + W + '" height="' + H + '" rx="14" fill="#FFFFFF" opacity="0.94" />';
     for (let c = 0; c < cols; c += 1) {
       const x = padX + c * cellW;
       out += '<rect x="' + x.toFixed(1) + '" y="' + padY + '" width="' + cellW.toFixed(1) + '" height="' + cellH.toFixed(1) + '" fill="#4C1428" stroke="rgba(26,23,27,.08)" />';
-      const t = truncateSvgText(safeHeaders[c] || '', cellW - 14, 11);
-      out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (padY + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="11" font-weight="700" fill="#FFFFFF">' + esc(t) + '</text>';
+      const txt = truncateSvgText(safeHeaders[c] || '', cellW - 14, 11);
+      out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (padY + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="11" font-weight="700" fill="#FFFFFF">' + esc(txt) + '</text>';
     }
     safeRows.forEach((row, rIdx) => {
       const y = padY + cellH * (rIdx + 1);
       for (let c = 0; c < cols; c += 1) {
         const x = padX + c * cellW;
         out += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + cellW.toFixed(1) + '" height="' + cellH.toFixed(1) + '" fill="#FFFFFF" stroke="rgba(26,23,27,.08)" />';
-        const t = truncateSvgText((row[c] || ''), cellW - 14, 10);
-        out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (y + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="10" fill="#1A171B">' + esc(t) + '</text>';
+        const txt = truncateSvgText(row[c] || '', cellW - 14, 10);
+        out += '<text x="' + (x + 8).toFixed(1) + '" y="' + (y + cellH/2 + 4).toFixed(1) + '" font-family="Manrope" font-size="10" fill="#1A171B">' + esc(txt) + '</text>';
       }
     });
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '">' + out + '</svg>';
@@ -508,7 +507,7 @@
   function graphSeriesData(parsed){
     return [{ name: 'Serie 1', labels: parsed.labels, values: parsed.values }];
   }
-  async function exportPpt(){
+    async function exportPpt(){
     if (!window.PptxGenJS) throw new Error('Libreria PPT non caricata.');
 
     const title = ($('#SbTitle')?.value || '').trim() || 'Inserire qui il titolo';

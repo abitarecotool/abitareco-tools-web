@@ -13,8 +13,8 @@
 .slidebuilder-card .sb-data-grid th,.slidebuilder-card .sb-data-grid td{border:1px solid #D4D7DD;padding:0;background:#fff}
 .slidebuilder-card .sb-data-grid .sb-corner,.slidebuilder-card .sb-data-grid .sb-row-head,.slidebuilder-card .sb-data-grid .sb-col-head{background:#66707F;color:#fff;border-color:#7D8694;position:relative}
 .slidebuilder-card .sb-data-grid .sb-corner{width:30px;min-width:30px;position:sticky;left:0;top:0;z-index:6;cursor:pointer}
-.slidebuilder-card .sb-data-grid .sb-row-head{width:30px;min-width:30px;text-align:center;font:700 11px/1 var(--font);position:sticky;left:0;z-index:5;cursor:pointer}
-.slidebuilder-card .sb-data-grid .sb-col-head{position:sticky;top:0;z-index:4;font:700 11px/1 var(--font);cursor:pointer}
+.slidebuilder-card .sb-data-grid .sb-row-head{width:30px;min-width:30px;text-align:center;font:700 10.5px/1 var(--font);position:sticky;left:0;z-index:5;cursor:pointer}
+.slidebuilder-card .sb-data-grid .sb-col-head{position:sticky;top:0;z-index:4;font:700 10.5px/1 var(--font);cursor:pointer}
 .slidebuilder-card .sb-data-grid .sb-row-head span,.slidebuilder-card .sb-data-grid .sb-col-head span{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
 .slidebuilder-card .sb-data-grid .sb-row-head.is-selected,.slidebuilder-card .sb-data-grid .sb-col-head.is-selected,.slidebuilder-card .sb-data-grid .sb-corner.is-selected{background:#7A8391}
 .slidebuilder-card .sb-cell{position:relative;background:#fff}
@@ -39,7 +39,7 @@ body.sb-is-resizing-row,body.sb-is-resizing-row *{cursor:row-resize!important}
 .slidebuilder-card .sb-toolbar-block{display:flex;flex-direction:column;gap:16px;margin-top:18px}
 .slidebuilder-card .sb-switch-label{display:block;margin-bottom:8px;font-weight:700;font-size:13px;color:var(--gray-700)}
 .slidebuilder-card .sb-switch-group .platform-switch-btn{font-weight:700}
-.slidebuilder-card .sb-preview-box{margin-top:18px;border:1px solid var(--gray-200);border-radius:18px;background:var(--white);box-shadow:var(--shadow-sm);padding:14px}
+.slidebuilder-card .sb-preview-box{margin-top:18px;border:1px solid var(--gray-200);border-radius:18px;background:var(--white);box-shadow:var(--shadow-sm);padding:16px}
 .slidebuilder-card .sb-preview-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
 .slidebuilder-card .sb-preview-top h4{margin:0;font-size:18px;line-height:1.1}
 .slidebuilder-card .sb-preview-logo-img{display:none}

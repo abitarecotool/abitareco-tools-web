@@ -286,7 +286,6 @@
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
       try { applyBrand(user); } catch {}
-      try { window.__loadDeferredAppAssets && window.__loadDeferredAppAssets(); } catch {}
       try { window.selectMode && window.selectMode('welcome'); } catch {}
     };
 
@@ -347,7 +346,6 @@
       try { window.applyGuards && window.applyGuards(user); } catch {}
       try { bindUserMenu(user); } catch {}
       try { applyBrand(user); } catch {}
-      try { window.__loadDeferredAppAssets && window.__loadDeferredAppAssets(); } catch {}
       try { window.selectMode && window.selectMode('welcome'); } catch {}
     }, 2000);
   }

@@ -761,7 +761,13 @@
  </div>
  </main>
  </div>
- <!-- ═════════ STARTUP-OPTIMIZED SCRIPTS ═════════ -->
+ <!-- ═════════ LIBRARIES ═════════ -->
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
+ <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+ <script src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+ <!-- App scripts (split) -->
  <script src="./js/core/permissions.js?v=20260518_fixprod2"></script>
  <script src="./js/core/auth.js?v=20260522_login7"></script>
  <script src="./js/core/guard.js?v=20260518_fixprod2"></script>
@@ -769,87 +775,26 @@
  <script src="./js/core/shell.js?v=20260518_fixprod2"></script>
  <script src="./js/core/sessionfix.js?v=20260522_sfix1"></script>
  <script src="./js/modules/welcome.js?v=20260518_fixprod2"></script>
- <script src="./js/app.js?v=20260604_sbfix13"></script>
- <script>
- (function(){
-   'use strict';
-   const DEFERRED_ASSETS = [
-     'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-     'https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js',
-     'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js',
-     'https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js',
-     'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-     './js/core/io.js?v=20260525_mobilepick2',
-     './js/core/shared.js',
-     './js/modules/images.js',
-     './js/modules/digitaltool.js',
-     './js/modules/pdf2jpg.js?v=20260525_oomfix1',
-     './js/modules/platform.js?v=20260526_platform7',
-     './js/modules/rename.js',
-     './js/modules/video.js?v=20260526_mobilepick3',
-     './js/modules/watermark.js?v=20260525_mobilepick2',
-     './js/modules/bv.js',
-     './js/modules/bv_preview.js',
-     './js/modules/bv_3d.js',
-     './js/modules/qr.js?v=20260513qr1',
-     './js/modules/iubenda.js',
-     './js/modules/ppt.js',
-     './js/modules/fattura.js?v=20260520v5',
-     'https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js',
-     './js/modules/slidebuilder.js?v=20260604_sbfix13',
-     './js/core/actionbar.js?v=20260520v5'
-   ];
-
-   let started = false;
-   let done = false;
-   let promise = null;
-
-   function loadOne(src){
-     return new Promise((resolve, reject) => {
-       const existing = document.querySelector('script[src="' + src.replace(/"/g, '\"') + '"]');
-       if (existing) {
-         if (existing.dataset.loaded === '1') return resolve();
-         existing.addEventListener('load', () => resolve(), { once: true });
-         existing.addEventListener('error', () => reject(new Error('Load error: ' + src)), { once: true });
-         return;
-       }
-       const s = document.createElement('script');
-       s.src = src;
-       s.async = false;
-       s.defer = false;
-       s.onload = () => { s.dataset.loaded = '1'; resolve(); };
-       s.onerror = () => reject(new Error('Load error: ' + src));
-       document.body.appendChild(s);
-     });
-   }
-
-   window.__loadDeferredAppAssets = function(){
-     if (done) return Promise.resolve(true);
-     if (promise) return promise;
-     started = true;
-     promise = (async () => {
-       for (const src of DEFERRED_ASSETS) {
-         await loadOne(src);
-       }
-       done = true;
-       document.documentElement.setAttribute('data-app-ready', '1');
-       return true;
-     })().catch((err) => {
-       console.warn('Deferred assets load error:', err);
-       throw err;
-     });
-     return promise;
-   };
-
-   // Se l'utente è già autenticato, non aspettiamo il click: carichiamo subito.
-   window.addEventListener('load', function(){
-     try {
-       const raw = sessionStorage.getItem('abitare_tools_auth_user') || localStorage.getItem('abitare_tools_auth_user');
-       if (raw) window.__loadDeferredAppAssets();
-     } catch {}
-   }, { once: true });
- })();
- </script>
+ <script src="./js/core/io.js?v=20260525_mobilepick2"></script>
+ <script src="./js/core/shared.js"></script>
+ <script src="./js/modules/images.js"></script>
+ <script src="./js/modules/digitaltool.js"></script>
+ <script src="./js/modules/pdf2jpg.js?v=20260525_oomfix1"></script>
+ <script src="./js/modules/platform.js?v=20260526_platform7"></script>
+ <script src="./js/modules/rename.js"></script>
+ <script src="./js/modules/video.js?v=20260526_mobilepick3"></script>
+ <script src="./js/modules/watermark.js?v=20260525_mobilepick2"></script>
+ <script src="./js/modules/bv.js"></script>
+ <script src="./js/modules/bv_preview.js"></script>
+ <script src="./js/modules/bv_3d.js"></script>
+ <script src="./js/modules/qr.js?v=20260513qr1"></script>
+ <script src="./js/modules/iubenda.js"></script>
+ <script src="./js/modules/ppt.js"></script>
+ <script src="./js/modules/fattura.js?v=20260520v5"></script>
+ <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js"></script>
+ <script src="./js/modules/slidebuilder.js?v=20260604_sbfix13"></script>
+ <script src="./js/core/actionbar.js?v=20260520v5"></script>
+<script src="./js/app.js?v=20260604_sbfix13"></script>
 <!-- WELCOME · HELP DRAWER (solo UI, no AI) -->
 <div id="WelcomeHelpOverlay" class="welcome-help-overlay hidden" aria-hidden="true"></div>
 <aside id="WelcomeHelpDrawer" class="welcome-help-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="WelcomeHelpTitle" aria-hidden="true">

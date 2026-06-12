@@ -70,6 +70,7 @@ if (DropArea) {
   BtnClearPath?.addEventListener('click', (e)=>{
     e.stopPropagation();
     picked = [];
+    window.picked = picked;
     const mode = String(window.currentMode || '').toLowerCase();
     TxtFolderPath.textContent = isGalleryModeForMainUpload()
       ? 'Tocca per selezionare più immagini…'

@@ -15,6 +15,7 @@
     images: 'Ottimizza per sito e share, naming e export.',
     digitaltool: 'Immagini pronte per utilizzo digitale.',
     pdf2jpg: 'Converti PDF in immagini in pochi click.',
+    pdfcompress: 'Comprimi PDF per email e condivisione.',
     rename: 'Rinomina file e cartelle in batch.',
     video: 'Crea video da cartelle immagini.',
     watermark: 'Applica watermark in modo rapido.',

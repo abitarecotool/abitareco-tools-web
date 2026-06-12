@@ -164,7 +164,7 @@
     if (maxBytes && file.size <= maxBytes) {
       return { blob: file, changed: false, hitTarget: true };
     }
-    const MAX_PAGE_PIXELS = 12_000_000;
+    const MAX_PAGE_PIXELS = 12000000;
     const loadingTask = window.pdfjsLib.getDocument({
       data: await file.arrayBuffer(),
       useWorkerFetch: true,
@@ -174,7 +174,6 @@
     });
     const pdf = await loadingTask.promise;
     let smallestBlob = null;
-    let hitTarget = false;
     try {
       const attempts = maxBytes ? buildAttemptProfiles(preset) : [buildAttemptProfiles(preset)[0]];
       for (let attemptIndex = 0; attemptIndex < attempts.length; attemptIndex++){
@@ -221,11 +220,7 @@
         const bytes = await outPdf.save({ useObjectStreams: true, addDefaultPage: false });
         const blob = new Blob([bytes], { type: 'application/pdf' });
         if (!smallestBlob || blob.size < smallestBlob.size) smallestBlob = blob;
-        if (!maxBytes || blob.size <= maxBytes) {
-          smallestBlob = blob;
-          hitTarget = !maxBytes || blob.size <= maxBytes;
-          break;
-        }
+        if (!maxBytes || blob.size <= maxBytes) break;
       }
     } finally {
       try { pdf.cleanup && pdf.cleanup(); } catch(_) {}
@@ -307,8 +302,6 @@
 
     const zip = new JSZip();
     let processed = 0;
-    let optimized = 0;
-    let alreadyOk = 0;
     let missedTarget = 0;
 
     try {
@@ -317,8 +310,6 @@
         const result = await buildCompressedPdfBlob(rec.file, preset, maxBytes, (txt) => {
           if (label) label.textContent = txt;
         });
-        if (result.changed) optimized += 1;
-        if (!result.changed && result.hitTarget) alreadyOk += 1;
         if (maxBytes && !result.hitTarget) missedTarget += 1;
         zip.file(path, result.blob || rec.file, { binary: true });
         processed += 1;
@@ -342,7 +333,6 @@
 
   PdfCompressQuality?.addEventListener('input', updatePdfPresetUI);
   PdfCompressQuality?.addEventListener('change', updatePdfPresetUI);
-  PdfCompressMaxMb?.addEventListener('input', refreshPdfCompressUI);
   document.getElementById('BtnClearPath')?.addEventListener('click', () => setTimeout(refreshPdfCompressUI, 0));
 
   try { updatePdfPresetUI(); } catch {}

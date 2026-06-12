@@ -1,3 +1,6 @@
+var picked = Array.isArray(window.picked) ? window.picked : [];
+window.picked = picked;
+
 /* ===== Core shared utilities (extracted) ===== */
 async function readDroppedDirectory(dt){
   const items = Array.from(dt.items || []);

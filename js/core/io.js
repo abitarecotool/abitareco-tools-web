@@ -16,9 +16,13 @@ function isFilePickerModeForMainUpload(){
 function updateMainUploadLabel(){
   const mode = String(window.currentMode || '').toLowerCase();
   if (picked.length) {
-    TxtFolderPath.textContent = mode === 'pdfcompress' ? `Selezionati ${picked.length} PDF…` : `Selezionati ${picked.length} file…`;
+    TxtFolderPath.textContent = mode === 'pdfcompress'
+      ? `Selezionati ${picked.length} PDF…`
+      : `Selezionati ${picked.length} file…`;
   } else {
-    TxtFolderPath.textContent = mode === 'pdfcompress' ? 'Trascina qui uno o più PDF o clicca per sfogliare…' : 'Nessun file supportato.';
+    TxtFolderPath.textContent = mode === 'pdfcompress'
+      ? 'Trascina qui uno o più PDF o clicca per sfogliare…'
+      : 'Nessun file supportato.';
   }
   BtnClearPath.classList.toggle('hidden', picked.length === 0);
   try { handleCropUI(); } catch {}
@@ -68,7 +72,9 @@ if (DropArea) {
     picked = [];
     window.picked = picked;
     const mode = String(window.currentMode || '').toLowerCase();
-    TxtFolderPath.textContent = isGalleryModeForMainUpload() ? 'Tocca per selezionare più immagini…' : (mode === 'pdfcompress' ? 'Trascina qui uno o più PDF o clicca per sfogliare…' : 'Trascina qui la cartella…');
+    TxtFolderPath.textContent = isGalleryModeForMainUpload()
+      ? 'Tocca per selezionare più immagini…'
+      : (mode === 'pdfcompress' ? 'Trascina qui uno o più PDF o clicca per sfogliare…' : 'Trascina qui la cartella…');
     BtnClearPath.classList.add('hidden');
     hideEl(ImageCropCard);
     try { window.refreshPdfCompressUI && window.refreshPdfCompressUI(); } catch {}

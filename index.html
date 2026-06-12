@@ -18,7 +18,7 @@
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
  <link rel="stylesheet" href="./css/styles.css" />
- <link rel="stylesheet" href="./css/modules/images.css" />
+ <link rel="stylesheet" href="./css/modules/images.css?v=20260612_pdfcompress5" />
  <link rel="stylesheet" href="./css/modules/platform.css?v=20260526_platform7" />
  <link rel="stylesheet" href="./css/modules/cropzoom.css" />
  <link rel="stylesheet" href="./css/modules/bv.css" />
@@ -150,7 +150,10 @@
  <li data-mode="pdf2jpg" data-icon="./assets/icons/icon-pdf.png" data-icon-active="./assets/icons/icon-pdf-selected.png">
  <span class="mi"><img alt="" /></span><span class="txt">PDF → JPG</span>
  </li>
- <li data-mode="rename" data-icon="./assets/icons/icon-rename.png" data-icon-active="./assets/icons/icon-rename-selected.png">
+  <li data-mode="pdfcompress" data-icon="./assets/icons/icon-pdfcompress.png" data-icon-active="./assets/icons/icon-pdfcompress-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">Compressione PDF</span>
+ </li>
+<li data-mode="rename" data-icon="./assets/icons/icon-rename.png" data-icon-active="./assets/icons/icon-rename-selected.png">
  <span class="mi"><img alt="" /></span><span class="txt">Rename</span>
  </li>
  <li data-mode="video" data-icon="./assets/icons/icon-video.png" data-icon-active="./assets/icons/icon-video-selected.png">
@@ -273,6 +276,38 @@
  </div>
 </section>
 
+<section id="PdfCompressCard" class="card hidden image-compress-card">
+ <div class="image-compress-head">
+  <div>
+   <h3>Compressione PDF</h3>
+   <p class="muted image-compress-copy">Riduci il peso dei PDF mantenendo nomi file e struttura cartelle originali. Ideale per invio email, upload su portali e condivisioni rapide.</p>
+  </div>
+  <div class="image-compress-summary">
+   <span class="muted">Totale PDF</span>
+   <strong id="PdfCompressCount">0</strong>
+  </div>
+ </div>
+ <div class="image-compress-slider-box">
+  <div class="image-compress-slider-head">
+   <label for="PdfCompressQuality">Qualità / compressione</label>
+   <span id="PdfCompressQualityValue" class="image-compress-target-badge">Bilanciata</span>
+  </div>
+  <input type="range" id="PdfCompressQuality" min="0" max="2" step="1" value="1" />
+  <div class="image-compress-scale" aria-hidden="true">
+   <span>Alta qualità</span>
+   <span>Bilanciata</span>
+   <span>Forte compressione</span>
+  </div>
+  <p id="PdfCompressQualityNote" class="muted image-compress-note">Preset consigliato: bilanciata. Riduce il peso mantenendo una resa adatta alla maggior parte degli invii email.</p>
+ </div>
+ <div class="row" style="margin-top:16px">
+  <div>
+   <label for="PdfCompressMaxMb">Peso massimo per file (MB) · opzionale</label>
+   <input id="PdfCompressMaxMb" class="input" type="number" min="1" step="0.5" placeholder="es. 5" />
+   <p class="muted" style="margin-top:-10px; line-height:1.55">Se lo compili, il tool proverà a mantenere ogni PDF sotto il limite indicato senza spingere oltre il necessario.</p>
+  </div>
+ </div>
+</section>
 <section id="ImageCompressCard" class="card hidden image-compress-card">
  <div class="image-compress-head">
   <div>
@@ -779,19 +814,19 @@
  <script src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
  <!-- App scripts (split) -->
- <script src="./js/core/permissions.js?v=20260612_pdfcompress3"></script>
+ <script src="./js/core/permissions.js?v=20260612_pdfcompress5"></script>
  <script src="./js/core/auth.js?v=20260522_login7"></script>
  <script src="./js/core/guard.js?v=20260518_fixprod2"></script>
  <script src="./js/core/helpers.js"></script>
- <script src="./js/core/shell.js?v=20260612_pdfcompress3"></script>
+ <script src="./js/core/shell.js?v=20260612_pdfcompress5"></script>
  <script src="./js/core/sessionfix.js?v=20260522_sfix1"></script>
- <script src="./js/modules/welcome.js?v=20260612_pdfcompress3"></script>
- <script src="./js/core/io.js?v=20260612_pdfcompress3"></script>
- <script src="./js/core/shared.js?v=20260612_pdfcompress3"></script>
- <script src="./js/modules/images.js?v=20260612_pdfcompress3"></script>
+ <script src="./js/modules/welcome.js?v=20260612_pdfcompress5"></script>
+ <script src="./js/core/io.js?v=20260612_pdfcompress5"></script>
+ <script src="./js/core/shared.js?v=20260612_pdfcompress5"></script>
+ <script src="./js/modules/images.js?v=20260612_pdfcompress5"></script>
  <script src="./js/modules/digitaltool.js"></script>
  <script src="./js/modules/pdf2jpg.js?v=20260525_oomfix1"></script>
-  <script src="./js/modules/pdfcompress.js?v=20260612_pdfcompress3"></script>
+  <script src="./js/modules/pdfcompress.js?v=20260612_pdfcompress5"></script>
  <script src="./js/modules/platform.js?v=20260526_platform7"></script>
  <script src="./js/modules/rename.js"></script>
  <script src="./js/modules/video.js?v=20260526_mobilepick3"></script>
@@ -805,8 +840,8 @@
  <script src="./js/modules/fattura.js?v=20260520v5"></script>
  <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js"></script>
  <script src="./js/modules/slidebuilder.js?v=20260604_sbfix13"></script>
- <script src="./js/core/actionbar.js?v=20260612_pdfcompress3"></script>
-<script src="./js/app.js?v=20260612_pdfcompress3"></script>
+ <script src="./js/core/actionbar.js?v=20260612_pdfcompress5"></script>
+<script src="./js/app.js?v=20260612_pdfcompress5"></script>
 <!-- WELCOME · HELP DRAWER (solo UI, no AI) -->
 <div id="WelcomeHelpOverlay" class="welcome-help-overlay hidden" aria-hidden="true"></div>
 <aside id="WelcomeHelpDrawer" class="welcome-help-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="WelcomeHelpTitle" aria-hidden="true">

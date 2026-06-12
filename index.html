@@ -69,54 +69,14 @@
  </style>
 <style id="PdfCompressInlineStyles">
   #PdfCompressQuality{
-    -webkit-appearance:none;
-    appearance:none;
-    width:100%;
-    height:8px;
-    border:0 !important;
-    padding:0 !important;
-    margin-bottom:0;
-    border-radius:999px;
-    outline:none;
-    box-shadow:none !important;
+    -webkit-appearance:none; appearance:none; width:100%; height:8px; border:0 !important; padding:0 !important; margin-bottom:0; border-radius:999px; outline:none; box-shadow:none !important;
     background:linear-gradient(to right, var(--red) 0 var(--fill, 50%), var(--gray-200) var(--fill, 50%) 100%) !important;
   }
-  #PdfCompressQuality::-webkit-slider-runnable-track{
-    -webkit-appearance:none;
-    height:8px;
-    border-radius:999px;
-    background:linear-gradient(to right, var(--red) 0 var(--fill, 50%), var(--gray-200) var(--fill, 50%) 100%);
-  }
-  #PdfCompressQuality::-moz-range-track{
-    height:8px;
-    border-radius:999px;
-    background:var(--gray-200);
-  }
-  #PdfCompressQuality::-moz-range-progress{
-    height:8px;
-    border-radius:999px;
-    background:var(--red);
-  }
-  #PdfCompressQuality::-webkit-slider-thumb{
-    -webkit-appearance:none;
-    width:18px;
-    height:18px;
-    margin-top:-5px;
-    border-radius:999px;
-    background:var(--red);
-    border:2px solid var(--white);
-    box-shadow:0 2px 10px rgba(0,0,0,.18);
-    cursor:pointer;
-  }
-  #PdfCompressQuality::-moz-range-thumb{
-    width:18px;
-    height:18px;
-    border-radius:999px;
-    background:var(--red);
-    border:2px solid var(--white);
-    box-shadow:0 2px 10px rgba(0,0,0,.18);
-    cursor:pointer;
-  }
+  #PdfCompressQuality::-webkit-slider-runnable-track{ -webkit-appearance:none; height:8px; border-radius:999px; background:linear-gradient(to right, var(--red) 0 var(--fill, 50%), var(--gray-200) var(--fill, 50%) 100%); }
+  #PdfCompressQuality::-moz-range-track{ height:8px; border-radius:999px; background:var(--gray-200); }
+  #PdfCompressQuality::-moz-range-progress{ height:8px; border-radius:999px; background:var(--red); }
+  #PdfCompressQuality::-webkit-slider-thumb{ -webkit-appearance:none; width:18px; height:18px; margin-top:-5px; border-radius:999px; background:var(--red); border:2px solid var(--white); box-shadow:0 2px 10px rgba(0,0,0,.18); cursor:pointer; }
+  #PdfCompressQuality::-moz-range-thumb{ width:18px; height:18px; border-radius:999px; background:var(--red); border:2px solid var(--white); box-shadow:0 2px 10px rgba(0,0,0,.18); cursor:pointer; }
 </style>
 </head>
  <body>
@@ -819,19 +779,19 @@
  <script src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
  <!-- App scripts (split) -->
- <script src="./js/core/permissions.js?v=20260612_pdfcompress2"></script>
+ <script src="./js/core/permissions.js?v=20260612_pdfcompress3"></script>
  <script src="./js/core/auth.js?v=20260522_login7"></script>
  <script src="./js/core/guard.js?v=20260518_fixprod2"></script>
  <script src="./js/core/helpers.js"></script>
- <script src="./js/core/shell.js?v=20260612_pdfcompress2"></script>
+ <script src="./js/core/shell.js?v=20260612_pdfcompress3"></script>
  <script src="./js/core/sessionfix.js?v=20260522_sfix1"></script>
- <script src="./js/modules/welcome.js?v=20260612_pdfcompress2"></script>
- <script src="./js/core/io.js?v=20260612_pdfcompress2"></script>
- <script src="./js/core/shared.js?v=20260612_pdfcompress2"></script>
- <script src="./js/modules/images.js?v=20260612_pdfcompress2"></script>
+ <script src="./js/modules/welcome.js?v=20260612_pdfcompress3"></script>
+ <script src="./js/core/io.js?v=20260612_pdfcompress3"></script>
+ <script src="./js/core/shared.js?v=20260612_pdfcompress3"></script>
+ <script src="./js/modules/images.js?v=20260612_pdfcompress3"></script>
  <script src="./js/modules/digitaltool.js"></script>
  <script src="./js/modules/pdf2jpg.js?v=20260525_oomfix1"></script>
-  <script src="./js/modules/pdfcompress.js?v=20260612_pdfcompress2"></script>
+  <script src="./js/modules/pdfcompress.js?v=20260612_pdfcompress3"></script>
  <script src="./js/modules/platform.js?v=20260526_platform7"></script>
  <script src="./js/modules/rename.js"></script>
  <script src="./js/modules/video.js?v=20260526_mobilepick3"></script>
@@ -845,8 +805,8 @@
  <script src="./js/modules/fattura.js?v=20260520v5"></script>
  <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js"></script>
  <script src="./js/modules/slidebuilder.js?v=20260604_sbfix13"></script>
- <script src="./js/core/actionbar.js?v=20260612_pdfcompress2"></script>
-<script src="./js/app.js?v=20260604_sbfix13"></script>
+ <script src="./js/core/actionbar.js?v=20260612_pdfcompress3"></script>
+<script src="./js/app.js?v=20260612_pdfcompress3"></script>
 <!-- WELCOME · HELP DRAWER (solo UI, no AI) -->
 <div id="WelcomeHelpOverlay" class="welcome-help-overlay hidden" aria-hidden="true"></div>
 <aside id="WelcomeHelpDrawer" class="welcome-help-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="WelcomeHelpTitle" aria-hidden="true">

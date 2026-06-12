@@ -7,7 +7,7 @@
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', async function(){
       try {
-        await navigator.serviceWorker.register('./sw.js?v=20260525_sw1', { scope: './' });
+        await navigator.serviceWorker.register('./sw.js?v=20260612_sw2', { scope: './' });
       } catch (err) {
         console.warn('Service Worker non registrato:', err);
       }

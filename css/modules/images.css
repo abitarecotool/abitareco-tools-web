@@ -1,14 +1,11 @@
 /* ============================================================
    IMMAGINI – Crop manuale (single image only) – FIX ratio + slider brand
    ============================================================ */
-
 .crop-frame{
   width: 520px;      /* regola SOLO questo per la grandezza preview */
   max-width: 100%;
   margin: 12px auto;
-
   aspect-ratio: var(--crop-ratio, 16 / 9);
-
   background: var(--gray-50);
   border: 1.5px dashed var(--gray-300);
   border-radius: 12px;
@@ -16,9 +13,7 @@
   position: relative;
   cursor: grab;
 }
-
 .crop-frame:active{ cursor: grabbing; }
-
 .crop-frame img{
   position: absolute;
   top: 50%;
@@ -27,7 +22,6 @@
   pointer-events: none;
   max-width: none;
 }
-
 /* Slider zoom – stile Abitare (rosso + track grigio) */
 #CropZoom,
 input#CropZoom.input{
@@ -79,8 +73,6 @@ input#CropZoom.input{
   box-shadow: 0 2px 10px rgba(0,0,0,.18);
   cursor: pointer;
 }
-
-
 /* ============================================================
    IMMAGINI – Mini sezioni + Compressione social
    ============================================================ */
@@ -131,7 +123,8 @@ input#CropZoom.input{
   font-size: 28px;
   line-height: 1;
 }
-.image-compress-slider-box{
+.image-compress-slider-box,
+.pdf-compress-simple-box{
   border:1px solid var(--gray-200);
   border-radius: 18px;
   background: var(--white);
@@ -232,6 +225,40 @@ input#CropZoom.input{
 .image-compress-pill{
   display:none !important;
 }
+.pdf-compress-badge-row{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:12px;
+  margin-bottom: 14px;
+}
+.pdf-compress-feature-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:grid;
+  gap:10px;
+}
+.pdf-compress-feature-list li{
+  position:relative;
+  padding-left:18px;
+  color: var(--navy);
+  line-height:1.6;
+}
+.pdf-compress-feature-list li::before{
+  content:'';
+  position:absolute;
+  left:0;
+  top:.7em;
+  width:7px;
+  height:7px;
+  border-radius:999px;
+  background: var(--red);
+  transform: translateY(-50%);
+}
+.pdf-compress-note strong{
+  color: var(--navy);
+}
 @media (max-width: 900px){
   .image-compress-head,
   .image-compress-slider-head{
@@ -254,8 +281,6 @@ input#CropZoom.input{
     gap: 8px;
   }
 }
-
-
 /* ============================================================
    COMPRESSIONE PDF – slider qualità
    ============================================================ */

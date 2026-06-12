@@ -18,7 +18,7 @@
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
  <link rel="stylesheet" href="./css/styles.css" />
- <link rel="stylesheet" href="./css/modules/images.css?v=20260612_pdfcompress5" />
+ <link rel="stylesheet" href="./css/modules/images.css?v=20260612_pdfcompress6" />
  <link rel="stylesheet" href="./css/modules/platform.css?v=20260526_platform7" />
  <link rel="stylesheet" href="./css/modules/cropzoom.css" />
  <link rel="stylesheet" href="./css/modules/bv.css" />
@@ -28,7 +28,6 @@
  <link rel="stylesheet" href="./css/modules/fattura.css?v=20260520v5" />
  <link rel="stylesheet" href="./css/modules/slidebuilder.css?v=20260604_sbfix13" />
  <link rel="stylesheet" href="./css/mobile.css?v=20260526_mob5" />
-
  <style id="ImageNamingPreviewStyles">
   .image-naming-preview{ margin-top:16px; }
   .image-naming-preview .platform-upload-header{ margin-bottom:12px; }
@@ -45,7 +44,6 @@
   .image-naming-preview .image-naming-chip{ font-size:12px; line-height:1.3; }
   .image-naming-preview .image-naming-more{ margin-top:-4px; }
   @media (max-width: 1120px){ .image-naming-preview .image-naming-grid{ grid-template-columns:1fr; } }
-
   .image-naming-preview .image-naming-summary strong{ color:var(--navy); }
   .image-naming-preview .image-naming-card{ background:var(--white); border-color:var(--gray-200); }
   .image-naming-preview .image-naming-card .platform-generated-name{ background:rgba(34,197,94,.08); color:#16a34a; border:1px solid rgba(34,197,94,.18); }
@@ -65,19 +63,7 @@
   }
   .image-naming-preview .image-naming-link:hover{ text-decoration:underline; }
   .image-naming-preview .image-naming-link.hidden{ display:none; }
-
  </style>
-<style id="PdfCompressInlineStyles">
-  #PdfCompressQuality{
-    -webkit-appearance:none; appearance:none; width:100%; height:8px; border:0 !important; padding:0 !important; margin-bottom:0; border-radius:999px; outline:none; box-shadow:none !important;
-    background:linear-gradient(to right, var(--red) 0 var(--fill, 50%), var(--gray-200) var(--fill, 50%) 100%) !important;
-  }
-  #PdfCompressQuality::-webkit-slider-runnable-track{ -webkit-appearance:none; height:8px; border-radius:999px; background:linear-gradient(to right, var(--red) 0 var(--fill, 50%), var(--gray-200) var(--fill, 50%) 100%); }
-  #PdfCompressQuality::-moz-range-track{ height:8px; border-radius:999px; background:var(--gray-200); }
-  #PdfCompressQuality::-moz-range-progress{ height:8px; border-radius:999px; background:var(--red); }
-  #PdfCompressQuality::-webkit-slider-thumb{ -webkit-appearance:none; width:18px; height:18px; margin-top:-5px; border-radius:999px; background:var(--red); border:2px solid var(--white); box-shadow:0 2px 10px rgba(0,0,0,.18); cursor:pointer; }
-  #PdfCompressQuality::-moz-range-thumb{ width:18px; height:18px; border-radius:999px; background:var(--red); border:2px solid var(--white); box-shadow:0 2px 10px rgba(0,0,0,.18); cursor:pointer; }
-</style>
 </head>
  <body>
  <!-- AUTH PRELOADER (2s) -->
@@ -140,7 +126,7 @@
  <ul id="SideMenu" class="menu">
  <li data-mode="images" data-icon="./assets/icons/icon-sito.png" data-icon-active="./assets/icons/icon-sito-selected.png">
  <span class="mi"><img alt="" /></span><span class="txt">Immagini</span>
- </li>   
+ </li>    
  <li data-mode="platform" data-icon="./assets/icons/icon-piattaforma.png" data-icon-active="./assets/icons/icon-piattaforma-selected.png">
  <span class="mi"><img alt="" /></span><span class="txt">Piattaforma</span>
  </li>
@@ -275,7 +261,6 @@
  </div>
  </div>
 </section>
-
 <section id="PdfCompressCard" class="card hidden image-compress-card">
  <div class="image-compress-head">
   <div>
@@ -287,25 +272,16 @@
    <strong id="PdfCompressCount">0</strong>
   </div>
  </div>
- <div class="image-compress-slider-box">
-  <div class="image-compress-slider-head">
-   <label for="PdfCompressQuality">Qualità / compressione</label>
-   <span id="PdfCompressQualityValue" class="image-compress-target-badge">Bilanciata</span>
+ <div class="pdf-compress-simple-box">
+  <div class="pdf-compress-badge-row">
+   <span class="image-compress-target-badge">Compressione intelligente</span>
   </div>
-  <input type="range" id="PdfCompressQuality" min="0" max="2" step="1" value="1" />
-  <div class="image-compress-scale" aria-hidden="true">
-   <span>Alta qualità</span>
-   <span>Bilanciata</span>
-   <span>Forte compressione</span>
-  </div>
-  <p id="PdfCompressQualityNote" class="muted image-compress-note">Preset consigliato: bilanciata. Riduce il peso mantenendo una resa adatta alla maggior parte degli invii email.</p>
- </div>
- <div class="row" style="margin-top:16px">
-  <div>
-   <label for="PdfCompressMaxMb">Peso massimo per file (MB) · opzionale</label>
-   <input id="PdfCompressMaxMb" class="input" type="number" min="1" step="0.5" placeholder="es. 5" />
-   <p class="muted" style="margin-top:-10px; line-height:1.55">Se lo compili, il tool proverà a mantenere ogni PDF sotto il limite indicato senza spingere oltre il necessario.</p>
-  </div>
+  <ul class="pdf-compress-feature-list">
+   <li>Preserva testo, vettoriali e impaginazione quando possibile, evitando la resa sgranata tipica della rasterizzazione forzata.</li>
+   <li>Per PDF composti soprattutto da scansioni o immagini, applica una compressione più delicata e automatica per contenere il peso senza rovinare visibilmente la lettura.</li>
+   <li>Mantiene nomi file e struttura cartelle originali nello ZIP finale, come già avviene ora.</li>
+  </ul>
+  <p id="PdfCompressQualityNote" class="muted image-compress-note pdf-compress-note">Carica uno o più PDF, controlla il totale rilevato e clicca <strong>Comprimi PDF</strong>. Il tool sceglie da solo la strategia migliore per ogni file.</p>
  </div>
 </section>
 <section id="ImageCompressCard" class="card hidden image-compress-card">
@@ -356,7 +332,7 @@
  </div>
 </section>
  <!-- DIGITAL TOOL -->
- <!-- RENAME -->   
+ <!-- RENAME -->    
 <section id="PlatformCard" class="card hidden">
  <div class="platform-head">
   <div>
@@ -695,13 +671,11 @@
 <section id="SlideBuilderCard" class="card hidden slidebuilder-card">
   <h3>Slide Builder</h3>
   <p class="form-section-sub">Genera una slide PPT brandizzata a partire da un foglio dati compilabile o incollato da Excel.</p>
-
   <div class="form-group">
     <label for="SbTitle">Titolo</label>
     <input id="SbTitle" class="input" type="text" placeholder="Titolo slide" />
     <p class="sb-title-note">Per il titolo puoi usare <code>&lt;i&gt;testo evidenziato&lt;/i&gt;</code>: in export PPT userò il font <strong>PP Pangaia Italic</strong> per il testo evidenziato e <strong>PP Pangaia Semibold</strong> per il resto del titolo.</p>
   </div>
-
   <div class="row sb-meta-row">
     <div class="form-group">
       <label for="SbDescription">Descrizione breve</label>
@@ -712,7 +686,6 @@
       <input id="SbSource" class="input" type="text" placeholder="Es. Immobiliare.it / CRM interno / Osservatorio ..." />
     </div>
   </div>
-
   <div class="form-group">
     <label>Dati</label>
     <div class="sb-sheet-shell">
@@ -738,7 +711,6 @@
     </div>
     <p id="SbDataHint" class="muted sb-data-hint"></p>
   </div>
-
   <div class="sb-toolbar-block">
     <div>
       <label class="sb-switch-label">Tipo contenuto</label>
@@ -748,7 +720,6 @@
         <button type="button" class="platform-switch-btn" data-type="table">Tabella</button>
       </div>
     </div>
-
     <div id="SbChartTypeWrap">
       <label class="sb-switch-label">Tipo grafico</label>
       <div class="platform-switch sb-switch-group" id="SbChartSwitch" role="tablist" aria-label="Tipo grafico">
@@ -759,7 +730,6 @@
       </div>
     </div>
   </div>
-
   <div class="sb-preview-box">
     <div class="sb-preview-top">
       <h4>Preview dati</h4>
@@ -826,7 +796,7 @@
  <script src="./js/modules/images.js?v=20260612_pdfcompress5"></script>
  <script src="./js/modules/digitaltool.js"></script>
  <script src="./js/modules/pdf2jpg.js?v=20260525_oomfix1"></script>
-  <script src="./js/modules/pdfcompress.js?v=20260612_pdfcompress5"></script>
+  <script src="./js/modules/pdfcompress.js?v=20260612_pdfcompress6"></script>
  <script src="./js/modules/platform.js?v=20260526_platform7"></script>
  <script src="./js/modules/rename.js"></script>
  <script src="./js/modules/video.js?v=20260526_mobilepick3"></script>
@@ -840,8 +810,8 @@
  <script src="./js/modules/fattura.js?v=20260520v5"></script>
  <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js"></script>
  <script src="./js/modules/slidebuilder.js?v=20260604_sbfix13"></script>
- <script src="./js/core/actionbar.js?v=20260612_pdfcompress5"></script>
-<script src="./js/app.js?v=20260612_pdfcompress5"></script>
+ <script src="./js/core/actionbar.js?v=20260612_pdfcompress6"></script>
+<script src="./js/app.js?v=20260612_pdfcompress6"></script>
 <!-- WELCOME · HELP DRAWER (solo UI, no AI) -->
 <div id="WelcomeHelpOverlay" class="welcome-help-overlay hidden" aria-hidden="true"></div>
 <aside id="WelcomeHelpDrawer" class="welcome-help-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="WelcomeHelpTitle" aria-hidden="true">

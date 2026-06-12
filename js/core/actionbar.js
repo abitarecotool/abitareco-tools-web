@@ -10,6 +10,7 @@ BtnProcedi?.addEventListener('click', async () => {
     if (mode === 'digitaltool')  { await exportDigitalTool(); ok = true; return; }
     if (mode === 'platform')     { await exportPlatform(); ok = true; return; }
     if (mode === 'pdf2jpg')      { await exportPdfToJpg(); ok = true; return; }
+    if (mode === 'pdfcompress')   { await exportPdfCompress(); ok = true; return; }
     if (mode === 'rename')       { await exportRename(); ok = true; return; }
     if (mode === 'video')        { await exportVideoSlideshow(); ok = true; return; }
     if (mode === 'watermark')    { await exportWatermarkPortali(); ok = true; return; }

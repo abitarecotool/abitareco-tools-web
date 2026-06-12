@@ -9,12 +9,24 @@ function isGalleryModeForMainUpload(){
   const mode = String(window.currentMode || '').toLowerCase();
   return isMobileUploadUI() && ['images','digitaltool'].includes(mode);
 }
+function isFilePickerModeForMainUpload(){
+  const mode = String(window.currentMode || '').toLowerCase();
+  return ['pdfcompress'].includes(mode);
+}
 function updateMainUploadLabel(){
-  TxtFolderPath.textContent = picked.length
-    ? `Selezionati ${picked.length} file…`
-    : 'Nessun file supportato.';
+  const mode = String(window.currentMode || '').toLowerCase();
+  if (picked.length) {
+    TxtFolderPath.textContent = mode === 'pdfcompress'
+      ? `Selezionati ${picked.length} PDF…`
+      : `Selezionati ${picked.length} file…`;
+  } else {
+    TxtFolderPath.textContent = mode === 'pdfcompress'
+      ? 'Trascina qui uno o più PDF o clicca per sfogliare…'
+      : 'Nessun file supportato.';
+  }
   BtnClearPath.classList.toggle('hidden', picked.length === 0);
   try { handleCropUI(); } catch {}
+  try { window.refreshPdfCompressUI && window.refreshPdfCompressUI(); } catch {}
 }
 
 if (DropArea) {
@@ -37,6 +49,8 @@ if (DropArea) {
     input.multiple = true;
     if (isGalleryModeForMainUpload()) {
       input.accept = 'image/*';
+    } else if (isFilePickerModeForMainUpload()) {
+      input.accept = '.pdf,application/pdf';
     } else {
       input.webkitdirectory = true;
       input.directory = true;
@@ -56,9 +70,13 @@ if (DropArea) {
   BtnClearPath?.addEventListener('click', (e)=>{
     e.stopPropagation();
     picked = [];
-    TxtFolderPath.textContent = isGalleryModeForMainUpload() ? 'Tocca per selezionare più immagini…' : 'Trascina qui la cartella…';
+    const mode = String(window.currentMode || '').toLowerCase();
+    TxtFolderPath.textContent = isGalleryModeForMainUpload()
+      ? 'Tocca per selezionare più immagini…'
+      : (mode === 'pdfcompress' ? 'Trascina qui uno o più PDF o clicca per sfogliare…' : 'Trascina qui la cartella…');
     BtnClearPath.classList.add('hidden');
     hideEl(ImageCropCard);
+    try { window.refreshPdfCompressUI && window.refreshPdfCompressUI(); } catch {}
   });
 }
 

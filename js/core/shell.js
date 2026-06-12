@@ -18,6 +18,7 @@
     platform: ['PlatformCard'],
     digitaltool: ['DTCard','UploadCard'],
     pdf2jpg: ['UploadCard'],
+    pdfcompress: ['UploadCard','PdfCompressCard'],
     rename: ['RenameCard'],
     video: ['VideoCard'],
     watermark: ['WatermarkCard','UploadCard'],
@@ -66,6 +67,7 @@
     if (mode === 'qr') setPrimaryActionLabel('Genera QR');
     if (mode === 'iubenda') setPrimaryActionLabel('Genera snippet');
     if (mode === 'platform') setPrimaryActionLabel('Esporta sezione');
+    if (mode === 'pdfcompress') setPrimaryActionLabel('Comprimi PDF');
     if (mode === 'slidebuilder') setPrimaryActionLabel('Esporta PPT');
     if (mode === 'fattura') setPrimaryActionLabel('Esporta PDF');
     if (mode === 'ppt') BtnProcedi?.classList.add('hidden');
@@ -73,6 +75,7 @@
     showCards(mode);
 
     try { window.handleCropUI && window.handleCropUI(); } catch {}
+    try { window.refreshPdfCompressUI && window.refreshPdfCompressUI(); } catch {}
     activateMenuVisual(mode);
   };
 

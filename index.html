@@ -17,7 +17,7 @@
  <link rel="preconnect" href="https://fonts.googleapis.com" />
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
- <link rel="stylesheet" href="./css/styles.css" />
+ <link rel="stylesheet" href="./css/styles.css?v=20260615_wmcomingsoon1" />
  <link rel="stylesheet" href="./css/modules/images.css?v=20260612_pdfcompress6" />
  <link rel="stylesheet" href="./css/modules/platform.css?v=20260526_platform7" />
  <link rel="stylesheet" href="./css/modules/cropzoom.css" />
@@ -431,6 +431,17 @@
  <button id="WmComingsoonClear" class="btn-small hidden" title="Rimuovi" type="button">✕</button>
  </div>
  </div>
+ <div id="WmComingsoonOptions" class="wm-comingsoon-options" style="margin-top:14px">
+ <div class="wm-comingsoon-options-head">
+ <h4 style="margin:0">Opzioni Coming soon</h4>
+ <p class="muted" style="margin-top:4px; line-height:1.6">Il ridimensionamento a 1920×1080 viene sempre applicato. Se deselezioni tutto, il tool esporta solo il formato Coming soon senza sfocatura, velina o testo.</p>
+ </div>
+ <div class="wm-comingsoon-options-grid radios">
+ <label class="wm-option-card"><input type="checkbox" id="WmComingsoonBlur" checked /> <span>Sfoca</span></label>
+ <label class="wm-option-card"><input type="checkbox" id="WmComingsoonVelina" checked /> <span>Metti la velina</span></label>
+ <label class="wm-option-card"><input type="checkbox" id="WmComingsoonTesto" checked /> <span>Metti il testo</span></label>
+ </div>
+ </div>
  <!-- Crop manuale (solo se 1 immagine in Coming soon) -->
  <div id="WmCropWrap" class="hidden" style="margin-top:14px">
  <h4 style="margin:0 0 6px 0">Ritaglio (Coming soon)</h4>
@@ -800,7 +811,7 @@
  <script src="./js/modules/platform.js?v=20260526_platform7"></script>
  <script src="./js/modules/rename.js"></script>
  <script src="./js/modules/video.js?v=20260526_mobilepick3"></script>
- <script src="./js/modules/watermark.js?v=20260525_mobilepick2"></script>
+ <script src="./js/modules/watermark.js?v=20260615_comingsoonopts1"></script>
  <script src="./js/modules/bv.js"></script>
  <script src="./js/modules/bv_preview.js"></script>
  <script src="./js/modules/bv_3d.js"></script>

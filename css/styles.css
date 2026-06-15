@@ -1088,3 +1088,47 @@ input[type="range"].input:focus,
   box-shadow: none !important;
   background: transparent !important;
 }
+
+/* ============================================================
+   WATERMARK · Coming soon options
+   ============================================================ */
+.wm-comingsoon-options {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  background: var(--gray-50);
+  padding: 16px;
+}
+.wm-comingsoon-options-head {
+  margin-bottom: 12px;
+}
+.wm-comingsoon-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.wm-option-card {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 11px 12px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 10px;
+  background: var(--white);
+  font-weight: 600 !important;
+  color: var(--gray-700);
+  transition: border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.wm-option-card:hover {
+  border-color: var(--red);
+  background: var(--pink-bg);
+  color: var(--red);
+}
+.wm-option-card input {
+  flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  .wm-comingsoon-options-grid {
+    grid-template-columns: 1fr;
+  }
+}

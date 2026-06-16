@@ -84,9 +84,6 @@
   const comingDrop  = document.getElementById('WmComingsoonDrop');
   const comingName  = document.getElementById('WmComingsoonName');
   const comingClear = document.getElementById('WmComingsoonClear');
-  const comingBlurChk   = document.getElementById('WmComingsoonBlur');
-  const comingVelinaChk = document.getElementById('WmComingsoonVelina');
-  const comingTestoChk  = document.getElementById('WmComingsoonTesto');
 
   const cropWrap  = document.getElementById('WmCropWrap');
   const cropFrame = document.getElementById('WmCropFrame');
@@ -97,13 +94,6 @@
   let wmPreset = 'portali';
   let wmPicked = []; // [{file, relPath}]
   let cropSrcUrl = '';
-  function getComingsoonOptions(){
-    return {
-      blur: !!comingBlurChk?.checked,
-      velina: !!comingVelinaChk?.checked,
-      testo: !!comingTestoChk?.checked
-    };
-  }
 
   // Crop state
   const crop = {
@@ -595,20 +585,10 @@
       return;
     }
 
-    const options = getComingsoonOptions();
-    const needVelina = !!options.velina;
-    const needTesto = !!options.testo;
-    let overlays = { velina:null, testo:null };
-
-    if (needVelina || needTesto){
-      overlays = await loadComingsoonOverlays();
-      const missing = [];
-      if (needVelina && !overlays.velina) missing.push('velina.png');
-      if (needTesto && !overlays.testo) missing.push('testo.png');
-      if (missing.length){
-        alert(`Mancano overlay Coming soon: ${missing.join(', ')}. Carica i file richiesti in assets/comingsoon/.`);
-        return;
-      }
+    const overlays = await loadComingsoonOverlays();
+    if (!overlays.velina || !overlays.testo){
+      alert('Mancano overlay Coming soon. Carica in assets/comingsoon/ velina.png e testo.png (1920×1080).');
+      return;
     }
 
     const zip = new JSZip();
@@ -634,12 +614,12 @@
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      if (options.blur) ctx.filter = 'blur(5px)';
+      ctx.filter = 'blur(5px)';
       ctx.drawImage(baseCanvas, 0, 0, W, H);
       ctx.filter = 'none';
 
-      if (needVelina && overlays.velina) ctx.drawImage(overlays.velina, 0, 0, W, H);
-      if (needTesto && overlays.testo) ctx.drawImage(overlays.testo, 0, 0, W, H);
+      ctx.drawImage(overlays.velina, 0, 0, W, H);
+      ctx.drawImage(overlays.testo, 0, 0, W, H);
 
       const outJpg = await canvasToBlob(c,'image/jpeg',0.92);
       const nn = String(++counter).padStart(2,'0');

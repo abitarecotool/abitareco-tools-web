@@ -414,43 +414,60 @@
  <button type="button" class="brand-pill" data-wm-preset="portali" id="WmPresetPortali">Portali immobiliari</button>
  <button type="button" class="brand-pill" data-wm-preset="comingsoon" id="WmPresetComingsoon">Coming soon sito</button>
  </div>
- <!-- Upload Portali (solo quando selezionato Portali immobiliari) -->
  <div id="WmPortaliUploadWrap" style="margin-top:14px">
- <div id="WmPortaliDrop" class="drop" tabindex="0" role="button" aria-label="Carica cartella Portali" title="Clicca per selezionare una cartella o trascinala qui">
- <div class="drop-inner">
- <span id="WmPortaliName" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
- <button id="WmPortaliClear" class="btn-small hidden" title="Rimuovi" type="button">✕</button>
+  <div id="WmPortaliDrop" class="drop" tabindex="0" role="button" aria-label="Carica cartella Portali" title="Clicca per selezionare una cartella o trascinala qui">
+   <div class="drop-inner">
+    <span id="WmPortaliName" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
+    <button id="WmPortaliClear" class="btn-small hidden" title="Rimuovi" type="button">✕</button>
+   </div>
+  </div>
  </div>
- </div>
- </div>
- <!-- Upload Coming soon (solo quando selezionato Coming soon sito) -->
  <div id="WmComingsoonUploadWrap" class="hidden" style="margin-top:14px">
- <div id="WmComingsoonDrop" class="drop" tabindex="0" role="button" aria-label="Carica cartella o immagine Coming soon" title="Clicca per selezionare file o trascina qui una cartella/immagine">
- <div class="drop-inner">
- <span id="WmComingsoonName" class="muted">Trascina qui la cartella/singola immagine o clicca per sfogliare…</span>
- <button id="WmComingsoonClear" class="btn-small hidden" title="Rimuovi" type="button">✕</button>
- </div>
- </div>
- <div id="WmComingsoonOptions" class="wm-comingsoon-options" style="margin-top:14px">
- <div class="wm-comingsoon-options-head">
- <h4 style="margin:0">Opzioni Coming soon</h4>
- <p class="muted" style="margin-top:4px; line-height:1.6">Il ridimensionamento a 1920×1080 viene sempre applicato. Se deselezioni tutto, il tool esporta solo il formato Coming soon senza sfocatura, velina o testo.</p>
- </div>
- <div class="wm-comingsoon-options-grid radios">
- <label class="wm-option-card"><input type="checkbox" id="WmComingsoonBlur" checked /> <span>Sfoca</span></label>
- <label class="wm-option-card"><input type="checkbox" id="WmComingsoonVelina" checked /> <span>Metti la velina</span></label>
- <label class="wm-option-card"><input type="checkbox" id="WmComingsoonTesto" checked /> <span>Metti il testo</span></label>
- </div>
- </div>
- <!-- Crop manuale (solo se 1 immagine in Coming soon) -->
- <div id="WmCropWrap" class="hidden" style="margin-top:14px">
- <h4 style="margin:0 0 6px 0">Ritaglio (Coming soon)</h4>
- <p class="muted" style="margin-top:0; line-height:1.6">Trascina per spostare e usa lo zoom per regolare l'inquadratura (output 1920×1080).</p>
- <div id="WmCropFrame" class="crop-frame"><img id="WmCropImg" alt="Anteprima ritaglio Coming soon" /></div>
- <label style="margin-top:12px">Zoom immagine</label>
- <input type="range" id="WmCropZoom" class="input" />
- <button id="WmCropReset" type="button" class="btn-outline" style="margin-top:12px">Ripristina</button>
- </div>
+  <div class="form-group">
+   <label for="WmComingSlugIta">Nome file ITA*</label>
+   <input id="WmComingSlugIta" class="input" type="text" placeholder="es. coming-soon-via-rossi" />
+  </div>
+  <div class="form-group">
+   <label for="WmComingSlugEng">Nome file ENG*</label>
+   <input id="WmComingSlugEng" class="input" type="text" placeholder="es. coming-soon-via-rossi" />
+  </div>
+  <label style="margin-bottom:8px">Effetti coming soon</label>
+  <div class="wm-coming-options" aria-label="Effetti coming soon">
+   <label><input id="WmComingBlur" type="checkbox" checked /> <span>Sfoca</span></label>
+   <label><input id="WmComingVelina" type="checkbox" checked /> <span>Metti la velina</span></label>
+   <label><input id="WmComingText" type="checkbox" checked /> <span>Metti il testo</span></label>
+  </div>
+  <p class="muted" style="margin:-4px 0 12px;line-height:1.6">Il ridimensionamento 1920×1080 è sempre obbligatorio. In export vengono generati automaticamente file ITA/ENG sia in JPG che in WEBP.</p>
+  <div id="WmComingsoonDrop" class="drop" tabindex="0" role="button" aria-label="Carica cartella o immagine Coming soon" title="Clicca per selezionare file o trascina qui una cartella/immagine">
+   <div class="drop-inner">
+    <span id="WmComingsoonName" class="muted">Trascina qui la cartella/singola immagine o clicca per sfogliare…</span>
+    <button id="WmComingsoonClear" class="btn-small hidden" title="Rimuovi" type="button">✕</button>
+   </div>
+  </div>
+  <div id="WmNamePreviewCard" class="image-naming-preview hidden" style="margin-top:16px">
+   <div class="platform-upload-big platform-upload-big--compact">
+    <div class="platform-upload-header">
+     <div>
+      <h4>Anteprima nomi esportazione</h4>
+      <p id="WmNamePreviewSummary" class="muted image-naming-summary">Carica immagini e compila i nomi ITA/ENG per vedere l’anteprima finale.</p>
+     </div>
+    </div>
+    <div class="image-naming-toolbar">
+     <div class="image-naming-meta">
+      <div id="WmNamePreviewEmpty" class="muted">La preview si aggiorna in tempo reale quando carichi file o modifichi i nomi ITA/ENG.</div>
+     </div>
+    </div>
+    <div id="WmNamePreviewGrid" class="image-naming-grid"></div>
+   </div>
+  </div>
+  <div id="WmCropWrap" class="hidden" style="margin-top:14px">
+   <h4 style="margin:0 0 6px 0">Ritaglio (Coming soon)</h4>
+   <p class="muted" style="margin-top:0; line-height:1.6">Trascina per spostare e usa lo zoom per regolare l'inquadratura (output 1920×1080).</p>
+   <div id="WmCropFrame" class="crop-frame"><img id="WmCropImg" alt="Anteprima ritaglio Coming soon" /></div>
+   <label style="margin-top:12px">Zoom immagine</label>
+   <input type="range" id="WmCropZoom" class="input" />
+   <button id="WmCropReset" type="button" class="btn-outline" style="margin-top:12px">Ripristina</button>
+  </div>
  </div>
 </section>
 <!-- FATTURA (Marketing/Admin) -->

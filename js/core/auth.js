@@ -347,7 +347,7 @@
       try { bindUserMenu(user); } catch {}
       try { applyBrand(user); } catch {}
       try { window.selectMode && window.selectMode('welcome'); } catch {}
-    }, 2000);
+    }, 600);
   }
 
   window.Auth = {

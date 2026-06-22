@@ -25,7 +25,7 @@
  <link rel="stylesheet" href="./css/modules/bv_3d.css" />
  <link rel="stylesheet" href="./css/modules/auth.css?v=20260522_login5" />
  <link rel="stylesheet" href="./css/modules/welcome.css?v=20260506v4" />
- <link rel="stylesheet" href="./css/modules/fattura.css?v=20260622_pf1" />
+ <link rel="stylesheet" href="./css/modules/fattura.css?v=20260622_pf2" />
  <link rel="stylesheet" href="./css/modules/slidebuilder.css?v=20260604_sbfix13" />
  <link rel="stylesheet" href="./css/mobile.css?v=20260526_mob5" />
  <style id="ImageNamingPreviewStyles">
@@ -486,21 +486,21 @@
  <div id="FatBackupWrap" class="fattura-helper-box">
   <div>
    <div class="fattura-helper-title">Backup preventivo</div>
-   <p class="muted fattura-helper-copy">Se vuoi conservare il preventivo anche fuori dal browser, scarica un file JSON con tutti i dati del documento. Potrai ricaricarlo in seguito senza riscrivere le voci.</p>
+   <p class="muted fattura-helper-copy">Quando esporti il preventivo, i dati vengono salvati automaticamente nel browser di questo PC e inseriti anche dentro il PDF esportato. Quindi, per il flusso normale, non serve alcun file aggiuntivo. Il JSON resta solo come backup opzionale.</p>
   </div>
-  <button id="FatBackupBtn" type="button" class="btn-outline fattura-helper-btn">Scarica backup dati</button>
+  <button id="FatBackupBtn" type="button" class="btn-outline fattura-helper-btn">Scarica backup JSON (opzionale)</button>
  </div>
 
  <div id="FatRecoverWrap" class="fattura-helper-box hidden">
   <div>
    <div class="fattura-helper-title">Crea fattura da preventivo</div>
-   <p class="muted fattura-helper-copy">Recupera un preventivo già creato usando il suo numero oppure caricando un file di backup JSON. Il numero documento verrà mantenuto identico anche nella fattura.</p>
+   <p class="muted fattura-helper-copy">Recupera un preventivo già creato usando il suo numero oppure caricando direttamente il PDF preventivo esportato. Il numero documento verrà mantenuto identico anche nella fattura. Se serve, resta comunque compatibile anche con il backup JSON.</p>
   </div>
   <div class="fattura-recover-actions">
    <input id="FatSourceNumero" class="input" type="text" placeholder="Numero preventivo" />
    <button id="FatLoadByNumero" type="button" class="btn-outline fattura-helper-btn">Recupera</button>
-   <button id="FatLoadFileBtn" type="button" class="btn-outline fattura-helper-btn">Carica backup JSON</button>
-   <input id="FatLoadFile" type="file" accept="application/json,.json" class="hidden" />
+   <button id="FatLoadFileBtn" type="button" class="btn-outline fattura-helper-btn">Carica PDF preventivo</button>
+   <input id="FatLoadFile" type="file" accept="application/pdf,.pdf,application/json,.json" class="hidden" />
   </div>
  </div>
 
@@ -865,7 +865,7 @@
  <script src="./js/modules/qr.js?v=20260513qr1"></script>
  <script src="./js/modules/iubenda.js"></script>
  <script src="./js/modules/ppt.js"></script>
- <script src="./js/modules/fattura.js?v=20260622_pf1"></script>
+ <script src="./js/modules/fattura.js?v=20260622_pf2"></script>
  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
  <script src="./js/modules/slidebuilder.js?v=20260604_sbfix13"></script>
  <script src="./js/core/actionbar.js?v=20260612_pdfcompress6"></script>

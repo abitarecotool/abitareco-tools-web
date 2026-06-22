@@ -67,6 +67,7 @@
   border:1px solid var(--gray-200);
   border-radius:999px;
   background:var(--gray-50);
+  box-shadow:none;
 }
 .fattura-doc-btn{
   appearance:none;
@@ -83,14 +84,14 @@
 .fattura-doc-btn.active{
   background:var(--red);
   color:var(--white);
-  box-shadow:0 8px 24px rgba(196,22,43,.16);
+  box-shadow:none;
 }
 .fattura-helper-box{
   margin-top:16px;
   padding:16px 18px;
   border:1px solid var(--gray-200);
   border-radius:16px;
-  background:linear-gradient(180deg, rgba(196,22,43,.02) 0%, rgba(196,22,43,.04) 100%);
+  background:var(--white);
   display:flex;
   align-items:flex-end;
   justify-content:space-between;

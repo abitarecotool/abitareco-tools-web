@@ -13,14 +13,14 @@
   const DOC_META = {
     preventivo: {
       title: 'Preventivo',
-      intro: 'Seleziona una sezione e un prodotto dal listino, inserisci quantità e (opzionale) sconto. Il costo unitario si compila automaticamente ma resta modificabile. Poi clicca <b>Esporta Preventivo PDF</b>.',
+      intro: 'Seleziona una sezione e un prodotto dal listino, inserisci quantità e (opzionale) sconto. Il costo unitario si compila automaticamente ma resta modificabile. Poi clicca <b>Esporta Preventivo PDF</b>. I dati verranno salvati anche automaticamente nel browser e dentro al PDF esportato.',
       buttonText: 'Esporta Preventivo PDF',
       pdfLabel: 'Preventivo',
       filePrefix: 'preventivo',
     },
     fattura: {
       title: 'Fattura',
-      intro: 'La struttura resta identica al preventivo: puoi usare le stesse voci e gli stessi importi. Se hai già creato un preventivo, recuperalo dal numero o da backup JSON e poi clicca <b>Crea Fattura PDF</b>.',
+      intro: 'La struttura resta identica al preventivo: puoi usare le stesse voci e gli stessi importi. Se hai già creato un preventivo, recuperalo dal numero oppure caricando il PDF preventivo esportato e poi clicca <b>Crea Fattura PDF</b>.',
       buttonText: 'Crea Fattura PDF',
       pdfLabel: 'Fattura',
       filePrefix: 'fattura',
@@ -334,6 +334,33 @@
       state: getState(),
     };
   }
+  function stringifyPayload(payload){
+    return JSON.stringify(payload || {});
+  }
+  function encodePayloadForPdf(payload){
+    try{
+      return btoa(unescape(encodeURIComponent(stringifyPayload(payload))));
+    } catch {
+      return '';
+    }
+  }
+  function decodePayloadFromPdf(encoded){
+    try{
+      const json = decodeURIComponent(escape(atob(String(encoded || '').trim())));
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
+  }
+  function getPdfPayloadMarker(payload){
+    const enc = encodePayloadForPdf(payload);
+    return enc ? `ABITARE_PF:${enc}` : '';
+  }
+  function readPayloadMarker(text){
+    const raw = String(text || '');
+    if (!raw.startsWith('ABITARE_PF:')) return null;
+    return decodePayloadFromPdf(raw.slice('ABITARE_PF:'.length));
+  }
 
   function readStorageIndex(){
     try{
@@ -429,21 +456,37 @@
     downloadBlob(blob, nome);
   }
 
-  async function importBackupFile(file){
+  async function importUploadedSource(file){
     if (!file) return;
+    const lowerName = String(file.name || '').toLowerCase();
     try{
+      if (lowerName.endsWith('.pdf') || String(file.type || '').includes('pdf')){
+        const bytes = await file.arrayBuffer();
+        const { PDFDocument } = window.PDFLib || {};
+        if (!PDFDocument) throw new Error('PDFLib non disponibile');
+        const pdfDoc = await PDFDocument.load(bytes);
+        const marker = readPayloadMarker(pdfDoc.getSubject?.())
+          || readPayloadMarker(Array.isArray(pdfDoc.getKeywords?.()) ? pdfDoc.getKeywords().join(' ') : pdfDoc.getKeywords?.())
+          || readPayloadMarker(pdfDoc.getTitle?.())
+          || readPayloadMarker(pdfDoc.getProducer?.());
+        if (!marker) throw new Error('Payload PDF assente');
+        const ok = fillFormFromState(marker);
+        if (!ok) return;
+        toast(currentDocType === 'fattura'
+          ? 'PDF preventivo caricato. Ora puoi creare la fattura mantenendo lo stesso numero.'
+          : 'PDF caricato correttamente.');
+        return;
+      }
       const txt = await file.text();
       const payload = JSON.parse(txt);
       const ok = fillFormFromState(payload);
       if (!ok) return;
-      if (currentDocType === 'fattura') {
-        toast('Preventivo caricato. Ora puoi creare la fattura mantenendo lo stesso numero.');
-      } else {
-        toast('Backup caricato correttamente.');
-      }
+      toast(currentDocType === 'fattura'
+        ? 'Backup caricato. Ora puoi creare la fattura mantenendo lo stesso numero.'
+        : 'Backup caricato correttamente.');
     } catch (e){
       console.error(e);
-      toast('Impossibile leggere il file JSON selezionato.');
+      toast('Impossibile leggere il file selezionato. Usa il PDF esportato dal tool oppure un backup JSON valido.');
     }
   }
 
@@ -468,7 +511,6 @@
     if (!btn) return;
     btn.classList.remove('hidden');
     btn.textContent = DOC_META[currentDocType].buttonText;
-    btn.onclick = exportFatturaPdf;
   }
 
   function updateDocTypeUI(){
@@ -804,6 +846,19 @@
     y -= 24;
     page.drawLine({ start: { x: marginX, y }, end: { x: marginX + 260, y }, thickness: 1, color: rgb(0.7,0.7,0.7) });
 
+    const pdfPayload = makePayload(currentDocType);
+    const pdfMarker = getPdfPayloadMarker(pdfPayload);
+    try{
+      if (pdfMarker){
+        pdfDoc.setSubject(pdfMarker);
+        pdfDoc.setKeywords(['ABITARE_PF', pdfMarker]);
+        pdfDoc.setProducer(pdfMarker);
+      }
+      pdfDoc.setCreator('Abitare Co. Preventivo/Fattura Tool');
+      pdfDoc.setTitle(`${meta.pdfLabel} ${st.header.numero}`);
+    } catch (e) {
+      console.warn('Metadati PDF non impostati', e);
+    }
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     downloadBlob(blob, `${meta.filePrefix}_${st.header.numero}.pdf`);
@@ -851,7 +906,7 @@
       fileBtn.addEventListener('click', () => fileInput.click());
       fileInput.addEventListener('change', async () => {
         const file = fileInput.files?.[0];
-        await importBackupFile(file);
+        await importUploadedSource(file);
         fileInput.value = '';
       });
     }

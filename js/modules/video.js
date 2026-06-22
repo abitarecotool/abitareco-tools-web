@@ -47,7 +47,7 @@ const VIDEO_TRANSITION_LABELS = {
   slideright: 'Slide right',
   zoomsoft: 'Zoom soft'
 };
-const VIDEO_PREVIEW_MAX_HEIGHT = 450;
+const VIDEO_PREVIEW_MAX_HEIGHT = 680;
 
 const videoEditorState = {
   enabled: false,
@@ -496,19 +496,18 @@ function updateVideoPreviewRatio(){
   const { W, H } = pickVideoSize();
   const ratio = W / H;
   const stageRect = VideoPreviewStage.getBoundingClientRect();
-  const maxHeight = VIDEO_PREVIEW_MAX_HEIGHT;
   const availableWidth = Math.max(220, Math.floor(stageRect.width || 0));
-  let width = Math.round(maxHeight * ratio);
-  let height = maxHeight;
+  const availableHeight = Math.max(320, Math.floor(stageRect.height || VIDEO_PREVIEW_MAX_HEIGHT));
+  let width = Math.round(availableHeight * ratio);
+  let height = availableHeight;
   if (width > availableWidth){
     width = availableWidth;
     height = Math.round(width / ratio);
   }
-  if (height > maxHeight){
-    height = maxHeight;
+  if (height > availableHeight){
+    height = availableHeight;
     width = Math.round(height * ratio);
   }
-  VideoPreviewStage.style.height = `${maxHeight}px`;
   VideoPreviewFrame.style.width = `${Math.max(180, width)}px`;
   VideoPreviewFrame.style.height = `${Math.max(180, height)}px`;
   VideoPreviewFrame.style.setProperty('--video-preview-ratio', `${W} / ${H}`);
@@ -901,10 +900,16 @@ async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate}){
 }
 
 async function exportVideoBlobPreferRecorder(renderFrame, {T,fps,W,H,bitrate}){
-  const mp4Mime = supportsMp4Recorder();
-  if (mp4Mime) return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:mp4Mime,bitrate}), ext:'mp4' };
-  const webmMime = (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) ? 'video/webm;codecs=vp9' : 'video/webm;codecs=vp8';
-  if (window.MediaRecorder) return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:webmMime,bitrate}), ext:'webm' };
+  const h264Cfg = await supportsH264WebCodecs();
+  if (h264Cfg && window.MP4Box) {
+    return { blob: await exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}), ext:'mp4' };
+  }
+  const webmMime = (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9'))
+    ? 'video/webm;codecs=vp9'
+    : 'video/webm;codecs=vp8';
+  if (window.MediaRecorder) {
+    return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:webmMime,bitrate}), ext:'webm' };
+  }
   return exportVideoBlob(renderFrame, {T,fps,W,H,bitrate});
 }
 function downloadVideoBlob(blob, filename){

@@ -517,12 +517,10 @@
     const meta = DOC_META[currentDocType] || DOC_META.preventivo;
     const title = $('#FatDocTitle');
     const intro = $('#FatDocIntro');
-    const backupWrap = $('#FatBackupWrap');
     const recoverWrap = $('#FatRecoverWrap');
 
     if (title) title.textContent = meta.title;
     if (intro) intro.innerHTML = meta.intro;
-    if (backupWrap) backupWrap.classList.toggle('hidden', currentDocType !== 'preventivo');
     if (recoverWrap) recoverWrap.classList.toggle('hidden', currentDocType !== 'fattura');
 
     document.querySelectorAll('.fattura-doc-btn').forEach(btn => {
@@ -894,8 +892,6 @@
 
     bindDocTypeSwitch();
 
-    const backupBtn = document.getElementById('FatBackupBtn');
-    if (backupBtn) backupBtn.addEventListener('click', downloadJsonBackup);
 
     const loadByNumeroBtn = document.getElementById('FatLoadByNumero');
     if (loadByNumeroBtn) loadByNumeroBtn.addEventListener('click', loadPreventivoByNumero);

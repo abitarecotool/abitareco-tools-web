@@ -170,3 +170,6 @@
     min-width:0;
   }
 }
+
+
+.fattura-helper-box.hidden{ display:none !important; }

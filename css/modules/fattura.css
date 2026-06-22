@@ -52,13 +52,15 @@
   .fat-del{ justify-self:end; }
 }
 
-/* 2026-06-22 · Preventivo/Fattura switch + recupero */
+/* 2026-06-22 · Preventivo/Fattura switch + recupero (layout allineato) */
 .fattura-doc-head{
+  display:block;
+}
+.fattura-doc-copy{
   display:flex;
-  justify-content:space-between;
+  flex-direction:column;
   align-items:flex-start;
-  gap:16px;
-  flex-wrap:wrap;
+  gap:14px;
 }
 .fattura-doc-switch{
   display:inline-flex;
@@ -76,10 +78,10 @@
   color:var(--gray-700);
   font:700 13px/1 var(--font);
   height:38px;
-  padding:0 16px;
+  padding:0 18px;
   border-radius:999px;
   cursor:pointer;
-  transition:background .18s ease,color .18s ease, box-shadow .18s ease;
+  transition:background .18s ease,color .18s ease;
 }
 .fattura-doc-btn.active{
   background:var(--red);
@@ -92,11 +94,19 @@
   border:1px solid var(--gray-200);
   border-radius:16px;
   background:var(--white);
+  display:grid;
+  grid-template-columns:minmax(0,1.35fr) minmax(380px,0.95fr);
+  align-items:center;
+  gap:18px;
+}
+.fattura-helper-left{
+  min-width:0;
+}
+.fattura-helper-right{
   display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:16px;
-  flex-wrap:wrap;
+  justify-content:flex-end;
+  align-items:center;
+  min-width:0;
 }
 .fattura-helper-title{
   font-size:14px;
@@ -108,26 +118,55 @@
   max-width:860px;
 }
 .fattura-helper-btn{
-  min-width:170px;
+  min-width:220px;
   white-space:nowrap;
 }
-.fattura-recover-actions{
+.fattura-recover-panel{
+  width:min(100%, 600px);
   display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
+  flex-direction:column;
+  gap:12px;
 }
-.fattura-recover-actions .input{
-  min-width:220px;
+.fattura-recover-panel .input{
+  width:100%;
+}
+.fattura-recover-actions{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:10px;
+  width:100%;
+}
+.fattura-recover-actions .fattura-helper-btn{
+  width:100%;
+  min-width:0;
+}
+@media (max-width: 1180px){
+  .fattura-helper-box{
+    grid-template-columns:1fr;
+    align-items:stretch;
+  }
+  .fattura-helper-right{
+    justify-content:flex-start;
+  }
+  .fattura-recover-panel{
+    width:100%;
+  }
 }
 @media (max-width: 900px){
-  .fattura-doc-head{ align-items:stretch; }
-  .fattura-doc-switch{ width:100%; justify-content:space-between; }
-  .fattura-doc-btn{ flex:1 1 0; }
-  .fattura-helper-box{ align-items:stretch; }
+  .fattura-doc-switch{
+    width:100%;
+    justify-content:space-between;
+  }
+  .fattura-doc-btn{
+    flex:1 1 0;
+  }
 }
 @media (max-width: 680px){
-  .fattura-recover-actions{ width:100%; }
-  .fattura-recover-actions .input,
-  .fattura-helper-btn{ width:100%; min-width:0; }
+  .fattura-recover-actions{
+    grid-template-columns:1fr;
+  }
+  .fattura-helper-btn{
+    width:100%;
+    min-width:0;
+  }
 }

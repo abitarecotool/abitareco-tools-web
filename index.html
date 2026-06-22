@@ -17,7 +17,7 @@
  <link rel="preconnect" href="https://fonts.googleapis.com" />
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
- <link rel="stylesheet" href="./css/styles.css?v=20260622_videoadvanced2" />
+ <link rel="stylesheet" href="./css/styles.css?v=20260622_videoadvanced3" />
  <link rel="stylesheet" href="./css/modules/images.css?v=20260612_pdfcompress6" />
  <link rel="stylesheet" href="./css/modules/platform.css?v=20260526_platform7" />
  <link rel="stylesheet" href="./css/modules/cropzoom.css" />
@@ -256,7 +256,7 @@
  <p id="ImagesUploadHint" class="muted hidden image-upload-hint"></p>
  <div id="DropArea" class="drop" tabindex="0" role="button" aria-label="Carica cartella" title="Clicca per selezionare una cartella o trascinala qui">
  <div class="drop-inner">
- <span id="TxtFolderPath" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
+ <span id="TxtFolderPath" class="muted">Trascina qui una cartella o una o più immagini, oppure clicca per sfogliare…</span>
  <button id="BtnClearPath" class="btn-small hidden" title="Rimuovi cartella" type="button">✕</button>
  </div>
  </div>
@@ -394,7 +394,7 @@
  </div>
  </div>
  <div class="form-group">
- <label>Carica cartella immagini*</label>
+ <label>Carica cartella o immagini*</label>
  <div id="DropAreaVideo" class="drop" tabindex="0" role="button" aria-label="Carica cartella per video">
  <div class="drop-inner">
  <span id="TxtFolderVideo" class="muted">Trascina qui la cartella o clicca per sfogliare…</span>
@@ -503,16 +503,18 @@
      <div class="video-panel-head">
       <div>
        <h5>Gestione slide</h5>
-       <p class="muted">Puoi rimuovere una o più slide selezionate, oppure sostituire l’immagine quando ne selezioni una sola.</p>
+       <p class="muted">Puoi rimuovere una o più slide selezionate, sostituire l’immagine quando ne selezioni una sola oppure aggiungere nuove immagini alla timeline.</p>
       </div>
      </div>
      <div class="video-transition-fields">
       <div class="video-transition-actions">
        <button id="BtnVideoRemoveSelected" type="button" class="btn-outline">Rimuovi selezione</button>
        <button id="BtnVideoReplaceSelected" type="button" class="btn-outline">Sostituisci immagine</button>
+       <button id="BtnVideoAddImages" type="button" class="btn-outline">Aggiungi immagini</button>
       </div>
       <p id="VideoManageHint" class="muted">Seleziona almeno una slide per attivare le azioni.</p>
       <input id="VideoReplaceInput" type="file" accept="image/*" class="hidden" />
+      <input id="VideoAddImagesInput" type="file" accept="image/*" multiple class="hidden" />
      </div>
     </div>
    </aside>
@@ -980,7 +982,7 @@
   <script src="./js/modules/pdfcompress.js?v=20260612_pdfcompress6"></script>
  <script src="./js/modules/platform.js?v=20260526_platform7"></script>
  <script src="./js/modules/rename.js"></script>
- <script src="./js/modules/video.js?v=20260622_videoadvanced2"></script>
+ <script src="./js/modules/video.js?v=20260622_videoadvanced3"></script>
  <script src="./js/modules/watermark.js?v=20260615_comingsoonopts2"></script>
  <script src="./js/modules/bv.js"></script>
  <script src="./js/modules/bv_preview.js"></script>

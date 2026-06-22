@@ -32,8 +32,10 @@ const BtnVideoRemoveTransition = $('#BtnVideoRemoveTransition');
 const VideoTransitionHint = $('#VideoTransitionHint');
 const BtnVideoRemoveSelected = $('#BtnVideoRemoveSelected');
 const BtnVideoReplaceSelected = $('#BtnVideoReplaceSelected');
+const BtnVideoAddImages = $('#BtnVideoAddImages');
 const VideoManageHint = $('#VideoManageHint');
 const VideoReplaceInput = $('#VideoReplaceInput');
+const VideoAddImagesInput = $('#VideoAddImagesInput');
 
 if (!Array.isArray(window.pickedVideo)) window.pickedVideo = [];
 
@@ -45,7 +47,7 @@ const VIDEO_TRANSITION_LABELS = {
   slideright: 'Slide right',
   zoomsoft: 'Zoom soft'
 };
-const VIDEO_PREVIEW_MAX_HEIGHT = 430;
+const VIDEO_PREVIEW_MAX_HEIGHT = 450;
 
 const videoEditorState = {
   enabled: false,
@@ -161,6 +163,72 @@ function buildVideoSlidesFromRecords(records){
   videoEditorState.activeId = videoEditorState.slides[0]?.id || null;
   videoEditorState.selectedIds = videoEditorState.activeId ? [videoEditorState.activeId] : [];
   videoEditorState.selectionAnchorId = videoEditorState.activeId;
+}
+
+function makeUniqueVideoSlideId(rec){
+  const base = slugify(rec?.relPath || rec?.file?.name || 'slide') || 'slide';
+  const uid = (window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`).replace(/[^a-zA-Z0-9-]/g, '');
+  return `slide-${base}-${uid}`;
+}
+function createVideoSlideFromRecord(rec){
+  return {
+    id: makeUniqueVideoSlideId(rec),
+    file: rec.file,
+    relPath: rec.relPath || rec.file?.webkitRelativePath || rec.file?.name,
+    name: rec.file?.name || 'slide',
+    previewUrl: URL.createObjectURL(rec.file),
+    transform: { x: 0, y: 0, scale: 1, minScale: 0.25, maxScale: 4 },
+    transitionToNext: { type: 'crossfade', duration: 0.8 }
+  };
+}
+async function extractDroppedVideoRecords(dataTransfer){
+  const out = [];
+  const seen = new Set();
+  const addRecord = (file, relPath) => {
+    if (!file || !/\.(jpe?g|png|tif?f|webp)$/i.test(file.name || '')) return;
+    const key = `${relPath || file.name}__${file.size}__${file.lastModified}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ file, relPath: relPath || file.webkitRelativePath || file.name });
+  };
+  const items = Array.from(dataTransfer?.items || []);
+  let hasDirectory = false;
+  for (const item of items){
+    const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
+    if (entry?.isDirectory) hasDirectory = true;
+    if (item.kind === 'file') {
+      const file = item.getAsFile();
+      addRecord(file, file?.name);
+    }
+  }
+  if (!out.length && dataTransfer?.files?.length) {
+    Array.from(dataTransfer.files).forEach(file => addRecord(file, file.webkitRelativePath || file.name));
+  }
+  if (hasDirectory && typeof readDroppedDirectory === 'function') {
+    const dropped = await readDroppedDirectory(dataTransfer);
+    (dropped || []).forEach(rec => addRecord(rec.file, rec.relPath || rec.file?.webkitRelativePath || rec.file?.name));
+  }
+  return sortVideoRecords(out);
+}
+function appendVideoPickedRecords(records){
+  const normalized = sortVideoRecords(records || []);
+  if (!normalized.length) return;
+  window.pickedVideo = [...videoRecords(), ...normalized];
+  TxtFolderVideo.textContent = `Selezionati ${window.pickedVideo.length} file…`;
+  BtnClearVideo?.classList.toggle('hidden', window.pickedVideo.length === 0);
+  const newSlides = normalized.map(createVideoSlideFromRecord);
+  if (videoHasSlides()) {
+    videoEditorState.slides.push(...newSlides);
+  } else {
+    videoEditorState.slides = newSlides;
+  }
+  videoEditorState.originalOrder = videoEditorState.slides.map(slide => slide.id);
+  if (!videoEditorState.activeId && videoEditorState.slides[0]) {
+    videoEditorState.activeId = videoEditorState.slides[0].id;
+    videoEditorState.selectedIds = [videoEditorState.activeId];
+    videoEditorState.selectionAnchorId = videoEditorState.activeId;
+  }
+  syncVideoUiState();
 }
 function sortVideoRecords(records){
   return records
@@ -379,13 +447,14 @@ function updateVideoSelectionInspector(){
   }
   if (VideoManageHint){
     if (!selectedCount) VideoManageHint.textContent = 'Seleziona almeno una slide per attivare le azioni.';
-    else if (selectedCount === 1) VideoManageHint.textContent = `Pronto: ${active?.name || 'slide'} selezionata. Puoi rimuoverla o sostituire l’immagine.`;
-    else VideoManageHint.textContent = `${selectedCount} slide selezionate. Puoi rimuoverle tutte insieme.`;
+    else if (selectedCount === 1) VideoManageHint.textContent = `Pronto: ${active?.name || 'slide'} selezionata. Puoi rimuoverla, sostituirla oppure aggiungere nuove immagini alla timeline.`;
+    else VideoManageHint.textContent = `${selectedCount} slide selezionate. Puoi rimuoverle tutte insieme oppure aggiungere altre immagini in coda.`;
   }
   if (BtnVideoApplyTransition) BtnVideoApplyTransition.disabled = pairs.length === 0;
   if (BtnVideoRemoveTransition) BtnVideoRemoveTransition.disabled = pairs.length === 0;
   if (BtnVideoRemoveSelected) BtnVideoRemoveSelected.disabled = selectedCount === 0;
   if (BtnVideoReplaceSelected) BtnVideoReplaceSelected.disabled = selectedCount !== 1;
+  if (BtnVideoAddImages) BtnVideoAddImages.disabled = false;
 }
 function buildVideoTimelineHtml(){
   if (!videoHasSlides()) return '<div class="video-timeline-empty">Carica una cartella immagini e clicca “Avanzate” per comporre il montaggio.</div>';
@@ -595,7 +664,7 @@ function removeSelectedSlides(){
   videoEditorState.slides = videoEditorState.slides.filter(slide => !selected.has(slide.id));
   if (!videoEditorState.slides.length){
     window.pickedVideo = [];
-    TxtFolderVideo.textContent = isMobileGalleryPicker() ? 'Tocca per selezionare più immagini…' : 'Trascina qui la cartella…';
+    TxtFolderVideo.textContent = isMobileGalleryPicker() ? 'Tocca per selezionare più immagini…' : 'Trascina qui una cartella o una o più immagini…';
     BtnClearVideo?.classList.add('hidden');
     setVideoAdvancedEnabled(false);
     syncVideoUiState();
@@ -830,6 +899,14 @@ async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate}){
   const webmMime = (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) ? 'video/webm;codecs=vp9' : 'video/webm;codecs=vp8';
   return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:webmMime,bitrate}), ext:'webm' };
 }
+
+async function exportVideoBlobPreferRecorder(renderFrame, {T,fps,W,H,bitrate}){
+  const mp4Mime = supportsMp4Recorder();
+  if (mp4Mime) return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:mp4Mime,bitrate}), ext:'mp4' };
+  const webmMime = (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) ? 'video/webm;codecs=vp9' : 'video/webm;codecs=vp8';
+  if (window.MediaRecorder) return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:webmMime,bitrate}), ext:'webm' };
+  return exportVideoBlob(renderFrame, {T,fps,W,H,bitrate});
+}
 function downloadVideoBlob(blob, filename){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -851,7 +928,7 @@ async function exportVideoSlideshow(){
     const slides = videoEditorState.slides.slice();
     const items = await filesToBitmapsVideoAdvanced(slides);
     const plan = buildAdvancedTimelinePlan(slides, T);
-    blobInfo = await exportVideoBlob((tSec) => renderAdvancedAt(plan, items, W, H, tSec), {T,fps,W,H,bitrate});
+    blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderAdvancedAt(plan, items, W, H, tSec), {T,fps,W,H,bitrate});
   } else {
     const F = currentVideoFade();
     const items = await filesToBitmapsVideo(videoRecords());
@@ -868,7 +945,7 @@ if (DropAreaVideo) {
   DropAreaVideo.addEventListener('dragleave', ()=> DropAreaVideo.classList.remove('drag-over'));
   DropAreaVideo.addEventListener('drop', async (e)=>{
     DropAreaVideo.classList.remove('drag-over');
-    const all = await readDroppedDirectory(e.dataTransfer);
+    const all = await extractDroppedVideoRecords(e.dataTransfer);
     updateVideoPickedRecords(all);
   });
   DropAreaVideo.addEventListener('click', ()=>{
@@ -886,7 +963,7 @@ if (DropAreaVideo) {
   BtnClearVideo?.addEventListener('click', (e)=>{
     e.stopPropagation();
     window.pickedVideo = [];
-    TxtFolderVideo.textContent = isMobileGalleryPicker() ? 'Tocca per selezionare più immagini…' : 'Trascina qui la cartella…';
+    TxtFolderVideo.textContent = isMobileGalleryPicker() ? 'Tocca per selezionare più immagini…' : 'Trascina qui una cartella o una o più immagini…';
     BtnClearVideo.classList.add('hidden');
     revokeSlidePreviewUrls();
     videoEditorState.slides = [];
@@ -941,6 +1018,15 @@ VideoReplaceInput?.addEventListener('change', () => {
   }
   replaceSelectedSlideFile(file);
   VideoReplaceInput.value = '';
+});
+BtnVideoAddImages?.addEventListener('click', () => {
+  VideoAddImagesInput?.click();
+});
+VideoAddImagesInput?.addEventListener('change', () => {
+  const files = VideoAddImagesInput.files ? Array.from(VideoAddImagesInput.files) : [];
+  if (!files.length) return;
+  appendVideoPickedRecords(files.map(file => ({ file, relPath: file.webkitRelativePath || file.name })));
+  VideoAddImagesInput.value = '';
 });
 
 VideoTimeline?.addEventListener('click', (e) => {

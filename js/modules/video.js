@@ -13,6 +13,7 @@ const BtnVideoAdvanced   = $('#BtnVideoAdvanced');
 const BtnVideoResetOrder = $('#BtnVideoResetOrder');
 const VideoAdvancedMeta  = $('#VideoAdvancedMeta');
 const VideoAdvancedCard  = $('#VideoAdvancedCard');
+const VideoPreviewStage  = $('#VideoPreviewStage');
 const VideoPreviewFrame  = $('#VideoPreviewFrame');
 const VideoPreviewImage  = $('#VideoPreviewImage');
 const VideoPreviewEmpty  = $('#VideoPreviewEmpty');
@@ -29,6 +30,10 @@ const VidTransitionDuration = $('#VidTransitionDuration');
 const BtnVideoApplyTransition = $('#BtnVideoApplyTransition');
 const BtnVideoRemoveTransition = $('#BtnVideoRemoveTransition');
 const VideoTransitionHint = $('#VideoTransitionHint');
+const BtnVideoRemoveSelected = $('#BtnVideoRemoveSelected');
+const BtnVideoReplaceSelected = $('#BtnVideoReplaceSelected');
+const VideoManageHint = $('#VideoManageHint');
+const VideoReplaceInput = $('#VideoReplaceInput');
 
 if (!Array.isArray(window.pickedVideo)) window.pickedVideo = [];
 
@@ -40,6 +45,7 @@ const VIDEO_TRANSITION_LABELS = {
   slideright: 'Slide right',
   zoomsoft: 'Zoom soft'
 };
+const VIDEO_PREVIEW_MAX_HEIGHT = 430;
 
 const videoEditorState = {
   enabled: false,
@@ -47,6 +53,7 @@ const videoEditorState = {
   originalOrder: [],
   activeId: null,
   selectedIds: [],
+  selectionAnchorId: null,
   previewPointerId: null,
   previewDragging: false,
   previewStartX: 0,
@@ -86,18 +93,10 @@ function vUpdateSliderFill(slider){
   const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
   vPaintRangeFill(slider, pct);
 }
-function videoRecords(){
-  return Array.isArray(window.pickedVideo) ? window.pickedVideo : [];
-}
-function videoHasSlides(){
-  return Array.isArray(videoEditorState.slides) && videoEditorState.slides.length > 0;
-}
-function currentVideoTitle(){
-  return (VidTitle?.value || '').trim();
-}
-function currentVideoDuration(){
-  return Math.max(1, parseFloat(VidDuration?.value || '30') || 30);
-}
+function videoRecords(){ return Array.isArray(window.pickedVideo) ? window.pickedVideo : []; }
+function videoHasSlides(){ return Array.isArray(videoEditorState.slides) && videoEditorState.slides.length > 0; }
+function currentVideoTitle(){ return (VidTitle?.value || '').trim(); }
+function currentVideoDuration(){ return Math.max(1, parseFloat(VidDuration?.value || '30') || 30); }
 function currentVideoFade(){ return 1.0; }
 function currentVideoFps(){ return 30; }
 function currentVideoFormatLabel(){
@@ -121,7 +120,7 @@ function pickBitrate(W,H,fps){
 }
 function supportsMp4Recorder(){
   if (!('MediaRecorder' in window)) return null;
-  const c=[
+  const c = [
     'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
     'video/mp4;codecs=avc1.42E01E',
     'video/mp4'
@@ -138,30 +137,13 @@ async function supportsH264WebCodecs(){
     return test.supported ? test.config : null;
   } catch { return null; }
 }
-function videoSlideBaseDuration(slideCount, totalDuration, transitionsTotal){
-  if (!slideCount) return 0;
-  const reserve = Math.max(0, totalDuration - transitionsTotal);
-  return reserve / slideCount;
-}
-function getVideoAdvancedSummary(){
-  const total = videoEditorState.slides.length;
-  const T = currentVideoDuration();
-  const pair = getSelectedTransitionPair();
-  const plan = buildAdvancedTimelinePlan(videoEditorState.slides, T);
-  const each = total ? `${plan.still.toFixed(1)}s base` : '0 slide';
-  return { total, T, pair, each, plan };
-}
-function formatTransitionLabel(transition){
-  if (!transition || transition.type === 'none' || !(transition.duration > 0)) return 'Nessuna';
-  return `${VIDEO_TRANSITION_LABELS[transition.type] || transition.type} · ${Number(transition.duration || 0).toFixed(1)}s`;
-}
 function makeVideoSlideId(rec, idx){
   const base = String(rec?.relPath || rec?.file?.webkitRelativePath || rec?.file?.name || `slide-${idx+1}`);
   return `slide-${idx+1}-${slugify(base) || idx+1}`;
 }
-function revokeSlidePreviewUrls(){
-  for (const slide of videoEditorState.slides){
-    try { if (slide.previewUrl) URL.revokeObjectURL(slide.previewUrl); } catch {}
+function revokeSlidePreviewUrls(list = videoEditorState.slides){
+  for (const slide of list || []){
+    try { if (slide?.previewUrl) URL.revokeObjectURL(slide.previewUrl); } catch {}
   }
 }
 function buildVideoSlidesFromRecords(records){
@@ -171,7 +153,6 @@ function buildVideoSlidesFromRecords(records){
     file: rec.file,
     relPath: rec.relPath || rec.file?.webkitRelativePath || rec.file?.name,
     name: rec.file?.name || `slide-${idx+1}`,
-    orderSeed: idx,
     previewUrl: URL.createObjectURL(rec.file),
     transform: { x: 0, y: 0, scale: 1, minScale: 0.25, maxScale: 4 },
     transitionToNext: { type: 'crossfade', duration: 0.8 }
@@ -179,50 +160,7 @@ function buildVideoSlidesFromRecords(records){
   videoEditorState.originalOrder = videoEditorState.slides.map(slide => slide.id);
   videoEditorState.activeId = videoEditorState.slides[0]?.id || null;
   videoEditorState.selectedIds = videoEditorState.activeId ? [videoEditorState.activeId] : [];
-}
-function syncVideoUiState(){
-  const count = videoRecords().length;
-  vToggle(VideoAdvancedTools, count > 0);
-  if (!count){
-    videoEditorState.enabled = false;
-    BtnVideoAdvanced?.classList.remove('is-active');
-    if (BtnVideoAdvanced) BtnVideoAdvanced.textContent = 'Avanzate';
-    vHide(VideoAdvancedCard);
-    revokeSlidePreviewUrls();
-    videoEditorState.slides = [];
-    videoEditorState.originalOrder = [];
-    videoEditorState.activeId = null;
-    videoEditorState.selectedIds = [];
-    updateVideoSelectionInspector();
-    renderVideoTimeline();
-    renderVideoPreview();
-    return;
-  }
-  if (!videoHasSlides()) buildVideoSlidesFromRecords(videoRecords());
-  if (BtnVideoResetOrder) BtnVideoResetOrder.disabled = count <= 1;
-  if (VideoAdvancedMeta){
-    const info = getVideoAdvancedSummary();
-    VideoAdvancedMeta.textContent = `${info.total} slide · ${currentVideoFormatLabel()} · ${info.each}`;
-  }
-  renderVideoIfNeeded();
-}
-function renderVideoIfNeeded(){
-  if (!videoHasSlides()) return;
-  updateVideoSelectionInspector();
-  renderVideoTimeline();
-  renderVideoPreview();
-}
-function setVideoAdvancedEnabled(enabled){
-  videoEditorState.enabled = !!enabled && videoRecords().length > 0;
-  if (BtnVideoAdvanced){
-    BtnVideoAdvanced.classList.toggle('is-active', videoEditorState.enabled);
-    BtnVideoAdvanced.textContent = videoEditorState.enabled ? 'Avanzate attive' : 'Avanzate';
-  }
-  vToggle(VideoAdvancedCard, videoEditorState.enabled);
-  if (videoEditorState.enabled) {
-    if (!videoHasSlides()) buildVideoSlidesFromRecords(videoRecords());
-    renderVideoIfNeeded();
-  }
+  videoEditorState.selectionAnchorId = videoEditorState.activeId;
 }
 function sortVideoRecords(records){
   return records
@@ -248,85 +186,206 @@ function ensureActiveVideoSlide(){
     videoEditorState.activeId = null;
     return null;
   }
-  const existing = currentActiveSlide();
-  if (existing) return existing;
+  const active = currentActiveSlide();
+  if (active) return active;
   videoEditorState.activeId = videoEditorState.slides[0].id;
   return videoEditorState.slides[0];
 }
 function alignSelectedIds(){
   const existing = new Set(videoEditorState.slides.map(slide => slide.id));
   videoEditorState.selectedIds = videoEditorState.selectedIds.filter(id => existing.has(id));
+  if (videoEditorState.selectionAnchorId && !existing.has(videoEditorState.selectionAnchorId)) {
+    videoEditorState.selectionAnchorId = videoEditorState.selectedIds[0] || videoEditorState.slides[0]?.id || null;
+  }
   const active = ensureActiveVideoSlide();
   if (!videoEditorState.selectedIds.length && active) videoEditorState.selectedIds = [active.id];
 }
-function setVideoSelection(id, additive=false){
+function getSlideIndexById(id){
+  return videoEditorState.slides.findIndex(slide => slide.id === id);
+}
+function getSelectedSlideIdsOrdered(){
+  alignSelectedIds();
+  return videoEditorState.selectedIds.slice().sort((a,b) => getSlideIndexById(a) - getSlideIndexById(b));
+}
+function getRangeIds(fromId, toId){
+  const from = getSlideIndexById(fromId);
+  const to = getSlideIndexById(toId);
+  if (from < 0 || to < 0) return [toId];
+  const a = Math.min(from, to);
+  const b = Math.max(from, to);
+  return videoEditorState.slides.slice(a, b + 1).map(slide => slide.id);
+}
+function setVideoSelection(id, opts={}){
   const slide = videoEditorState.slides.find(item => item.id === id);
   if (!slide) return;
-  if (additive){
+  const mode = opts.mode || 'single';
+  if (mode === 'range'){
+    const anchor = videoEditorState.selectionAnchorId || videoEditorState.activeId || id;
+    videoEditorState.selectedIds = getRangeIds(anchor, id);
+  } else if (mode === 'toggle'){
     const has = videoEditorState.selectedIds.includes(id);
     if (has) videoEditorState.selectedIds = videoEditorState.selectedIds.filter(x => x !== id);
     else videoEditorState.selectedIds = [...videoEditorState.selectedIds, id];
     if (!videoEditorState.selectedIds.length) videoEditorState.selectedIds = [id];
+    videoEditorState.selectionAnchorId = id;
   } else {
     videoEditorState.selectedIds = [id];
+    videoEditorState.selectionAnchorId = id;
   }
   videoEditorState.activeId = id;
   alignSelectedIds();
   renderVideoIfNeeded();
 }
-function getSelectedTransitionPair(){
-  alignSelectedIds();
-  if (videoEditorState.selectedIds.length !== 2) return null;
-  const orderMap = new Map(videoEditorState.slides.map((slide, idx) => [slide.id, idx]));
-  const ordered = videoEditorState.selectedIds
-    .slice()
-    .sort((a,b) => (orderMap.get(a) || 0) - (orderMap.get(b) || 0));
-  const firstIdx = orderMap.get(ordered[0]);
-  const secondIdx = orderMap.get(ordered[1]);
-  if (firstIdx == null || secondIdx == null || secondIdx !== firstIdx + 1) return null;
-  return {
-    from: videoEditorState.slides[firstIdx],
-    to: videoEditorState.slides[secondIdx],
-    fromIndex: firstIdx,
-    toIndex: secondIdx
-  };
+function getSelectedTransitionPairs(){
+  const orderedIds = getSelectedSlideIdsOrdered();
+  if (orderedIds.length < 2) return [];
+  const idSet = new Set(orderedIds);
+  const pairs = [];
+  videoEditorState.slides.forEach((slide, idx) => {
+    if (idx >= videoEditorState.slides.length - 1) return;
+    const next = videoEditorState.slides[idx + 1];
+    if (idSet.has(slide.id) && idSet.has(next.id)) {
+      pairs.push({ from: slide, to: next, fromIndex: idx, toIndex: idx + 1 });
+    }
+  });
+  return pairs;
+}
+function formatTransitionLabel(transition){
+  if (!transition || transition.type === 'none' || !(transition.duration > 0)) return 'Nessuna';
+  return `${VIDEO_TRANSITION_LABELS[transition.type] || transition.type} · ${Number(transition.duration || 0).toFixed(1)}s`;
+}
+function buildTransitionList(slides){
+  return slides.map((slide, idx) => {
+    if (idx >= slides.length - 1) return { type:'none', duration:0 };
+    const t = slide.transitionToNext || { type:'crossfade', duration:0.8 };
+    const duration = t.type === 'none' ? 0 : Math.max(0, Number(t.duration) || 0);
+    return { type: t.type || 'crossfade', duration };
+  });
+}
+function buildAdvancedTimelinePlan(slides, totalDuration, fallbackFade=0.8){
+  const count = Math.max(0, slides?.length || 0);
+  if (!count) return { still:0, offsets:[], transitions:[], frames:0 };
+  const transitions = buildTransitionList(slides);
+  let totalTransitions = transitions.reduce((sum, item) => sum + Math.max(0, item.duration || 0), 0);
+  const minStill = 0.35;
+  const maxTransitionsTotal = Math.max(0, totalDuration - (count * minStill));
+  if (totalTransitions > maxTransitionsTotal && totalTransitions > 0){
+    const ratio = maxTransitionsTotal / totalTransitions;
+    transitions.forEach(item => { item.duration = Number((item.duration * ratio).toFixed(3)); });
+    totalTransitions = transitions.reduce((sum, item) => sum + Math.max(0, item.duration || 0), 0);
+  }
+  let still = (totalDuration - totalTransitions) / count;
+  if (!(still > 0)){
+    const safeFade = Math.max(0, Math.min(fallbackFade, totalDuration / Math.max(1, (count - 1) || 1)));
+    transitions.forEach((item, idx) => { if (idx < count - 1) item.duration = safeFade; });
+    totalTransitions = transitions.reduce((sum, item) => sum + Math.max(0, item.duration || 0), 0);
+    still = Math.max(minStill, (totalDuration - totalTransitions) / count);
+  }
+  const offsets = [0];
+  for (let i=1; i<count; i++) offsets[i] = offsets[i-1] + still + (transitions[i-1]?.duration || 0);
+  return { still, offsets, transitions, frames: Math.round(totalDuration * currentVideoFps()) };
 }
 function getTimelineClipSeconds(plan, idx){
   const transitionDur = plan?.transitions?.[idx]?.duration || 0;
   return idx < (plan.offsets.length - 1) ? plan.still + transitionDur : plan.still;
 }
+function getVideoAdvancedSummary(){
+  const total = videoEditorState.slides.length;
+  const plan = buildAdvancedTimelinePlan(videoEditorState.slides, currentVideoDuration());
+  const each = total ? `${plan.still.toFixed(1)}s base` : '0 slide';
+  return { total, each, plan };
+}
+function syncVideoUiState(){
+  const count = videoRecords().length;
+  vToggle(VideoAdvancedTools, count > 0);
+  if (!count){
+    videoEditorState.enabled = false;
+    if (BtnVideoAdvanced){
+      BtnVideoAdvanced.classList.remove('is-active');
+      BtnVideoAdvanced.textContent = 'Avanzate';
+    }
+    vHide(VideoAdvancedCard);
+    revokeSlidePreviewUrls();
+    videoEditorState.slides = [];
+    videoEditorState.originalOrder = [];
+    videoEditorState.activeId = null;
+    videoEditorState.selectedIds = [];
+    videoEditorState.selectionAnchorId = null;
+    updateVideoSelectionInspector();
+    renderVideoTimeline();
+    renderVideoPreview();
+    return;
+  }
+  if (!videoHasSlides()) buildVideoSlidesFromRecords(videoRecords());
+  if (BtnVideoResetOrder) BtnVideoResetOrder.disabled = count <= 1;
+  if (VideoAdvancedMeta){
+    const info = getVideoAdvancedSummary();
+    VideoAdvancedMeta.textContent = `${info.total} slide · ${currentVideoFormatLabel()} · ${info.each}`;
+  }
+  renderVideoIfNeeded();
+}
+function setVideoAdvancedEnabled(enabled){
+  videoEditorState.enabled = !!enabled && videoRecords().length > 0;
+  if (BtnVideoAdvanced){
+    BtnVideoAdvanced.classList.toggle('is-active', videoEditorState.enabled);
+    BtnVideoAdvanced.textContent = videoEditorState.enabled ? 'Avanzate attive' : 'Avanzate';
+  }
+  vToggle(VideoAdvancedCard, videoEditorState.enabled);
+  if (videoEditorState.enabled) {
+    if (!videoHasSlides()) buildVideoSlidesFromRecords(videoRecords());
+    renderVideoIfNeeded();
+  }
+}
 function updateVideoSelectionInspector(){
   alignSelectedIds();
   const active = currentActiveSlide();
-  const pair = getSelectedTransitionPair();
-  if (VideoSelectedName) VideoSelectedName.textContent = active?.name || 'Nessuna slide selezionata';
+  const pairs = getSelectedTransitionPairs();
+  const selectedOrdered = getSelectedSlideIdsOrdered();
+  const selectedCount = selectedOrdered.length;
+  if (VideoSelectedName) {
+    VideoSelectedName.textContent = selectedCount > 1
+      ? `${selectedCount} slide selezionate`
+      : (active?.name || 'Nessuna slide selezionata');
+  }
   if (VideoSelectedOrder) {
     if (!active) VideoSelectedOrder.textContent = '—';
-    else {
-      const idx = videoEditorState.slides.findIndex(slide => slide.id === active.id);
+    else if (selectedCount > 1) {
+      const firstIdx = getSlideIndexById(selectedOrdered[0]);
+      const lastIdx = getSlideIndexById(selectedOrdered[selectedOrdered.length - 1]);
+      VideoSelectedOrder.textContent = `Slide ${firstIdx + 1} → ${lastIdx + 1} su ${videoEditorState.slides.length}`;
+    } else {
+      const idx = getSlideIndexById(active.id);
       VideoSelectedOrder.textContent = `Slide ${idx + 1} / ${videoEditorState.slides.length}`;
     }
   }
   if (VideoSelectedTransform) {
     if (!active) VideoSelectedTransform.textContent = 'Nessuna inquadratura disponibile.';
+    else if (selectedCount > 1) VideoSelectedTransform.textContent = 'Le azioni inquadratura lavorano sulla slide attiva all’interno della selezione.';
     else VideoSelectedTransform.textContent = `Zoom ${Number(active.transform.scale || 1).toFixed(2)} · X ${Number(active.transform.x || 0).toFixed(3)} · Y ${Number(active.transform.y || 0).toFixed(3)}`;
   }
   if (VideoTimelineMeta){
-    const info = getVideoAdvancedSummary();
     const transCount = videoEditorState.slides.slice(0, -1).filter(slide => slide.transitionToNext && slide.transitionToNext.type !== 'none' && slide.transitionToNext.duration > 0).length;
-    VideoTimelineMeta.textContent = `${info.total} slide · ${currentVideoDuration()}s totali · ${transCount} transizioni attive`;
+    VideoTimelineMeta.textContent = `${videoEditorState.slides.length} slide · ${currentVideoDuration()}s totali · ${transCount} transizioni attive`;
   }
   if (VideoTransitionHint){
-    const activeTransition = active?.transitionToNext;
-    const currentLine = active && videoEditorState.slides.indexOf(active) < videoEditorState.slides.length - 1
-      ? `Transizione verso la prossima slide: ${formatTransitionLabel(activeTransition)}.`
-      : 'Ultima slide selezionata: nessuna transizione in uscita.';
-    VideoTransitionHint.textContent = pair
-      ? `Pronto: ${pair.from.name} → ${pair.to.name}. ${currentLine}`
-      : `Seleziona due slide consecutive con Ctrl/Cmd + click per aggiungere o rimuovere la transizione. ${currentLine}`;
+    const pairCount = pairs.length;
+    if (pairCount > 0) {
+      const first = pairs[0];
+      const extra = pairCount > 1 ? ` + ${pairCount - 1} collegamenti consecutivi` : '';
+      VideoTransitionHint.textContent = `Pronto: ${first.from.name} → ${first.to.name}${extra}. Le transizioni verranno applicate a tutti i passaggi consecutivi selezionati.`;
+    } else {
+      VideoTransitionHint.textContent = 'Seleziona almeno 2 slide consecutive con Shift oppure Ctrl/Cmd + click per applicare o rimuovere la transizione.';
+    }
   }
-  if (BtnVideoApplyTransition) BtnVideoApplyTransition.disabled = !pair;
-  if (BtnVideoRemoveTransition) BtnVideoRemoveTransition.disabled = !pair;
+  if (VideoManageHint){
+    if (!selectedCount) VideoManageHint.textContent = 'Seleziona almeno una slide per attivare le azioni.';
+    else if (selectedCount === 1) VideoManageHint.textContent = `Pronto: ${active?.name || 'slide'} selezionata. Puoi rimuoverla o sostituire l’immagine.`;
+    else VideoManageHint.textContent = `${selectedCount} slide selezionate. Puoi rimuoverle tutte insieme.`;
+  }
+  if (BtnVideoApplyTransition) BtnVideoApplyTransition.disabled = pairs.length === 0;
+  if (BtnVideoRemoveTransition) BtnVideoRemoveTransition.disabled = pairs.length === 0;
+  if (BtnVideoRemoveSelected) BtnVideoRemoveSelected.disabled = selectedCount === 0;
+  if (BtnVideoReplaceSelected) BtnVideoReplaceSelected.disabled = selectedCount !== 1;
 }
 function buildVideoTimelineHtml(){
   if (!videoHasSlides()) return '<div class="video-timeline-empty">Carica una cartella immagini e clicca “Avanzate” per comporre il montaggio.</div>';
@@ -336,7 +395,7 @@ function buildVideoTimelineHtml(){
     const isActive = slide.id === videoEditorState.activeId;
     const isSelected = videoEditorState.selectedIds.includes(slide.id);
     const clipSeconds = getTimelineClipSeconds(plan, idx);
-    const width = Math.max(148, Math.min(250, 110 + (clipSeconds * 26)));
+    const width = Math.max(132, Math.min(220, 96 + (clipSeconds * 22)));
     html += `
       <button type="button" class="video-timeline-item ${isActive ? 'is-active' : ''} ${isSelected ? 'is-selected' : ''}" data-video-slide-id="${vEscapeHtml(slide.id)}" draggable="true" style="flex-basis:${width}px">
         <span class="video-timeline-thumb"><img src="${slide.previewUrl}" alt="${vEscapeHtml(slide.name)}" draggable="false" /></span>
@@ -364,8 +423,25 @@ function renderVideoTimeline(){
   VideoTimeline.innerHTML = buildVideoTimelineHtml();
 }
 function updateVideoPreviewRatio(){
-  if (!VideoPreviewFrame) return;
+  if (!VideoPreviewFrame || !VideoPreviewStage) return;
   const { W, H } = pickVideoSize();
+  const ratio = W / H;
+  const stageRect = VideoPreviewStage.getBoundingClientRect();
+  const maxHeight = VIDEO_PREVIEW_MAX_HEIGHT;
+  const availableWidth = Math.max(220, Math.floor(stageRect.width || 0));
+  let width = Math.round(maxHeight * ratio);
+  let height = maxHeight;
+  if (width > availableWidth){
+    width = availableWidth;
+    height = Math.round(width / ratio);
+  }
+  if (height > maxHeight){
+    height = maxHeight;
+    width = Math.round(height * ratio);
+  }
+  VideoPreviewStage.style.height = `${maxHeight}px`;
+  VideoPreviewFrame.style.width = `${Math.max(180, width)}px`;
+  VideoPreviewFrame.style.height = `${Math.max(180, height)}px`;
   VideoPreviewFrame.style.setProperty('--video-preview-ratio', `${W} / ${H}`);
   try { VideoPreviewFrame.style.aspectRatio = `${W} / ${H}`; } catch {}
 }
@@ -410,8 +486,8 @@ function applyVideoPreviewTransform(){
   const drawScale = metrics.coverScale * slide.transform.scale;
   const drawW = Math.round(VideoPreviewImage.naturalWidth * drawScale);
   const drawH = Math.round(VideoPreviewImage.naturalHeight * drawScale);
-  const shiftX = (Number(slide.transform.x || 0) * frameW);
-  const shiftY = (Number(slide.transform.y || 0) * frameH);
+  const shiftX = Number(slide.transform.x || 0) * frameW;
+  const shiftY = Number(slide.transform.y || 0) * frameH;
   VideoPreviewImage.style.width = `${drawW}px`;
   VideoPreviewImage.style.height = `${drawH}px`;
   VideoPreviewImage.style.transform = `translate(calc(-50% + ${shiftX}px), calc(-50% + ${shiftY}px))`;
@@ -448,11 +524,17 @@ function renderVideoPreview(){
   syncActiveSlideSliderBounds();
   applyVideoPreviewTransform();
 }
-function resetVideoSlideTransform(slide, keepScale=false){
+function renderVideoIfNeeded(){
+  if (!videoHasSlides()) return;
+  updateVideoSelectionInspector();
+  renderVideoTimeline();
+  renderVideoPreview();
+}
+function resetVideoSlideTransform(slide){
   if (!slide) return;
   slide.transform.x = 0;
   slide.transform.y = 0;
-  if (!keepScale) slide.transform.scale = 1;
+  slide.transform.scale = 1;
   syncActiveSlideSliderBounds();
   applyVideoPreviewTransform();
 }
@@ -484,58 +566,67 @@ function resetVideoSlideOrder(){
   alignSelectedIds();
   renderVideoIfNeeded();
 }
-function setTransitionOnSelectedPair(type, duration){
-  const pair = getSelectedTransitionPair();
-  if (!pair) return false;
-  pair.from.transitionToNext = {
-    type: type || 'crossfade',
-    duration: Math.max(0, Number(duration) || 0.8)
-  };
-  renderVideoIfNeeded();
-  return true;
-}
-function removeTransitionOnSelectedPair(){
-  const pair = getSelectedTransitionPair();
-  if (!pair) return false;
-  pair.from.transitionToNext = { type:'none', duration:0 };
-  renderVideoIfNeeded();
-  return true;
-}
-function buildTransitionList(slides){
-  return slides.map((slide, idx) => {
-    if (idx >= slides.length - 1) return { type:'none', duration:0 };
-    const t = slide.transitionToNext || { type:'crossfade', duration:0.8 };
-    const duration = t.type === 'none' ? 0 : Math.max(0, Number(t.duration) || 0);
-    return { type: t.type || 'crossfade', duration };
+function setTransitionOnSelectedPairs(type, duration){
+  const pairs = getSelectedTransitionPairs();
+  if (!pairs.length) return false;
+  pairs.forEach(pair => {
+    pair.from.transitionToNext = {
+      type: type || 'crossfade',
+      duration: Math.max(0, Number(duration) || 0.8)
+    };
   });
+  renderVideoIfNeeded();
+  return true;
 }
-function buildAdvancedTimelinePlan(slides, totalDuration, fallbackFade=0.8){
-  const count = Math.max(0, slides?.length || 0);
-  if (!count) return { still:0, offsets:[], transitions:[], frames:0 };
-  const transitions = buildTransitionList(slides);
-  let totalTransitions = transitions.reduce((sum, item) => sum + Math.max(0, item.duration || 0), 0);
-  const minStill = 0.35;
-  const maxTransitionsTotal = Math.max(0, totalDuration - (count * minStill));
-  if (totalTransitions > maxTransitionsTotal && totalTransitions > 0){
-    const ratio = maxTransitionsTotal / totalTransitions;
-    transitions.forEach(item => { item.duration = Number((item.duration * ratio).toFixed(3)); });
-    totalTransitions = transitions.reduce((sum, item) => sum + Math.max(0, item.duration || 0), 0);
+function removeTransitionOnSelectedPairs(){
+  const pairs = getSelectedTransitionPairs();
+  if (!pairs.length) return false;
+  pairs.forEach(pair => {
+    pair.from.transitionToNext = { type:'none', duration:0 };
+  });
+  renderVideoIfNeeded();
+  return true;
+}
+function removeSelectedSlides(){
+  const selected = new Set(getSelectedSlideIdsOrdered());
+  if (!selected.size) return false;
+  const removedAll = videoEditorState.slides.filter(slide => selected.has(slide.id));
+  revokeSlidePreviewUrls(removedAll);
+  videoEditorState.slides = videoEditorState.slides.filter(slide => !selected.has(slide.id));
+  if (!videoEditorState.slides.length){
+    window.pickedVideo = [];
+    TxtFolderVideo.textContent = isMobileGalleryPicker() ? 'Tocca per selezionare più immagini…' : 'Trascina qui la cartella…';
+    BtnClearVideo?.classList.add('hidden');
+    setVideoAdvancedEnabled(false);
+    syncVideoUiState();
+    return true;
   }
-  let still = (totalDuration - totalTransitions) / count;
-  if (!(still > 0)){
-    const safeFade = Math.max(0, Math.min(fallbackFade, totalDuration / Math.max(1, (count - 1) || 1)));
-    transitions.forEach((item, idx) => { if (idx < count - 1) item.duration = safeFade; });
-    totalTransitions = transitions.reduce((sum, item) => sum + Math.max(0, item.duration || 0), 0);
-    still = Math.max(minStill, (totalDuration - totalTransitions) / count);
+  window.pickedVideo = videoEditorState.slides.map(slide => ({ file: slide.file, relPath: slide.relPath || slide.name }));
+  videoEditorState.originalOrder = videoEditorState.slides.map(slide => slide.id);
+  videoEditorState.activeId = videoEditorState.slides[Math.min(getSlideIndexById(videoEditorState.activeId), videoEditorState.slides.length - 1)]?.id || videoEditorState.slides[0].id;
+  videoEditorState.selectedIds = [videoEditorState.activeId];
+  videoEditorState.selectionAnchorId = videoEditorState.activeId;
+  TxtFolderVideo.textContent = `Selezionati ${videoEditorState.slides.length} file…`;
+  syncVideoUiState();
+  return true;
+}
+function replaceSelectedSlideFile(file){
+  const selected = getSelectedSlideIdsOrdered();
+  if (selected.length !== 1) return false;
+  const slide = videoEditorState.slides.find(item => item.id === selected[0]);
+  if (!slide) return false;
+  try { if (slide.previewUrl) URL.revokeObjectURL(slide.previewUrl); } catch {}
+  slide.file = file;
+  slide.name = file.name;
+  slide.relPath = file.webkitRelativePath || file.name;
+  slide.previewUrl = URL.createObjectURL(file);
+  slide.transform = { x: 0, y: 0, scale: 1, minScale: 0.25, maxScale: 4 };
+  const idx = videoEditorState.slides.findIndex(item => item.id === slide.id);
+  if (idx >= 0) {
+    window.pickedVideo[idx] = { file, relPath: slide.relPath };
   }
-  const offsets = [0];
-  for (let i=1; i<count; i++) offsets[i] = offsets[i-1] + still + (transitions[i-1]?.duration || 0);
-  return {
-    still,
-    offsets,
-    transitions,
-    frames: Math.round(totalDuration * currentVideoFps())
-  };
+  renderVideoIfNeeded();
+  return true;
 }
 function computeStill(T, N, F){
   let still = (T - (N - 1) * F) / N;
@@ -584,11 +675,8 @@ function drawTransitionFrame(ctx, currentItem, nextItem, transition, progress, W
   const type = transition?.type || 'crossfade';
   const p = vClamp(progress, 0, 1);
   if (type === 'fadeblack'){
-    if (p < 0.5){
-      drawTransformedOn(ctx, currentItem.bmp, currentItem, W, H, { alpha: 1 - (p * 2) });
-    } else {
-      drawTransformedOn(ctx, nextItem.bmp, nextItem, W, H, { alpha: (p - 0.5) * 2 });
-    }
+    if (p < 0.5) drawTransformedOn(ctx, currentItem.bmp, currentItem, W, H, { alpha: 1 - (p * 2) });
+    else drawTransformedOn(ctx, nextItem.bmp, nextItem, W, H, { alpha: (p - 0.5) * 2 });
     return;
   }
   if (type === 'slideleft'){
@@ -606,13 +694,14 @@ function drawTransitionFrame(ctx, currentItem, nextItem, transition, progress, W
     drawTransformedOn(ctx, nextItem.bmp, nextItem, W, H, { alpha: p, scaleMul: 1.08 - (p * 0.08) });
     return;
   }
-  drawTransformedOn(ctx, currentItem.bmp, currentItem, W, H, { alpha: 1 });
-  drawTransformedOn(ctx, nextItem.bmp, nextItem, W, H, { alpha: p });
+  drawTransformedOn(ctx, currentItem.bmp, currentItem, W, H, { alpha:1 });
+  drawTransformedOn(ctx, nextItem.bmp, nextItem, W, H, { alpha:p });
 }
 function renderSimpleAt(tl, items, W, H, tSec){
   const { still, fade, offsets } = tl;
   const ctx = VidCanvas.getContext('2d', { alpha:false });
-  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,W,H);
   let i=0;
   for (; i<items.length; i++){
     const start = offsets[i];
@@ -654,14 +743,12 @@ function renderAdvancedAt(tl, items, W, H, tSec){
 }
 async function filesToBitmapsVideo(recs){
   const arr = [];
-  for (const r of recs){ arr.push({ name:r.file.name, bmp: await loadImageBitmap(r.file) }); }
+  for (const r of recs) arr.push({ name:r.file.name, bmp: await loadImageBitmap(r.file) });
   return arr;
 }
 async function filesToBitmapsVideoAdvanced(slides){
   const arr = [];
-  for (const slide of slides){
-    arr.push({ ...slide, bmp: await loadImageBitmap(slide.file) });
-  }
+  for (const slide of slides) arr.push({ ...slide, bmp: await loadImageBitmap(slide.file) });
   return arr;
 }
 async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}){
@@ -683,13 +770,14 @@ async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}){
       const key = (chunk.type === 'key');
       const buf = new Uint8Array(chunk.byteLength); chunk.copyTo(buf);
       if (!trackId && meta?.decoderConfig?.description){
-        trackId = mp4.addTrack({ timescale: 1e6, width: W, height: H, h264: { avcDecoderConfigRecord: meta.decoderConfig.description } });
-        mp4.setSegmentOptions(trackId, segCtx, { nbSamples: 1e6 });
+        trackId = mp4.addTrack({ timescale:1e6, width:W, height:H, h264:{ avcDecoderConfigRecord: meta.decoderConfig.description } });
+        mp4.setSegmentOptions(trackId, segCtx, { nbSamples:1e6 });
         const inits = mp4.initializeSegmentation();
         inits.forEach(seg => { seg.buffer.fileStart = segCtx.nextFileStart; segCtx.nextFileStart += seg.buffer.byteLength; chunks.push(seg.buffer); });
       }
       mp4.addSample(trackId, buf.buffer, { dts:ts, cts:ts, duration:dur, is_sync:key });
-    }, error: e => console.error(e)
+    },
+    error: e => console.error(e)
   });
   encoder.configure(encConfig);
   const totalFrames = Math.round(T * fps);
@@ -785,7 +873,10 @@ if (DropAreaVideo) {
   });
   DropAreaVideo.addEventListener('click', ()=>{
     const input = document.createElement('input');
-    input.type = 'file'; input.multiple = true; input.accept = 'image/*'; if (!isMobileGalleryPicker()) { input.webkitdirectory = true; input.directory = true; }
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = 'image/*';
+    if (!isMobileGalleryPicker()) { input.webkitdirectory = true; input.directory = true; }
     input.onchange = ()=>{
       const fl = input.files ? Array.from(input.files) : [];
       updateVideoPickedRecords(fl.map(f => ({ file:f, relPath:f.webkitRelativePath || f.name })));
@@ -802,6 +893,7 @@ if (DropAreaVideo) {
     videoEditorState.originalOrder = [];
     videoEditorState.activeId = null;
     videoEditorState.selectedIds = [];
+    videoEditorState.selectionAnchorId = null;
     setVideoAdvancedEnabled(false);
     syncVideoUiState();
   });
@@ -822,30 +914,50 @@ VidSlideZoom?.addEventListener('input', () => {
   applyVideoPreviewTransform();
 });
 BtnVideoApplyTransition?.addEventListener('click', () => {
-  if (!setTransitionOnSelectedPair(VidTransitionType?.value || 'crossfade', Number(VidTransitionDuration?.value || 0.8))) {
-    alert('Seleziona due slide consecutive nella timeline per aggiungere la transizione.');
+  if (!setTransitionOnSelectedPairs(VidTransitionType?.value || 'crossfade', Number(VidTransitionDuration?.value || 0.8))) {
+    alert('Seleziona almeno due slide consecutive per aggiungere la transizione.');
   }
 });
 BtnVideoRemoveTransition?.addEventListener('click', () => {
-  if (!removeTransitionOnSelectedPair()) alert('Seleziona due slide consecutive nella timeline per rimuovere la transizione.');
+  if (!removeTransitionOnSelectedPairs()) alert('Seleziona almeno due slide consecutive per rimuovere la transizione.');
+});
+BtnVideoRemoveSelected?.addEventListener('click', () => {
+  if (!removeSelectedSlides()) alert('Seleziona almeno una slide da rimuovere.');
+});
+BtnVideoReplaceSelected?.addEventListener('click', () => {
+  if (getSelectedSlideIdsOrdered().length !== 1) {
+    alert('Per sostituire l’immagine seleziona una sola slide.');
+    return;
+  }
+  VideoReplaceInput?.click();
+});
+VideoReplaceInput?.addEventListener('change', () => {
+  const file = VideoReplaceInput.files?.[0];
+  if (!file) return;
+  if (!/\.(jpe?g|png|tif?f|webp)$/i.test(file.name || '')) {
+    alert('Formato non supportato. Seleziona JPG, PNG, TIFF o WEBP.');
+    VideoReplaceInput.value = '';
+    return;
+  }
+  replaceSelectedSlideFile(file);
+  VideoReplaceInput.value = '';
 });
 
 VideoTimeline?.addEventListener('click', (e) => {
   const item = e.target.closest('[data-video-slide-id]');
   if (!item) return;
   const id = item.dataset.videoSlideId;
-  setVideoSelection(id, e.metaKey || e.ctrlKey);
+  if (e.shiftKey) setVideoSelection(id, { mode:'range' });
+  else if (e.metaKey || e.ctrlKey) setVideoSelection(id, { mode:'toggle' });
+  else setVideoSelection(id, { mode:'single' });
 });
 VideoTimeline?.addEventListener('dragstart', (e) => {
   const item = e.target.closest('[data-video-slide-id]');
   if (!item) return;
   videoEditorState.dragSlideId = item.dataset.videoSlideId;
-  item.classList.add('is-dragging');
   try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', videoEditorState.dragSlideId || ''); } catch {}
 });
-VideoTimeline?.addEventListener('dragend', (e) => {
-  const item = e.target.closest('[data-video-slide-id]');
-  item?.classList.remove('is-dragging');
+VideoTimeline?.addEventListener('dragend', () => {
   videoEditorState.dragSlideId = null;
   Array.from(VideoTimeline.querySelectorAll('.video-timeline-item')).forEach(el => el.classList.remove('drop-before', 'drop-after'));
 });

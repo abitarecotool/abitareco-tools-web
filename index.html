@@ -17,7 +17,7 @@
  <link rel="preconnect" href="https://fonts.googleapis.com" />
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
- <link rel="stylesheet" href="./css/styles.css?v=20260622_videoadvanced1" />
+ <link rel="stylesheet" href="./css/styles.css?v=20260622_videoadvanced2" />
  <link rel="stylesheet" href="./css/modules/images.css?v=20260612_pdfcompress6" />
  <link rel="stylesheet" href="./css/modules/platform.css?v=20260526_platform7" />
  <link rel="stylesheet" href="./css/modules/cropzoom.css" />
@@ -413,7 +413,6 @@
     <h4>Editor avanzato slideshow</h4>
     <p class="muted">Preview live del formato scelto, timeline drag &amp; drop, riposizionamento immagine e transizioni tra slide consecutive.</p>
    </div>
-   <span class="video-advanced-badge">Desktop editor</span>
   </div>
   <div class="video-advanced-grid">
    <div class="video-preview-panel">
@@ -423,9 +422,8 @@
        <h5>Preview</h5>
        <p class="muted">L’anteprima segue in tempo reale il formato selezionato sopra.</p>
       </div>
-      <span class="video-panel-kicker">Drag &amp; zoom</span>
      </div>
-     <div class="video-preview-stage">
+     <div id="VideoPreviewStage" class="video-preview-stage">
       <div id="VideoPreviewFrame" class="video-preview-frame">
        <img id="VideoPreviewImage" class="video-preview-image hidden" alt="Anteprima slide selezionata" draggable="false" />
        <div id="VideoPreviewEmpty" class="video-preview-empty">Seleziona una slide dalla timeline per regolare l’inquadratura.</div>
@@ -470,7 +468,7 @@
      <div class="video-panel-head">
       <div>
        <h5>Transizioni</h5>
-       <p class="muted">Seleziona due slide consecutive nella timeline con Ctrl/Cmd + click.</p>
+       <p class="muted">Usa Shift per selezioni multiple contigue oppure Ctrl/Cmd + click per aggiungere o togliere singole slide.</p>
       </div>
      </div>
      <div class="video-transition-fields">
@@ -498,7 +496,23 @@
        <button id="BtnVideoApplyTransition" type="button" class="btn-primary">Inserisci transizione</button>
        <button id="BtnVideoRemoveTransition" type="button" class="btn-outline">Rimuovi</button>
       </div>
-      <p id="VideoTransitionHint" class="muted">Seleziona due slide consecutive con Ctrl/Cmd + click per aggiungere o rimuovere la transizione.</p>
+      <p id="VideoTransitionHint" class="muted">Seleziona almeno 2 slide consecutive con Shift oppure Ctrl/Cmd + click per applicare o rimuovere la transizione.</p>
+     </div>
+    </div>
+    <div class="video-panel-card video-manage-card">
+     <div class="video-panel-head">
+      <div>
+       <h5>Gestione slide</h5>
+       <p class="muted">Puoi rimuovere una o più slide selezionate, oppure sostituire l’immagine quando ne selezioni una sola.</p>
+      </div>
+     </div>
+     <div class="video-transition-fields">
+      <div class="video-transition-actions">
+       <button id="BtnVideoRemoveSelected" type="button" class="btn-outline">Rimuovi selezione</button>
+       <button id="BtnVideoReplaceSelected" type="button" class="btn-outline">Sostituisci immagine</button>
+      </div>
+      <p id="VideoManageHint" class="muted">Seleziona almeno una slide per attivare le azioni.</p>
+      <input id="VideoReplaceInput" type="file" accept="image/*" class="hidden" />
      </div>
     </div>
    </aside>
@@ -516,7 +530,8 @@
  </section>
  <canvas id="VidCanvas" width="1920" height="1080" hidden></canvas>
  </section>
- <!-- WATERMARK -->
+ 
+<!-- WATERMARK -->
  <section id="WatermarkCard" class="card hidden">
  <h3>Watermark</h3>
  <p class="muted" style="margin-top:6px;line-height:1.6">
@@ -965,7 +980,7 @@
   <script src="./js/modules/pdfcompress.js?v=20260612_pdfcompress6"></script>
  <script src="./js/modules/platform.js?v=20260526_platform7"></script>
  <script src="./js/modules/rename.js"></script>
- <script src="./js/modules/video.js?v=20260622_videoadvanced1"></script>
+ <script src="./js/modules/video.js?v=20260622_videoadvanced2"></script>
  <script src="./js/modules/watermark.js?v=20260615_comingsoonopts2"></script>
  <script src="./js/modules/bv.js"></script>
  <script src="./js/modules/bv_preview.js"></script>

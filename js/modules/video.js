@@ -83,6 +83,9 @@ function getFrameRenderTime(frameIndex, totalFrames, fps, T){
 function closeVideoBitmapItems(items){
   for (const item of items || []){
     try { item?.bmp?.close?.(); } catch {}
+    try {
+      if (item?.bmpZoomSoft && item.bmpZoomSoft !== item.bmp) item?.bmpZoomSoft?.close?.();
+    } catch {}
   }
 }
 function updateVideoExportProgress(doneFrames, totalFrames, label='Esportazione MP4 in corso…'){
@@ -865,6 +868,28 @@ function buildVideoExportSlides(slides){
     transitionToNext: normalizeVideoTransitionForExport(slide?.transitionToNext)
   }));
 }
+async function createZoomSoftBitmapVariant(sourceBmp, zoomFactor=1.03){
+  if (!sourceBmp) return null;
+  const iw = Number(sourceBmp.width) || 0;
+  const ih = Number(sourceBmp.height) || 0;
+  if (!(iw > 0) || !(ih > 0)) return null;
+  const factor = Math.max(1.001, Number(zoomFactor) || 1.03);
+  const sw = Math.max(1, Math.round(iw / factor));
+  const sh = Math.max(1, Math.round(ih / factor));
+  const sx = Math.max(0, Math.round((iw - sw) / 2));
+  const sy = Math.max(0, Math.round((ih - sh) / 2));
+  const canvas = (typeof OffscreenCanvas !== 'undefined')
+    ? new OffscreenCanvas(iw, ih)
+    : Object.assign(document.createElement('canvas'), { width: iw, height: ih });
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(sourceBmp, sx, sy, sw, sh, 0, 0, iw, ih);
+  if (typeof createImageBitmap === 'function') {
+    try { return await createImageBitmap(canvas); } catch {}
+  }
+  return canvas;
+}
 function drawFallbackTransformedOn(ctx, bmp, W, H, alpha=1){
   const oldAlpha = ctx.globalAlpha;
   ctx.globalAlpha = vClamp(Number(alpha), 0, 1);
@@ -959,9 +984,7 @@ function drawTransitionFrame(ctx, currentItem, nextItem, transition, progress, W
   }
   if (type === 'zoomsoft_safe' || type === 'zoomsoft'){
     drawFallbackTransformedOn(ctx, currentItem?.bmp, W, H, 1);
-    const incomingScale = 1.028 - (p * 0.028);
-    const drewIncoming = drawScaledMotionCoverOn(ctx, nextItem?.bmp, W, H, { alpha: p, scaleMul: incomingScale });
-    if (!drewIncoming) drawFallbackTransformedOn(ctx, nextItem?.bmp, W, H, p);
+    drawFallbackTransformedOn(ctx, nextItem?.bmpZoomSoft || nextItem?.bmp, W, H, p);
     return;
   }
   drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 });
@@ -1025,7 +1048,11 @@ async function filesToBitmapsVideoAdvanced(slides){
   const arr = [];
   for (const slide of slides || []){
     const bmp = await loadImageBitmap(slide.file);
-    arr.push(buildVideoExportSlide(slide, bmp));
+    const bmpZoomSoft = await createZoomSoftBitmapVariant(bmp, 1.03);
+    arr.push({
+      ...buildVideoExportSlide(slide, bmp),
+      bmpZoomSoft: bmpZoomSoft || bmp
+    });
   }
   return arr;
 }

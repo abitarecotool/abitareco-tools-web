@@ -96,6 +96,48 @@ function vShow(el){
   try { if (typeof showEl === 'function') return showEl(el); } catch {}
   el.classList.remove('hidden');
 }
+
+function getPreferredEncoderMode(mode='auto'){
+  if (mode === 'prefer-software' || mode === 'software') return 'prefer-software';
+  if (mode === 'prefer-hardware' || mode === 'hardware') return 'prefer-hardware';
+  return 'auto';
+}
+function videoAdvancedUsesComplexMotion(){
+  return videoEditorState.slides.some(slide => {
+    const type = slide?.transitionToNext?.type || 'none';
+    return type === 'zoomsoft' || type === 'slideleft' || type === 'slideright' || type === 'fadeblack';
+  });
+}
+function currentVideoEncoderPreference(){
+  if (!(videoEditorState.enabled && videoHasSlides())) return 'auto';
+  return videoAdvancedUsesComplexMotion() ? 'prefer-software' : 'auto';
+}
+function drawScaledMotionCoverOn(ctx, bmp, W, H, opts={}){
+  const iw = Number(bmp?.width) || 0;
+  const ih = Number(bmp?.height) || 0;
+  if (!(iw > 0) || !(ih > 0)) return false;
+  const coverScale = Math.max(W / iw, H / ih);
+  if (!Number.isFinite(coverScale) || !(coverScale > 0)) return false;
+  const scaleMul = Math.max(0.1, Number.isFinite(Number(opts.scaleMul)) ? Number(opts.scaleMul) : 1);
+  const moveX = Number.isFinite(Number(opts.dx)) ? Number(opts.dx) : 0;
+  const moveY = Number.isFinite(Number(opts.dy)) ? Number(opts.dy) : 0;
+  const dw = iw * coverScale * scaleMul;
+  const dh = ih * coverScale * scaleMul;
+  const x = ((W - dw) / 2) + moveX;
+  const y = ((H - dh) / 2) + moveY;
+  if (!Number.isFinite(dw) || !Number.isFinite(dh) || !Number.isFinite(x) || !Number.isFinite(y)) return false;
+  const oldAlpha = ctx.globalAlpha;
+  if (opts.alpha != null) ctx.globalAlpha = vClamp(Number(opts.alpha), 0, 1);
+  try {
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bmp, x, y, dw, dh);
+  } finally {
+    ctx.globalAlpha = oldAlpha;
+  }
+  return true;
+}
+
 function vHide(el){
   if (!el) return;
   try { if (typeof hideEl === 'function') return hideEl(el); } catch {}
@@ -159,10 +201,15 @@ function supportsMp4Recorder(){
   }
   return null;
 }
-async function supportsH264WebCodecs(W=1920, H=1080, fps=30, bitrate=12e6){
+async function supportsH264WebCodecs(W=1920, H=1080, fps=30, bitrate=12e6, encoderMode='auto'){
   if (!('VideoEncoder' in window)) return [];
   const codecCandidates = ['avc1.42E01E', 'avc1.4D401F', 'avc1.640028'];
-  const accelCandidates = ['prefer-hardware', 'prefer-software', null];
+  const mode = getPreferredEncoderMode(encoderMode);
+  const accelCandidates = mode === 'prefer-software'
+    ? ['prefer-software', null]
+    : mode === 'prefer-hardware'
+      ? ['prefer-hardware', null]
+      : ['prefer-software', null, 'prefer-hardware'];
   const supported = [];
   const seen = new Set();
   for (const codec of codecCandidates){
@@ -862,8 +909,12 @@ function drawTransitionFrame(ctx, currentItem, nextItem, transition, progress, W
     return;
   }
   if (type === 'zoomsoft'){
-    drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 - p, scaleMul: 1 + (p * 0.08) });
-    drawTransformedOn(ctx, nextItem?.bmp, nextItem, W, H, { alpha: p, scaleMul: 1.08 - (p * 0.08) });
+    const outScale = 1 + (p * 0.04);
+    const inScale = 1.04 - (p * 0.04);
+    const drewCur = drawScaledMotionCoverOn(ctx, currentItem?.bmp, W, H, { alpha: 1 - p, scaleMul: outScale });
+    const drewNext = drawScaledMotionCoverOn(ctx, nextItem?.bmp, W, H, { alpha: p, scaleMul: inScale });
+    if (!drewCur) drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 - p, scaleMul: outScale });
+    if (!drewNext) drawTransformedOn(ctx, nextItem?.bmp, nextItem, W, H, { alpha: p, scaleMul: inScale });
     return;
   }
   drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 });
@@ -931,14 +982,14 @@ async function filesToBitmapsVideoAdvanced(slides){
   }
   return arr;
 }
-async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}){
+async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto'}){
   if (!isMp4MuxerReady()) throw new Error('mp4-muxer non caricato');
   vShow(ActionProgressWrap);
   if (ActionProgress) ActionProgress.value = 0;
   if (ActionProgressLabel) ActionProgressLabel.textContent = 'Esportazione MP4 in corso…';
   VidCanvas.width = W;
   VidCanvas.height = H;
-  const cfgList = await supportsH264WebCodecs(W, H, fps, bitrate);
+  const cfgList = await supportsH264WebCodecs(W, H, fps, bitrate, encoderPreference);
   if (!cfgList.length) {
     vHide(ActionProgressWrap);
     throw new Error('H.264 WebCodecs non disponibile in questo browser');
@@ -1038,9 +1089,9 @@ async function exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime,bitr
   vHide(ActionProgressWrap);
   return new Blob(parts, { type: mime });
 }
-async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate}){
+async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto'}){
   if (window.VideoEncoder && isMp4MuxerReady()) {
-    return { blob: await exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}), ext:'mp4' };
+    return { blob: await exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,encoderPreference}), ext:'mp4' };
   }
   const mp4Mime = supportsMp4Recorder();
   if (mp4Mime) {
@@ -1049,9 +1100,9 @@ async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate}){
   throw new Error('Questo browser non supporta un export MP4 stabile. Apri il tool con Chrome o Edge desktop aggiornato.');
 }
 
-async function exportVideoBlobPreferRecorder(renderFrame, {T,fps,W,H,bitrate}){
+async function exportVideoBlobPreferRecorder(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto'}){
   try {
-    return await exportVideoBlob(renderFrame, {T,fps,W,H,bitrate});
+    return await exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference});
   } catch (err) {
     console.warn('Export MP4 non disponibile:', err);
     throw err;
@@ -1088,14 +1139,15 @@ async function exportVideoSlideshow(){
       }));
       items = await filesToBitmapsVideoAdvanced(slides);
       const plan = buildAdvancedTimelinePlan(slides, T);
+      const encoderPreference = currentVideoEncoderPreference();
       renderAdvancedAt(plan, items, W, H, 0);
-      blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderAdvancedAt(plan, items, W, H, tSec), {T,fps,W,H,bitrate});
+      blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderAdvancedAt(plan, items, W, H, tSec), {T,fps,W,H,bitrate,encoderPreference});
     } else {
       const fade = currentVideoFade();
       items = await filesToBitmapsVideo(videoRecords());
       const tl = buildTimelineVideo(items.length, T, fade, fps);
       renderSimpleAt(tl, items, W, H, 0);
-      blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderSimpleAt(tl, items, W, H, tSec), {T,fps,W,H,bitrate});
+      blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderSimpleAt(tl, items, W, H, tSec), {T,fps,W,H,bitrate,encoderPreference:'auto'});
     }
     downloadVideoBlob(blobInfo.blob, `${slugify(title)}.mp4`);
   } catch (err) {

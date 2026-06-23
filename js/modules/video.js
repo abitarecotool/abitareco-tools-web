@@ -909,6 +909,14 @@ function drawFallbackTransformedOn(ctx, bmp, W, H, alpha=1){
   drawCoverOn(ctx, bmp, W, H);
   ctx.globalAlpha = oldAlpha;
 }
+function getZoomSoftSettleSeconds(plan){
+  const still = Math.max(0, Number(plan?.still) || 0);
+  return Math.max(0.18, Math.min(0.42, still * 0.32));
+}
+function easeOutSoft01(v){
+  const p = vClamp(Number(v) || 0, 0, 1);
+  return 1 - Math.pow(1 - p, 2);
+}
 function drawCoverOn(ctx, bmp, W, H){
   const iw=bmp.width, ih=bmp.height;
   const cr=W/H, ir=iw/ih;
@@ -996,10 +1004,11 @@ function drawTransitionFrame(ctx, currentItem, nextItem, transition, progress, W
     return;
   }
   if (type === 'zoomsoft_safe' || type === 'zoomsoft'){
+    const eased = easeOutSoft01(p);
     drawFallbackTransformedOn(ctx, currentItem?.bmp, W, H, 1);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    drawFallbackTransformedOn(ctx, nextItem?.bmpZoomSoft || nextItem?.bmp, W, H, p);
+    drawFallbackTransformedOn(ctx, nextItem?.bmpZoomSoft || nextItem?.bmp, W, H, eased);
     return;
   }
   drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 });
@@ -1049,6 +1058,16 @@ function renderAdvancedAt(tl, items, W, H, tSec){
     const progress = (localT - Number(tl?.still || 0)) / Math.max(0.000001, tr.duration);
     drawTransitionFrame(ctx, cur, items[i+1], tr, progress, W, H);
     return;
+  }
+  const prevTr = i > 0 ? (tl?.transitions?.[i - 1] || { type:'none', duration:0 }) : { type:'none', duration:0 };
+  if ((prevTr.type === 'zoomsoft_safe' || prevTr.type === 'zoomsoft') && (cur?.bmpZoomSoft || cur?.bmp)) {
+    const settleSeconds = getZoomSoftSettleSeconds(tl);
+    if (localT < settleSeconds) {
+      const settleProgress = easeOutSoft01(localT / Math.max(0.000001, settleSeconds));
+      drawFallbackTransformedOn(ctx, cur.bmpZoomSoft || cur.bmp, W, H, 1);
+      drawFallbackTransformedOn(ctx, cur.bmp, W, H, settleProgress);
+      return;
+    }
   }
   if (!drawTransformedOn(ctx, cur.bmp, cur, W, H, { alpha:1 })) {
     drawCoverOn(ctx, cur.bmp, W, H);

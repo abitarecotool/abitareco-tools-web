@@ -36,6 +36,34 @@ const BtnVideoAddImages = $('#BtnVideoAddImages');
 const VideoManageHint = $('#VideoManageHint');
 const VideoReplaceInput = $('#VideoReplaceInput');
 const VideoAddImagesInput = $('#VideoAddImagesInput');
+const BtnVideoInspectorPrev = $('#BtnVideoInspectorPrev');
+const BtnVideoInspectorNext = $('#BtnVideoInspectorNext');
+const VideoInspectorTitle = $('#VideoInspectorTitle');
+const VideoInspectorSubtitle = $('#VideoInspectorSubtitle');
+const VideoInspectorCounter = $('#VideoInspectorCounter');
+const VideoInspectorPanelTransitions = $('#VideoInspectorPanelTransitions');
+const VideoInspectorPanelOverlay = $('#VideoInspectorPanelOverlay');
+const VideoInspectorPanelMusic = $('#VideoInspectorPanelMusic');
+const BtnVideoOverlayAddText = $('#BtnVideoOverlayAddText');
+const BtnVideoOverlayAddPng = $('#BtnVideoOverlayAddPng');
+const BtnVideoOverlayRemove = $('#BtnVideoOverlayRemove');
+const VidOverlayFont = $('#VidOverlayFont');
+const VidOverlayColor = $('#VidOverlayColor');
+const VidOverlayText = $('#VidOverlayText');
+const VidOverlayScale = $('#VidOverlayScale');
+const VidOverlayOpacity = $('#VidOverlayOpacity');
+const VideoOverlayHint = $('#VideoOverlayHint');
+const VideoOverlayAssetName = $('#VideoOverlayAssetName');
+const VideoOverlayPngInput = $('#VideoOverlayPngInput');
+const BtnVideoMusicAdd = $('#BtnVideoMusicAdd');
+const BtnVideoMusicRemove = $('#BtnVideoMusicRemove');
+const VidMusicVolume = $('#VidMusicVolume');
+const VidMusicLoop = $('#VidMusicLoop');
+const VidMusicFadeIn = $('#VidMusicFadeIn');
+const VidMusicFadeOut = $('#VidMusicFadeOut');
+const VideoMusicHint = $('#VideoMusicHint');
+const VideoMusicFileName = $('#VideoMusicFileName');
+const VideoMusicInput = $('#VideoMusicInput');
 
 if (!Array.isArray(window.pickedVideo)) window.pickedVideo = [];
 
@@ -61,8 +89,45 @@ const videoEditorState = {
   previewStartX: 0,
   previewStartY: 0,
   dragSlideId: null,
-  hoverInsertAfter: false
+  hoverInsertAfter: false,
+  inspectorMode: 'transitions',
+  overlayDraft: {
+    kind: 'text',
+    font: 'PPPANGAIA',
+    text: '',
+    color: '#ffffff',
+    scale: 1,
+    opacity: 100,
+    pngName: ''
+  },
+  musicDraft: {
+    fileName: '',
+    volume: 18,
+    loop: true,
+    fadeIn: true,
+    fadeOut: true
+  }
 };
+const VIDEO_INSPECTOR_MODES = [
+  {
+    key: 'transitions',
+    title: 'Transizioni',
+    subtitle: 'Usa Shift per selezioni multiple contigue oppure Ctrl/Cmd + click per aggiungere o togliere singole slide.',
+    panel: () => VideoInspectorPanelTransitions
+  },
+  {
+    key: 'overlay',
+    title: 'Gestione testi e PNG',
+    subtitle: 'Interfaccia compatta per layer grafici sopra le slide, senza toccare la logica di export già stabilizzata.',
+    panel: () => VideoInspectorPanelOverlay
+  },
+  {
+    key: 'music',
+    title: 'Gestione musica background',
+    subtitle: 'Prepariamo una regia audio soft e ordinata dentro lo stesso box, mantenendo invariata l’altezza della colonna destra.',
+    panel: () => VideoInspectorPanelMusic
+  }
+];
 
 const VIDEO_EXPORT_KEYFRAME_SECONDS = 2;
 function isMp4MuxerReady(){
@@ -190,6 +255,70 @@ function vUpdateSliderFill(slider){
   const val = Number(slider.value) || min;
   const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
   vPaintRangeFill(slider, pct);
+}
+function getVideoInspectorModeIndex(){
+  const idx = VIDEO_INSPECTOR_MODES.findIndex(item => item.key === videoEditorState.inspectorMode);
+  return idx >= 0 ? idx : 0;
+}
+function setVideoInspectorMode(modeKey){
+  const mode = VIDEO_INSPECTOR_MODES.find(item => item.key === modeKey) || VIDEO_INSPECTOR_MODES[0];
+  videoEditorState.inspectorMode = mode.key;
+  VIDEO_INSPECTOR_MODES.forEach((item, idx) => {
+    const panel = item.panel?.();
+    panel?.classList.toggle('hidden', item.key !== mode.key);
+    if (item.key === mode.key && VideoInspectorCounter) {
+      VideoInspectorCounter.textContent = `${idx + 1} / ${VIDEO_INSPECTOR_MODES.length}`;
+    }
+  });
+  if (VideoInspectorTitle) VideoInspectorTitle.textContent = mode.title;
+  if (VideoInspectorSubtitle) VideoInspectorSubtitle.textContent = mode.subtitle;
+}
+function cycleVideoInspectorMode(step){
+  const currentIdx = getVideoInspectorModeIndex();
+  const nextIdx = (currentIdx + step + VIDEO_INSPECTOR_MODES.length) % VIDEO_INSPECTOR_MODES.length;
+  setVideoInspectorMode(VIDEO_INSPECTOR_MODES[nextIdx].key);
+}
+function syncVideoPhaseOneUi(){
+  if (VidOverlayFont) VidOverlayFont.value = videoEditorState.overlayDraft.font;
+  if (VidOverlayColor) VidOverlayColor.value = videoEditorState.overlayDraft.color;
+  if (VidOverlayText) VidOverlayText.value = videoEditorState.overlayDraft.text;
+  if (VidOverlayScale) {
+    VidOverlayScale.value = String(videoEditorState.overlayDraft.scale);
+    vUpdateSliderFill(VidOverlayScale);
+  }
+  if (VidOverlayOpacity) {
+    VidOverlayOpacity.value = String(videoEditorState.overlayDraft.opacity);
+    vUpdateSliderFill(VidOverlayOpacity);
+  }
+  if (VideoOverlayAssetName) {
+    VideoOverlayAssetName.textContent = videoEditorState.overlayDraft.pngName
+      ? `PNG pronto: ${videoEditorState.overlayDraft.pngName}`
+      : 'Nessun PNG selezionato.';
+  }
+  if (VideoOverlayHint) {
+    const textState = videoEditorState.overlayDraft.text?.trim()
+      ? `Testo pronto: “${videoEditorState.overlayDraft.text.trim()}”.`
+      : 'Aggiungi un testo o un PNG per iniziare a costruire il livello overlay.';
+    VideoOverlayHint.textContent = `${textState} Fase 1 UI: il layout è pronto e nella fase successiva collegheremo drag, posizionamento e export dei layer.`;
+  }
+  if (VidMusicVolume) {
+    VidMusicVolume.value = String(videoEditorState.musicDraft.volume);
+    vUpdateSliderFill(VidMusicVolume);
+  }
+  if (VidMusicLoop) VidMusicLoop.checked = !!videoEditorState.musicDraft.loop;
+  if (VidMusicFadeIn) VidMusicFadeIn.checked = !!videoEditorState.musicDraft.fadeIn;
+  if (VidMusicFadeOut) VidMusicFadeOut.checked = !!videoEditorState.musicDraft.fadeOut;
+  if (VideoMusicFileName) {
+    VideoMusicFileName.textContent = videoEditorState.musicDraft.fileName
+      ? `Traccia pronta: ${videoEditorState.musicDraft.fileName}`
+      : 'Nessun file musicale selezionato.';
+  }
+  if (VideoMusicHint) {
+    const label = videoEditorState.musicDraft.fileName
+      ? `Musica pronta con volume ${videoEditorState.musicDraft.volume}%.`
+      : 'Puoi già impostare volume, loop e fade per la futura traccia background.';
+    VideoMusicHint.textContent = `${label} Fase 1 UI: non stiamo ancora toccando il motore export che ora funziona alla grande.`;
+  }
 }
 function videoRecords(){ return Array.isArray(window.pickedVideo) ? window.pickedVideo : []; }
 function videoHasSlides(){ return Array.isArray(videoEditorState.slides) && videoEditorState.slides.length > 0; }
@@ -522,6 +651,8 @@ function syncVideoUiState(){
     updateVideoSelectionInspector();
     renderVideoTimeline();
     renderVideoPreview();
+    setVideoInspectorMode('transitions');
+    syncVideoPhaseOneUi();
     return;
   }
   if (!videoHasSlides()) buildVideoSlidesFromRecords(videoRecords());
@@ -530,6 +661,7 @@ function syncVideoUiState(){
     const info = getVideoAdvancedSummary();
     VideoAdvancedMeta.textContent = `${info.total} slide · ${currentVideoFormatLabel()} · ${info.each}`;
   }
+  syncVideoPhaseOneUi();
   renderVideoIfNeeded();
 }
 function setVideoAdvancedEnabled(enabled){
@@ -541,6 +673,8 @@ function setVideoAdvancedEnabled(enabled){
   vToggle(VideoAdvancedCard, videoEditorState.enabled);
   if (videoEditorState.enabled) {
     if (!videoHasSlides()) buildVideoSlidesFromRecords(videoRecords());
+    setVideoInspectorMode(videoEditorState.inspectorMode || 'transitions');
+    syncVideoPhaseOneUi();
     renderVideoIfNeeded();
   }
 }
@@ -1338,6 +1472,83 @@ BtnVideoAdvanced?.addEventListener('click', () => {
   if (!videoRecords().length) return;
   setVideoAdvancedEnabled(!videoEditorState.enabled);
 });
+BtnVideoInspectorPrev?.addEventListener('click', () => cycleVideoInspectorMode(-1));
+BtnVideoInspectorNext?.addEventListener('click', () => cycleVideoInspectorMode(1));
+BtnVideoOverlayAddText?.addEventListener('click', () => {
+  videoEditorState.overlayDraft.kind = 'text';
+  if (!videoEditorState.overlayDraft.text) videoEditorState.overlayDraft.text = 'Nuovo testo overlay';
+  setVideoInspectorMode('overlay');
+  syncVideoPhaseOneUi();
+});
+BtnVideoOverlayAddPng?.addEventListener('click', () => {
+  videoEditorState.overlayDraft.kind = 'png';
+  VideoOverlayPngInput?.click();
+});
+BtnVideoOverlayRemove?.addEventListener('click', () => {
+  videoEditorState.overlayDraft = { kind:'text', font:'PPPANGAIA', text:'', color:'#ffffff', scale:1, opacity:100, pngName:'' };
+  syncVideoPhaseOneUi();
+});
+VideoOverlayPngInput?.addEventListener('change', () => {
+  const file = VideoOverlayPngInput.files?.[0];
+  if (!file) return;
+  videoEditorState.overlayDraft.kind = 'png';
+  videoEditorState.overlayDraft.pngName = file.name;
+  syncVideoPhaseOneUi();
+  VideoOverlayPngInput.value = '';
+});
+VidOverlayFont?.addEventListener('change', () => {
+  videoEditorState.overlayDraft.font = VidOverlayFont.value || 'PPPANGAIA';
+  syncVideoPhaseOneUi();
+});
+VidOverlayColor?.addEventListener('input', () => {
+  videoEditorState.overlayDraft.color = VidOverlayColor.value || '#ffffff';
+  syncVideoPhaseOneUi();
+});
+VidOverlayText?.addEventListener('input', () => {
+  videoEditorState.overlayDraft.text = VidOverlayText.value || '';
+  syncVideoPhaseOneUi();
+});
+VidOverlayScale?.addEventListener('input', () => {
+  videoEditorState.overlayDraft.scale = Number(VidOverlayScale.value || 1);
+  vUpdateSliderFill(VidOverlayScale);
+  syncVideoPhaseOneUi();
+});
+VidOverlayOpacity?.addEventListener('input', () => {
+  videoEditorState.overlayDraft.opacity = Number(VidOverlayOpacity.value || 100);
+  vUpdateSliderFill(VidOverlayOpacity);
+  syncVideoPhaseOneUi();
+});
+BtnVideoMusicAdd?.addEventListener('click', () => {
+  VideoMusicInput?.click();
+});
+BtnVideoMusicRemove?.addEventListener('click', () => {
+  videoEditorState.musicDraft.fileName = '';
+  syncVideoPhaseOneUi();
+});
+VideoMusicInput?.addEventListener('change', () => {
+  const file = VideoMusicInput.files?.[0];
+  if (!file) return;
+  videoEditorState.musicDraft.fileName = file.name;
+  syncVideoPhaseOneUi();
+  VideoMusicInput.value = '';
+});
+VidMusicVolume?.addEventListener('input', () => {
+  videoEditorState.musicDraft.volume = Number(VidMusicVolume.value || 18);
+  vUpdateSliderFill(VidMusicVolume);
+  syncVideoPhaseOneUi();
+});
+VidMusicLoop?.addEventListener('change', () => {
+  videoEditorState.musicDraft.loop = !!VidMusicLoop.checked;
+  syncVideoPhaseOneUi();
+});
+VidMusicFadeIn?.addEventListener('change', () => {
+  videoEditorState.musicDraft.fadeIn = !!VidMusicFadeIn.checked;
+  syncVideoPhaseOneUi();
+});
+VidMusicFadeOut?.addEventListener('change', () => {
+  videoEditorState.musicDraft.fadeOut = !!VidMusicFadeOut.checked;
+  syncVideoPhaseOneUi();
+});
 BtnVideoResetOrder?.addEventListener('click', resetVideoSlideOrder);
 BtnVideoResetFrame?.addEventListener('click', () => resetVideoSlideTransform(currentActiveSlide()));
 BtnVideoCenterFrame?.addEventListener('click', () => centerVideoSlideTransform(currentActiveSlide()));
@@ -1474,5 +1685,10 @@ window.addEventListener('resize', () => {
 });
 
 try { vUpdateSliderFill(VidSlideZoom); } catch {}
+try { vUpdateSliderFill(VidOverlayScale); } catch {}
+try { vUpdateSliderFill(VidOverlayOpacity); } catch {}
+try { vUpdateSliderFill(VidMusicVolume); } catch {}
+try { setVideoInspectorMode('transitions'); } catch {}
+try { syncVideoPhaseOneUi(); } catch {}
 try { syncVideoUiState(); } catch {}
 window.exportVideoSlideshow = exportVideoSlideshow;

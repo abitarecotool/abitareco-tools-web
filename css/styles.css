@@ -1518,3 +1518,26 @@ input#VidSlideZoom.input{
 .video-manage-card .muted{ margin-top:8px; line-height:1.55; }
 .video-transition-card .video-transition-actions{ margin-bottom:12px; }
 .video-transition-card .muted{ margin-top:6px; line-height:1.55; }
+.video-inspector-carousel-card{ min-height:382px; height:382px; display:flex; flex-direction:column; overflow:hidden; }
+.video-panel-head--carousel{ flex-shrink:0; }
+.video-panel-headline-row{ display:flex; align-items:center; gap:10px; }
+.video-panel-headline-row h5{ margin:0; }
+.video-inspector-nav{ width:34px; height:34px; border-radius:999px; border:1px solid var(--gray-300); background:var(--white); color:var(--red); font:800 16px/1 var(--font); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:border-color .15s, background .15s, transform .15s; }
+.video-inspector-nav:hover{ border-color:var(--red); background:var(--pink-bg); transform:translateY(-1px); }
+.video-inspector-carousel-body{ position:relative; flex:1; min-height:0; margin-top:14px; }
+.video-inspector-panel-view{ position:absolute; inset:0; overflow:auto; padding-right:4px; }
+.video-transition-fields--compact{ margin-top:0; }
+.video-compact-grid{ display:grid; grid-template-columns:1fr 110px; gap:12px; }
+.video-compact-grid--overlay .form-group{ margin-bottom:12px; }
+.video-color-input{ padding:4px 6px !important; min-height:41px; }
+.video-slider-group--compact{ min-width:0; margin-bottom:12px; }
+.video-slider-group--compact label{ margin-bottom:8px; }
+.video-slider-group--compact input[type='range']{ margin-bottom:0; }
+.video-transition-actions--triple .btn-primary,
+.video-transition-actions--triple .btn-outline{ flex:1 1 0; min-width:0; }
+.video-overlay-fields .form-group{ margin-bottom:12px; }
+.video-inline-meta{ min-height:20px; margin-top:2px !important; }
+.video-compact-checks{ display:flex; flex-direction:column; gap:10px; margin:2px 0 12px; }
+.video-compact-checks label{ display:flex; align-items:center; gap:8px; font-weight:500; margin-bottom:0; }
+@media (max-width: 1380px){ .video-inspector-carousel-card{ min-height:396px; height:396px; } }
+@media (max-width: 760px){ .video-compact-grid{ grid-template-columns:1fr; } .video-transition-actions--triple{ flex-direction:column; } }

@@ -17,7 +17,7 @@
  <link rel="preconnect" href="https://fonts.googleapis.com" />
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
- <link rel="stylesheet" href="./css/styles.css?v=20260623_videofix2" />
+ <link rel="stylesheet" href="./css/styles.css?v=20260623_slideshowpro1" />
  <link rel="stylesheet" href="./css/modules/images.css?v=20260612_pdfcompress6" />
  <link rel="stylesheet" href="./css/modules/platform.css?v=20260526_platform7" />
  <link rel="stylesheet" href="./css/modules/cropzoom.css" />
@@ -442,39 +442,106 @@
     </div>
    </div>
    <aside class="video-inspector-panel">
-    <div class="video-panel-card video-transition-card">
-     <div class="video-panel-head">
+    <div class="video-panel-card video-transition-card video-inspector-carousel-card">
+     <div class="video-panel-head video-panel-head--carousel">
       <div>
-       <h5>Transizioni</h5>
-       <p class="muted">Usa Shift per selezioni multiple contigue oppure Ctrl/Cmd + click per aggiungere o togliere singole slide.</p>
+       <div class="video-panel-headline-row">
+        <button id="BtnVideoInspectorPrev" type="button" class="video-inspector-nav" aria-label="Scheda precedente">←</button>
+        <h5 id="VideoInspectorTitle">Transizioni</h5>
+        <button id="BtnVideoInspectorNext" type="button" class="video-inspector-nav" aria-label="Scheda successiva">→</button>
+       </div>
+       <p id="VideoInspectorSubtitle" class="muted">Usa Shift per selezioni multiple contigue oppure Ctrl/Cmd + click per aggiungere o togliere singole slide.</p>
       </div>
+      <span id="VideoInspectorCounter" class="video-panel-kicker">1 / 3</span>
      </div>
-     <div class="video-transition-fields">
-      <div class="form-group">
-       <label for="VidTransitionType">Tipo transizione</label>
-       <select id="VidTransitionType" class="input" style="height:41px">
-        <option value="crossfade" selected>Dissolvenza</option>
-        <option value="fadeblack">Fade to black</option>
-        <option value="slideleft">Slide left</option>
-        <option value="slideright">Slide right</option>
-        <option value="zoomsoft">Zoom soft</option>
-       </select>
-      </div>
-      <div class="form-group">
-       <label for="VidTransitionDuration">Durata</label>
-       <select id="VidTransitionDuration" class="input" style="height:41px">
-        <option value="0.4">0.4 sec</option>
-        <option value="0.6">0.6 sec</option>
-        <option value="0.8" selected>0.8 sec</option>
-        <option value="1.0">1.0 sec</option>
-        <option value="1.2">1.2 sec</option>
-       </select>
-      </div>
-      <div class="video-transition-actions">
-       <button id="BtnVideoApplyTransition" type="button" class="btn-primary">Inserisci transizione</button>
-       <button id="BtnVideoRemoveTransition" type="button" class="btn-outline">Rimuovi</button>
-      </div>
-      <p id="VideoTransitionHint" class="muted">Seleziona almeno 2 slide consecutive con Shift oppure Ctrl/Cmd + click per applicare o rimuovere la transizione.</p>
+     <div class="video-inspector-carousel-body">
+      <section id="VideoInspectorPanelTransitions" class="video-inspector-panel-view">
+       <div class="video-transition-fields video-transition-fields--compact">
+        <div class="form-group">
+         <label for="VidTransitionType">Tipo transizione</label>
+         <select id="VidTransitionType" class="input" style="height:41px">
+          <option value="crossfade" selected>Dissolvenza</option>
+          <option value="fadeblack">Fade to black</option>
+          <option value="slideleft">Slide left</option>
+          <option value="slideright">Slide right</option>
+          <option value="zoomsoft">Zoom soft</option>
+         </select>
+        </div>
+        <div class="form-group">
+         <label for="VidTransitionDuration">Durata</label>
+         <select id="VidTransitionDuration" class="input" style="height:41px">
+          <option value="0.4">0.4 sec</option>
+          <option value="0.6">0.6 sec</option>
+          <option value="0.8" selected>0.8 sec</option>
+          <option value="1.0">1.0 sec</option>
+          <option value="1.2">1.2 sec</option>
+         </select>
+        </div>
+        <div class="video-transition-actions">
+         <button id="BtnVideoApplyTransition" type="button" class="btn-primary">Inserisci transizione</button>
+         <button id="BtnVideoRemoveTransition" type="button" class="btn-outline">Rimuovi</button>
+        </div>
+        <p id="VideoTransitionHint" class="muted">Seleziona almeno 2 slide consecutive con Shift oppure Ctrl/Cmd + click per applicare o rimuovere la transizione.</p>
+       </div>
+      </section>
+      <section id="VideoInspectorPanelOverlay" class="video-inspector-panel-view hidden">
+       <div class="video-transition-fields video-transition-fields--compact video-overlay-fields">
+        <div class="video-transition-actions video-transition-actions--triple">
+         <button id="BtnVideoOverlayAddText" type="button" class="btn-primary">Inserisci testo</button>
+         <button id="BtnVideoOverlayAddPng" type="button" class="btn-outline">Inserisci PNG</button>
+         <button id="BtnVideoOverlayRemove" type="button" class="btn-outline">Rimuovi</button>
+        </div>
+        <div class="video-compact-grid video-compact-grid--overlay">
+         <div class="form-group">
+          <label for="VidOverlayFont">Font</label>
+          <select id="VidOverlayFont" class="input" style="height:41px">
+           <option value="PPPANGAIA" selected>PPPangaia</option>
+           <option value="CIRCULAR">Circular Std</option>
+           <option value="MANROPE">Manrope</option>
+          </select>
+         </div>
+         <div class="form-group">
+          <label for="VidOverlayColor">Colore testo</label>
+          <input id="VidOverlayColor" class="input video-color-input" type="color" value="#ffffff" />
+         </div>
+        </div>
+        <div class="form-group">
+         <label for="VidOverlayText">Contenuto testo</label>
+         <input id="VidOverlayText" class="input" type="text" placeholder="Titolo, claim o label" />
+        </div>
+        <div class="video-slider-group video-slider-group--compact">
+         <label for="VidOverlayScale">Scala elemento</label>
+         <input id="VidOverlayScale" class="input" type="range" min="0.4" max="2.4" step="0.01" value="1" />
+        </div>
+        <div class="video-slider-group video-slider-group--compact">
+         <label for="VidOverlayOpacity">Opacità</label>
+         <input id="VidOverlayOpacity" class="input" type="range" min="10" max="100" step="1" value="100" />
+        </div>
+        <p id="VideoOverlayHint" class="muted">Fase 1 UI: qui prepariamo la gestione di testi e PNG. Nella preview abbiamo già il layout pronto e nella fase successiva collegheremo posizionamento e export dei layer.</p>
+        <p id="VideoOverlayAssetName" class="video-inline-meta muted">Nessun PNG selezionato.</p>
+        <input id="VideoOverlayPngInput" type="file" accept="image/png" class="hidden" />
+       </div>
+      </section>
+      <section id="VideoInspectorPanelMusic" class="video-inspector-panel-view hidden">
+       <div class="video-transition-fields video-transition-fields--compact video-overlay-fields">
+        <div class="video-transition-actions">
+         <button id="BtnVideoMusicAdd" type="button" class="btn-primary">Inserisci musica</button>
+         <button id="BtnVideoMusicRemove" type="button" class="btn-outline">Rimuovi</button>
+        </div>
+        <div class="video-slider-group video-slider-group--compact">
+         <label for="VidMusicVolume">Volume background</label>
+         <input id="VidMusicVolume" class="input" type="range" min="0" max="100" step="1" value="18" />
+        </div>
+        <div class="video-compact-checks">
+         <label><input id="VidMusicLoop" type="checkbox" checked /> <span>Loop automatico</span></label>
+         <label><input id="VidMusicFadeIn" type="checkbox" checked /> <span>Fade in soft</span></label>
+         <label><input id="VidMusicFadeOut" type="checkbox" checked /> <span>Fade out finale</span></label>
+        </div>
+        <p id="VideoMusicHint" class="muted">Fase 1 UI: predisposizione della traccia audio background senza toccare la pipeline export che ora funziona. Nella fase successiva collegheremo mix audio e volume finale.</p>
+        <p id="VideoMusicFileName" class="video-inline-meta muted">Nessun file musicale selezionato.</p>
+        <input id="VideoMusicInput" type="file" accept="audio/*" class="hidden" />
+       </div>
+      </section>
      </div>
     </div>
     <div class="video-panel-card video-manage-card">
@@ -961,7 +1028,7 @@
   <script src="./js/modules/pdfcompress.js?v=20260612_pdfcompress6"></script>
  <script src="./js/modules/platform.js?v=20260526_platform7"></script>
  <script src="./js/modules/rename.js"></script>
- <script src="./js/modules/video.js?v=20260623_videofix15"></script>
+ <script src="./js/modules/video.js?v=20260623_slideshowpro1"></script>
  <script src="./js/modules/watermark.js?v=20260615_comingsoonopts2"></script>
  <script src="./js/modules/bv.js"></script>
  <script src="./js/modules/bv_preview.js"></script>

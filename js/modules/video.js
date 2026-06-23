@@ -112,6 +112,29 @@ function currentVideoEncoderPreference(){
   if (!(videoEditorState.enabled && videoHasSlides())) return 'auto';
   return videoAdvancedUsesComplexMotion() ? 'prefer-software' : 'auto';
 }
+function videoAdvancedRequiresRecorderFallback(){
+  if (!(videoEditorState.enabled && videoHasSlides())) return false;
+  return videoEditorState.slides.some(slide => {
+    const type = slide?.transitionToNext?.type || 'none';
+    return type === 'zoomsoft' || type === 'fadeblack';
+  });
+}
+function videoAdvancedHasMotionTransitions(){
+  if (!(videoEditorState.enabled && videoHasSlides())) return false;
+  return videoEditorState.slides.some(slide => {
+    const type = slide?.transitionToNext?.type || 'none';
+    return type === 'zoomsoft' || type === 'fadeblack' || type === 'slideleft' || type === 'slideright';
+  });
+}
+function withVideoExportTimeout(promise, ms, label='Esportazione video'){
+  return new Promise((resolve, reject) => {
+    const timerId = setTimeout(() => reject(new Error(`${label} non completata entro il tempo previsto.`)), ms);
+    promise.then(
+      value => { clearTimeout(timerId); resolve(value); },
+      err => { clearTimeout(timerId); reject(err); }
+    );
+  });
+}
 function drawScaledMotionCoverOn(ctx, bmp, W, H, opts={}){
   const iw = Number(bmp?.width) || 0;
   const ih = Number(bmp?.height) || 0;
@@ -1089,20 +1112,30 @@ async function exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime,bitr
   vHide(ActionProgressWrap);
   return new Blob(parts, { type: mime });
 }
-async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto'}){
-  if (window.VideoEncoder && isMp4MuxerReady()) {
-    return { blob: await exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,encoderPreference}), ext:'mp4' };
-  }
+async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto',forceRecorder=false}){
   const mp4Mime = supportsMp4Recorder();
+  if (forceRecorder) {
+    if (mp4Mime) {
+      return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:mp4Mime,bitrate}), ext:'mp4' };
+    }
+    throw new Error('Questo browser non supporta il fallback MP4 richiesto per questa transizione. Apri il tool con Chrome o Edge desktop aggiornato.');
+  }
+  if (window.VideoEncoder && isMp4MuxerReady()) {
+    const webCodecsTask = exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,encoderPreference});
+    return {
+      blob: await withVideoExportTimeout(webCodecsTask, Math.max(90000, Math.round(T * 6000)), 'Esportazione MP4'),
+      ext:'mp4'
+    };
+  }
   if (mp4Mime) {
     return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:mp4Mime,bitrate}), ext:'mp4' };
   }
   throw new Error('Questo browser non supporta un export MP4 stabile. Apri il tool con Chrome o Edge desktop aggiornato.');
 }
 
-async function exportVideoBlobPreferRecorder(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto'}){
+async function exportVideoBlobPreferRecorder(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto',forceRecorder=false}){
   try {
-    return await exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference});
+    return await exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference,forceRecorder});
   } catch (err) {
     console.warn('Export MP4 non disponibile:', err);
     throw err;
@@ -1139,15 +1172,23 @@ async function exportVideoSlideshow(){
       }));
       items = await filesToBitmapsVideoAdvanced(slides);
       const plan = buildAdvancedTimelinePlan(slides, T);
-      const encoderPreference = currentVideoEncoderPreference();
+      const hasMotion = videoAdvancedHasMotionTransitions();
+      const forceRecorder = videoAdvancedRequiresRecorderFallback();
+      const encoderPreference = hasMotion ? currentVideoEncoderPreference() : 'auto';
       renderAdvancedAt(plan, items, W, H, 0);
-      blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderAdvancedAt(plan, items, W, H, tSec), {T,fps,W,H,bitrate,encoderPreference});
+      blobInfo = await exportVideoBlobPreferRecorder(
+        (tSec) => renderAdvancedAt(plan, items, W, H, tSec),
+        { T, fps, W, H, bitrate, encoderPreference, forceRecorder }
+      );
     } else {
       const fade = currentVideoFade();
       items = await filesToBitmapsVideo(videoRecords());
       const tl = buildTimelineVideo(items.length, T, fade, fps);
       renderSimpleAt(tl, items, W, H, 0);
-      blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderSimpleAt(tl, items, W, H, tSec), {T,fps,W,H,bitrate,encoderPreference:'auto'});
+      blobInfo = await exportVideoBlobPreferRecorder(
+        (tSec) => renderSimpleAt(tl, items, W, H, tSec),
+        { T, fps, W, H, bitrate, encoderPreference:'auto', forceRecorder:false }
+      );
     }
     downloadVideoBlob(blobInfo.blob, `${slugify(title)}.mp4`);
   } catch (err) {

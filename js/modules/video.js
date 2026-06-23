@@ -854,7 +854,7 @@ function buildVideoExportSlide(slide, bmp){
 function normalizeVideoTransitionForExport(transition){
   const type = transition?.type || 'none';
   const duration = Math.max(0, Number(transition?.duration) || 0);
-  if (type === 'zoomsoft') return { type:'crossfade_safe', duration };
+  if (type === 'zoomsoft') return { type:'zoomsoft_safe', duration };
   if (type === 'fadeblack') return { type:'fadeblack_safe', duration };
   return { type, duration };
 }
@@ -959,7 +959,9 @@ function drawTransitionFrame(ctx, currentItem, nextItem, transition, progress, W
   }
   if (type === 'zoomsoft_safe' || type === 'zoomsoft'){
     drawFallbackTransformedOn(ctx, currentItem?.bmp, W, H, 1);
-    drawFallbackTransformedOn(ctx, nextItem?.bmp, W, H, p);
+    const incomingScale = 1.028 - (p * 0.028);
+    const drewIncoming = drawScaledMotionCoverOn(ctx, nextItem?.bmp, W, H, { alpha: p, scaleMul: incomingScale });
+    if (!drewIncoming) drawFallbackTransformedOn(ctx, nextItem?.bmp, W, H, p);
     return;
   }
   drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 });

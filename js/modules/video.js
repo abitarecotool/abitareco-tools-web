@@ -64,6 +64,33 @@ const videoEditorState = {
   hoverInsertAfter: false
 };
 
+const VIDEO_EXPORT_KEYFRAME_SECONDS = 2;
+function isMp4MuxerReady(){
+  return !!(window.Mp4Muxer?.Muxer && window.Mp4Muxer?.ArrayBufferTarget);
+}
+function getStableExportFrameCount(T, fps){
+  return Math.max(1, Math.round(Math.max(0.001, Number(T) || 0) * Math.max(1, Number(fps) || 1)));
+}
+function getFrameDurationUs(fps){
+  return Math.max(1, Math.round(1e6 / Math.max(1, Number(fps) || 1)));
+}
+function getFrameRenderTime(frameIndex, totalFrames, fps, T){
+  if (totalFrames <= 1) return 0;
+  const frameSeconds = frameIndex / Math.max(1, fps || 1);
+  const lastRenderable = Math.max(0, (Number(T) || 0) - (0.5 / Math.max(1, fps || 1)));
+  return Math.min(frameSeconds, lastRenderable);
+}
+function closeVideoBitmapItems(items){
+  for (const item of items || []){
+    try { item?.bmp?.close?.(); } catch {}
+  }
+}
+function updateVideoExportProgress(doneFrames, totalFrames, label='Esportazione MP4 in corso…'){
+  if (ActionProgressLabel) ActionProgressLabel.textContent = label;
+  if (ActionProgress) ActionProgress.value = Math.max(0, Math.min(100, Math.round((doneFrames / Math.max(1, totalFrames)) * 100)));
+}
+
+
 function vShow(el){
   if (!el) return;
   try { if (typeof showEl === 'function') return showEl(el); } catch {}
@@ -137,17 +164,29 @@ async function supportsH264WebCodecs(W=1920, H=1080, fps=30, bitrate=12e6){
   const codecCandidates = ['avc1.42E01E', 'avc1.4D401F', 'avc1.640028'];
   const accelCandidates = ['prefer-hardware', 'prefer-software', null];
   const supported = [];
+  const seen = new Set();
   for (const codec of codecCandidates){
     for (const accel of accelCandidates){
-      const cfg = { codec, width:W, height:H, framerate:fps, bitrate, bitrateMode:'constant', avc:{ format:'annexb' } };
+      const cfg = {
+        codec,
+        width: W,
+        height: H,
+        framerate: fps,
+        bitrate,
+        bitrateMode: 'constant',
+        avc: { format: 'avc' }
+      };
       if (accel) cfg.hardwareAcceleration = accel;
       try {
-        if (typeof VideoEncoder.isConfigSupported === 'function') {
-          const test = await VideoEncoder.isConfigSupported(cfg);
-          if (test?.supported) supported.push(test.config || cfg);
-        } else {
-          supported.push(cfg);
-        }
+        const test = (typeof VideoEncoder.isConfigSupported === 'function')
+          ? await VideoEncoder.isConfigSupported(cfg)
+          : { supported:true, config: cfg };
+        if (!test?.supported) continue;
+        const normalized = test.config || cfg;
+        const key = JSON.stringify(normalized);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        supported.push(normalized);
       } catch {}
     }
   }
@@ -346,14 +385,14 @@ function buildTransitionList(slides){
 }
 function buildAdvancedTimelinePlan(slides, totalDuration, fallbackFade=0.8){
   const count = Math.max(0, slides?.length || 0);
-  if (!count) return { still:0, offsets:[], transitions:[], frames:0 };
+  if (!count) return { still:0, offsets:[], transitions:[], frames:0, totalDuration:0 };
   const transitions = buildTransitionList(slides);
   let totalTransitions = transitions.reduce((sum, item) => sum + Math.max(0, item.duration || 0), 0);
   const minStill = 0.35;
   const maxTransitionsTotal = Math.max(0, totalDuration - (count * minStill));
   if (totalTransitions > maxTransitionsTotal && totalTransitions > 0){
     const ratio = maxTransitionsTotal / totalTransitions;
-    transitions.forEach(item => { item.duration = Number((item.duration * ratio).toFixed(3)); });
+    transitions.forEach(item => { item.duration = Number((item.duration * ratio).toFixed(4)); });
     totalTransitions = transitions.reduce((sum, item) => sum + Math.max(0, item.duration || 0), 0);
   }
   let still = (totalDuration - totalTransitions) / count;
@@ -363,9 +402,11 @@ function buildAdvancedTimelinePlan(slides, totalDuration, fallbackFade=0.8){
     totalTransitions = transitions.reduce((sum, item) => sum + Math.max(0, item.duration || 0), 0);
     still = Math.max(minStill, (totalDuration - totalTransitions) / count);
   }
+  const planned = (still * count) + totalTransitions;
+  if (Math.abs(planned - totalDuration) > 1e-6) still += (totalDuration - planned) / count;
   const offsets = [0];
-  for (let i=1; i<count; i++) offsets[i] = offsets[i-1] + still + (transitions[i-1]?.duration || 0);
-  return { still, offsets, transitions, frames: Math.round(totalDuration * currentVideoFps()) };
+  for (let i = 1; i < count; i++) offsets[i] = Number((offsets[i-1] + still + (transitions[i-1]?.duration || 0)).toFixed(6));
+  return { still, offsets, transitions, frames: getStableExportFrameCount(totalDuration, currentVideoFps()), totalDuration };
 }
 function getTimelineClipSeconds(plan, idx){
   const transitionDur = plan?.transitions?.[idx]?.duration || 0;
@@ -835,134 +876,143 @@ async function filesToBitmapsVideoAdvanced(slides){
   return arr;
 }
 async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}){
-  if (!window.MP4Box) throw new Error('MP4Box.js non caricato');
-  vShow(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Esportazione in corso…';
-  VidCanvas.width = W; VidCanvas.height = H;
+  if (!isMp4MuxerReady()) throw new Error('mp4-muxer non caricato');
+  vShow(ActionProgressWrap);
+  if (ActionProgress) ActionProgress.value = 0;
+  if (ActionProgressLabel) ActionProgressLabel.textContent = 'Esportazione MP4 in corso…';
+  VidCanvas.width = W;
+  VidCanvas.height = H;
   const cfgList = await supportsH264WebCodecs(W, H, fps, bitrate);
-  if (!cfgList.length) throw new Error('H.264 WebCodecs non disponibile');
+  if (!cfgList.length) {
+    vHide(ActionProgressWrap);
+    throw new Error('H.264 WebCodecs non disponibile in questo browser');
+  }
+  const totalFrames = getStableExportFrameCount(T, fps);
+  const frameDurUs = getFrameDurationUs(fps);
   let lastErr = null;
-  for (const encConfig of cfgList){
+  for (const cfg of cfgList){
+    let encoder = null;
+    let encoderErr = null;
     try {
-      const mp4 = MP4Box.createFile();
-      const chunks = [];
-      const segCtx = { nextFileStart: 0 };
-      mp4.onSegment = (id, user, buffer) => {
-        buffer.fileStart = user.nextFileStart;
-        user.nextFileStart += buffer.byteLength;
-        chunks.push(buffer);
-      };
-      let trackId = null;
-      const encoder = new VideoEncoder({
-        output: (chunk, meta) => {
-          const ts = chunk.timestamp;
-          const dur = chunk.duration || Math.round(1e6 / fps);
-          const key = (chunk.type === 'key');
-          const buf = new Uint8Array(chunk.byteLength);
-          chunk.copyTo(buf);
-          if (!trackId && meta?.decoderConfig?.description){
-            trackId = mp4.addTrack({ timescale:1e6, width:W, height:H, h264:{ avcDecoderConfigRecord: meta.decoderConfig.description } });
-            mp4.setSegmentOptions(trackId, segCtx, { nbSamples:1e6 });
-            const inits = mp4.initializeSegmentation();
-            inits.forEach(seg => {
-              seg.buffer.fileStart = segCtx.nextFileStart;
-              segCtx.nextFileStart += seg.buffer.byteLength;
-              chunks.push(seg.buffer);
-            });
-          }
-          if (!trackId) return;
-          mp4.addSample(trackId, buf.buffer, { dts:ts, cts:ts, duration:dur, is_sync:key });
-        },
-        error: e => { lastErr = e; }
+      const muxerTarget = new window.Mp4Muxer.ArrayBufferTarget();
+      const muxer = new window.Mp4Muxer.Muxer({
+        target: muxerTarget,
+        video: { codec:'avc', width:W, height:H, frameRate:fps },
+        fastStart:'in-memory',
+        firstTimestampBehavior:'offset'
       });
-      encoder.configure(encConfig);
-      const totalFrames = Math.round(T * fps);
-      const frameDurUs = Math.round(1e6 / fps);
-      for (let f=0; f<totalFrames; f++){
-        renderFrame(f / fps);
-        const vf = new VideoFrame(VidCanvas, { timestamp: f * frameDurUs, duration: frameDurUs });
-        encoder.encode(vf, { keyFrame: (f===0) || (f % Math.max(1, fps*2) === 0) });
-        vf.close();
-        if ((f % fps) === 0){
-          ActionProgress.value = Math.round((f / Math.max(totalFrames, 1)) * 100);
-          await new Promise(r => setTimeout(r));
+      encoder = new VideoEncoder({
+        output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+        error: err => { encoderErr = err; }
+      });
+      encoder.configure({
+        ...cfg,
+        width: W,
+        height: H,
+        framerate: fps,
+        bitrate,
+        bitrateMode: 'constant',
+        avc: { format:'avc' }
+      });
+      for (let f = 0; f < totalFrames; f++){
+        renderFrame(getFrameRenderTime(f, totalFrames, fps, T));
+        const frame = new VideoFrame(VidCanvas, {
+          timestamp: f * frameDurUs,
+          duration: frameDurUs
+        });
+        encoder.encode(frame, {
+          keyFrame: (f === 0) || (f % Math.max(1, Math.round(fps * VIDEO_EXPORT_KEYFRAME_SECONDS)) === 0)
+        });
+        frame.close();
+        if (encoderErr) throw encoderErr;
+        if ((f % Math.max(1, Math.round(fps / 2))) === 0 || f === totalFrames - 1){
+          updateVideoExportProgress(f + 1, totalFrames);
+          await new Promise(resolve => setTimeout(resolve));
         }
       }
       await encoder.flush();
-      encoder.close();
-      mp4.flush();
+      if (encoderErr) throw encoderErr;
+      try { encoder.close(); } catch {}
+      muxer.finalize();
+      const out = muxerTarget.buffer;
+      if (!out || !out.byteLength) throw new Error('MP4 generato vuoto');
+      updateVideoExportProgress(totalFrames, totalFrames, 'MP4 pronto…');
       vHide(ActionProgressWrap);
-      if (!chunks.length) throw new Error('Encoder MP4 senza output');
-      return new Blob(chunks, { type:'video/mp4' });
+      return new Blob([out], { type:'video/mp4' });
     } catch (err) {
       lastErr = err;
+      try { encoder?.close?.(); } catch {}
     }
   }
   vHide(ActionProgressWrap);
   throw (lastErr || new Error('Impossibile generare MP4 con WebCodecs'));
 }
 async function exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime,bitrate}){
-  vShow(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Esportazione in corso…';
-  VidCanvas.width = W; VidCanvas.height = H;
-  const str = VidCanvas.captureStream(fps);
-  const rec = new MediaRecorder(str, { mimeType: mime, videoBitsPerSecond: bitrate });
+  vShow(ActionProgressWrap);
+  if (ActionProgress) ActionProgress.value = 0;
+  if (ActionProgressLabel) ActionProgressLabel.textContent = 'Esportazione video in corso…';
+  VidCanvas.width = W;
+  VidCanvas.height = H;
+  const stream = VidCanvas.captureStream(Math.max(1, fps));
+  const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: bitrate });
   const parts = [];
-  rec.ondataavailable = e => { if (e.data?.size) parts.push(e.data); };
-  const stopped = new Promise(res => rec.onstop = res);
-  rec.start(1000);
-  const t0 = performance.now(); let rafId = 0;
+  recorder.ondataavailable = e => { if (e.data?.size) parts.push(e.data); };
+  const stopped = new Promise(resolve => { recorder.onstop = resolve; });
+  recorder.start(1000);
+  const t0 = performance.now();
+  let rafId = 0;
   (function loop(){
-    const now = performance.now();
-    const tSec = Math.min((now - t0) / 1000, T);
+    const tSec = Math.min((performance.now() - t0) / 1000, T);
     renderFrame(tSec);
-    ActionProgress.value = Math.min(100, Math.round((tSec / Math.max(T, 0.001)) * 100));
+    updateVideoExportProgress(Math.round(tSec * fps), Math.max(1, Math.round(T * fps)), 'Esportazione video in corso…');
     if (tSec < T) rafId = requestAnimationFrame(loop);
   })();
-  await new Promise(r => setTimeout(r, Math.max(0, T * 1000) + 250));
-  renderFrame(T);
+  await new Promise(resolve => setTimeout(resolve, Math.max(0, T * 1000) + 320));
+  renderFrame(Math.max(0, T - (1 / Math.max(1, fps))));
   try {
-    const track = str.getVideoTracks?.()[0];
+    const track = stream.getVideoTracks?.()[0];
     track?.requestFrame?.();
   } catch {}
-  try { rec.requestData?.(); } catch {}
-  await new Promise(r => setTimeout(r, 120));
-  rec.stop();
+  try { recorder.requestData?.(); } catch {}
+  await new Promise(resolve => setTimeout(resolve, 180));
+  recorder.stop();
   if (rafId) cancelAnimationFrame(rafId);
   await stopped;
+  updateVideoExportProgress(Math.max(1, Math.round(T * fps)), Math.max(1, Math.round(T * fps)), 'Video pronto…');
   vHide(ActionProgressWrap);
   return new Blob(parts, { type: mime });
 }
 async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate}){
-  const h264Cfg = await supportsH264WebCodecs(W, H, fps);
+  if (window.VideoEncoder && isMp4MuxerReady()) {
+    return { blob: await exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}), ext:'mp4' };
+  }
   const mp4Mime = supportsMp4Recorder();
-  if (h264Cfg && window.MP4Box) return { blob: await exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}), ext:'mp4' };
-  if (mp4Mime) return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:mp4Mime,bitrate}), ext:'mp4' };
-  const webmMime = (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) ? 'video/webm;codecs=vp9' : 'video/webm;codecs=vp8';
-  return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:webmMime,bitrate}), ext:'webm' };
+  if (mp4Mime) {
+    return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:mp4Mime,bitrate}), ext:'mp4' };
+  }
+  throw new Error('Questo browser non supporta un export MP4 stabile. Apri il tool con Chrome o Edge desktop aggiornato.');
 }
 
 async function exportVideoBlobPreferRecorder(renderFrame, {T,fps,W,H,bitrate}){
-  if (window.VideoEncoder && window.MP4Box) {
-    try {
-      return { blob: await exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}), ext:'mp4' };
-    } catch (err) {
-      console.warn('Fallback WebM dopo tentativo MP4 WebCodecs fallito:', err);
-    }
+  try {
+    return await exportVideoBlob(renderFrame, {T,fps,W,H,bitrate});
+  } catch (err) {
+    console.warn('Export MP4 non disponibile:', err);
+    throw err;
   }
-  const webmMime = (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9'))
-    ? 'video/webm;codecs=vp9'
-    : 'video/webm;codecs=vp8';
-  if (window.MediaRecorder) {
-    return { blob: await exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime:webmMime,bitrate}), ext:'webm' };
-  }
-  return exportVideoBlob(renderFrame, {T,fps,W,H,bitrate});
 }
 function downloadVideoBlob(blob, filename){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  setTimeout(() => {
+    try { URL.revokeObjectURL(url); } catch {}
+  }, 4000);
 }
 async function exportVideoSlideshow(){
   const title = currentVideoTitle();
@@ -972,19 +1022,34 @@ async function exportVideoSlideshow(){
   const fps = currentVideoFps();
   const { W, H } = pickVideoSize();
   const bitrate = pickBitrate(W,H,fps);
-  let blobInfo;
-  if (videoEditorState.enabled && videoHasSlides()){
-    const slides = videoEditorState.slides.slice();
-    const items = await filesToBitmapsVideoAdvanced(slides);
-    const plan = buildAdvancedTimelinePlan(slides, T);
-    blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderAdvancedAt(plan, items, W, H, tSec), {T,fps,W,H,bitrate});
-  } else {
-    const F = currentVideoFade();
-    const items = await filesToBitmapsVideo(videoRecords());
-    const tl = buildTimelineVideo(items.length, T, F, fps);
-    blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderSimpleAt(tl, items, W, H, tSec), {T,fps,W,H,bitrate});
+  let items = [];
+  try {
+    let blobInfo;
+    if (videoEditorState.enabled && videoHasSlides()){
+      const slides = videoEditorState.slides.slice();
+      items = await filesToBitmapsVideoAdvanced(slides);
+      const plan = buildAdvancedTimelinePlan(slides, T);
+      blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderAdvancedAt(plan, items, W, H, tSec), {T,fps,W,H,bitrate});
+    } else {
+      const fade = currentVideoFade();
+      items = await filesToBitmapsVideo(videoRecords());
+      const tl = buildTimelineVideo(items.length, T, fade, fps);
+      blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderSimpleAt(tl, items, W, H, tSec), {T,fps,W,H,bitrate});
+    }
+    downloadVideoBlob(blobInfo.blob, `${slugify(title)}.mp4`);
+  } catch (err) {
+    console.error('Export slideshow fallito:', err);
+    const msg = err?.message || 'Errore durante l’esportazione del video.';
+    alert(msg);
+  } finally {
+    closeVideoBitmapItems(items);
+    try {
+      const ctx = VidCanvas?.getContext?.('2d', { alpha:false });
+      ctx?.clearRect?.(0, 0, VidCanvas.width || 0, VidCanvas.height || 0);
+    } catch {}
+    if (ActionProgress) ActionProgress.value = 0;
+    vHide(ActionProgressWrap);
   }
-  downloadVideoBlob(blobInfo.blob, `${slugify(title)}.${blobInfo.ext}`);
 }
 
 if (DropAreaVideo) {

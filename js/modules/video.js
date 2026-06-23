@@ -134,6 +134,11 @@ function withVideoExportTimeout(promise, ms, label='Esportazione video'){
     );
   });
 }
+async function throttleVideoEncoder(encoder, queueLimit=6){
+  if (!encoder) return;
+  if ((encoder.encodeQueueSize || 0) < queueLimit) return;
+  await encoder.flush();
+}
 function drawScaledMotionCoverOn(ctx, bmp, W, H, opts={}){
   const iw = Number(bmp?.width) || 0;
   const ih = Number(bmp?.height) || 0;
@@ -200,7 +205,7 @@ function currentVideoExportFps(){
   return videoAdvancedHasZoomSoftTransitions() ? 24 : currentVideoFps();
 }
 function videoAdvancedNeedsAllKeyframes(){
-  return videoAdvancedHasZoomSoftTransitions();
+  return false;
 }
 function currentVideoFormatLabel(){
   if (VidFmtV?.checked) return 'Verticale · 1080×1920';
@@ -1105,6 +1110,9 @@ async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,en
         bitrateMode: 'constant',
         avc: { format:'avc' }
       });
+      const lowFpsMode = fps <= 24;
+      const queueLimit = lowFpsMode ? 2 : 6;
+      const flushEvery = lowFpsMode ? 12 : 30;
       for (let f = 0; f < totalFrames; f++){
         renderFrame(getFrameRenderTime(f, totalFrames, fps, T));
         const frame = new VideoFrame(VidCanvas, {
@@ -1116,6 +1124,10 @@ async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,en
         });
         frame.close();
         if (encoderErr) throw encoderErr;
+        if ((encoder.encodeQueueSize || 0) >= queueLimit || (f > 0 && (f % flushEvery) === 0)) {
+          await throttleVideoEncoder(encoder, queueLimit);
+          if (encoderErr) throw encoderErr;
+        }
         if ((f % Math.max(1, Math.round(fps / 2))) === 0 || f === totalFrames - 1){
           updateVideoExportProgress(f + 1, totalFrames);
           await new Promise(resolve => setTimeout(resolve));

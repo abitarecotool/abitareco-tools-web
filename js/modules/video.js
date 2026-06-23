@@ -108,7 +108,7 @@ function getPreferredEncoderMode(mode='auto'){
 function videoAdvancedUsesComplexMotion(){
   return videoEditorState.slides.some(slide => {
     const type = slide?.transitionToNext?.type || 'none';
-    return type === 'slideleft' || type === 'slideright' || type === 'fadeblack';
+    return type === 'zoomsoft' || type === 'slideleft' || type === 'slideright' || type === 'fadeblack';
   });
 }
 function currentVideoEncoderPreference(){
@@ -122,7 +122,7 @@ function videoAdvancedHasMotionTransitions(){
   if (!(videoEditorState.enabled && videoHasSlides())) return false;
   return videoEditorState.slides.some(slide => {
     const type = slide?.transitionToNext?.type || 'none';
-    return type === 'fadeblack' || type === 'slideleft' || type === 'slideright';
+    return type === 'zoomsoft' || type === 'fadeblack' || type === 'slideleft' || type === 'slideright';
   });
 }
 function withVideoExportTimeout(promise, ms, label='Esportazione video'){
@@ -878,16 +878,14 @@ async function createZoomSoftBitmapVariant(sourceBmp, zoomFactor=1.03){
   const sh = Math.max(1, Math.round(ih / factor));
   const sx = Math.max(0, Math.round((iw - sw) / 2));
   const sy = Math.max(0, Math.round((ih - sh) / 2));
-  const canvas = (typeof OffscreenCanvas !== 'undefined')
-    ? new OffscreenCanvas(iw, ih)
-    : Object.assign(document.createElement('canvas'), { width: iw, height: ih });
+  const canvas = document.createElement('canvas');
+  canvas.width = iw;
+  canvas.height = ih;
   const ctx = canvas.getContext('2d', { alpha: false });
+  if (!ctx) return null;
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(sourceBmp, sx, sy, sw, sh, 0, 0, iw, ih);
-  if (typeof createImageBitmap === 'function') {
-    try { return await createImageBitmap(canvas); } catch {}
-  }
   return canvas;
 }
 function drawFallbackTransformedOn(ctx, bmp, W, H, alpha=1){
@@ -984,6 +982,8 @@ function drawTransitionFrame(ctx, currentItem, nextItem, transition, progress, W
   }
   if (type === 'zoomsoft_safe' || type === 'zoomsoft'){
     drawFallbackTransformedOn(ctx, currentItem?.bmp, W, H, 1);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     drawFallbackTransformedOn(ctx, nextItem?.bmpZoomSoft || nextItem?.bmp, W, H, p);
     return;
   }
@@ -1048,7 +1048,7 @@ async function filesToBitmapsVideoAdvanced(slides){
   const arr = [];
   for (const slide of slides || []){
     const bmp = await loadImageBitmap(slide.file);
-    const bmpZoomSoft = await createZoomSoftBitmapVariant(bmp, 1.03);
+    const bmpZoomSoft = await createZoomSoftBitmapVariant(bmp, 1.018);
     arr.push({
       ...buildVideoExportSlide(slide, bmp),
       bmpZoomSoft: bmpZoomSoft || bmp

@@ -113,11 +113,7 @@ function currentVideoEncoderPreference(){
   return videoAdvancedUsesComplexMotion() ? 'prefer-software' : 'auto';
 }
 function videoAdvancedRequiresRecorderFallback(){
-  if (!(videoEditorState.enabled && videoHasSlides())) return false;
-  return videoEditorState.slides.some(slide => {
-    const type = slide?.transitionToNext?.type || 'none';
-    return type === 'zoomsoft' || type === 'fadeblack';
-  });
+  return false;
 }
 function videoAdvancedHasMotionTransitions(){
   if (!(videoEditorState.enabled && videoHasSlides())) return false;
@@ -855,6 +851,20 @@ function buildVideoExportSlide(slide, bmp){
     transform: sanitizeVideoTransform(slide?.transform)
   };
 }
+function normalizeVideoTransitionForExport(transition){
+  const type = transition?.type || 'none';
+  const duration = Math.max(0, Number(transition?.duration) || 0);
+  if (type === 'zoomsoft') return { type:'zoomsoft_safe', duration };
+  if (type === 'fadeblack') return { type:'fadeblack_safe', duration };
+  return { type, duration };
+}
+function buildVideoExportSlides(slides){
+  return (slides || []).map(slide => ({
+    ...slide,
+    transform: sanitizeVideoTransform(slide?.transform),
+    transitionToNext: normalizeVideoTransitionForExport(slide?.transitionToNext)
+  }));
+}
 function drawFallbackTransformedOn(ctx, bmp, W, H, alpha=1){
   const oldAlpha = ctx.globalAlpha;
   ctx.globalAlpha = vClamp(Number(alpha), 0, 1);
@@ -916,9 +926,20 @@ function drawTransformedOn(ctx, bmp, slide, W, H, opts={}){
 function drawTransitionFrame(ctx, currentItem, nextItem, transition, progress, W, H){
   const type = transition?.type || 'crossfade';
   const p = vClamp(progress, 0, 1);
-  if (type === 'fadeblack'){
-    if (p < 0.5) drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 - (p * 2) });
-    else drawTransformedOn(ctx, nextItem?.bmp, nextItem, W, H, { alpha: (p - 0.5) * 2 });
+  if (type === 'fadeblack_safe' || type === 'fadeblack'){
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+    if (p < 0.5) {
+      const alpha = 1 - (p * 2);
+      if (!drawScaledMotionCoverOn(ctx, currentItem?.bmp, W, H, { alpha })) {
+        drawFallbackTransformedOn(ctx, currentItem?.bmp, W, H, alpha);
+      }
+    } else {
+      const alpha = (p - 0.5) * 2;
+      if (!drawScaledMotionCoverOn(ctx, nextItem?.bmp, W, H, { alpha })) {
+        drawFallbackTransformedOn(ctx, nextItem?.bmp, W, H, alpha);
+      }
+    }
     return;
   }
   if (type === 'slideleft'){
@@ -931,13 +952,13 @@ function drawTransitionFrame(ctx, currentItem, nextItem, transition, progress, W
     drawTransformedOn(ctx, nextItem?.bmp, nextItem, W, H, { dx: -(1 - p) * W });
     return;
   }
-  if (type === 'zoomsoft'){
-    const outScale = 1 + (p * 0.04);
-    const inScale = 1.04 - (p * 0.04);
+  if (type === 'zoomsoft_safe' || type === 'zoomsoft'){
+    const outScale = 1 + (p * 0.015);
+    const inScale = 1.015 - (p * 0.015);
     const drewCur = drawScaledMotionCoverOn(ctx, currentItem?.bmp, W, H, { alpha: 1 - p, scaleMul: outScale });
     const drewNext = drawScaledMotionCoverOn(ctx, nextItem?.bmp, W, H, { alpha: p, scaleMul: inScale });
-    if (!drewCur) drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 - p, scaleMul: outScale });
-    if (!drewNext) drawTransformedOn(ctx, nextItem?.bmp, nextItem, W, H, { alpha: p, scaleMul: inScale });
+    if (!drewCur) drawFallbackTransformedOn(ctx, currentItem?.bmp, W, H, 1 - p);
+    if (!drewNext) drawFallbackTransformedOn(ctx, nextItem?.bmp, W, H, p);
     return;
   }
   drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 });
@@ -1080,7 +1101,7 @@ async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,en
 async function exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime,bitrate}){
   vShow(ActionProgressWrap);
   if (ActionProgress) ActionProgress.value = 0;
-  if (ActionProgressLabel) ActionProgressLabel.textContent = 'Esportazione video in corso…';
+  if (ActionProgressLabel) ActionProgressLabel.textContent = 'Esportazione MP4 in corso…';
   VidCanvas.width = W;
   VidCanvas.height = H;
   const stream = VidCanvas.captureStream(Math.max(1, fps));
@@ -1094,7 +1115,7 @@ async function exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime,bitr
   (function loop(){
     const tSec = Math.min((performance.now() - t0) / 1000, T);
     renderFrame(tSec);
-    updateVideoExportProgress(Math.round(tSec * fps), Math.max(1, Math.round(T * fps)), 'Esportazione video in corso…');
+    updateVideoExportProgress(Math.round(tSec * fps), Math.max(1, Math.round(T * fps)), 'Esportazione MP4 in corso…');
     if (tSec < T) rafId = requestAnimationFrame(loop);
   })();
   await new Promise(resolve => setTimeout(resolve, Math.max(0, T * 1000) + 320));
@@ -1108,7 +1129,7 @@ async function exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime,bitr
   recorder.stop();
   if (rafId) cancelAnimationFrame(rafId);
   await stopped;
-  updateVideoExportProgress(Math.max(1, Math.round(T * fps)), Math.max(1, Math.round(T * fps)), 'Video pronto…');
+  updateVideoExportProgress(Math.max(1, Math.round(T * fps)), Math.max(1, Math.round(T * fps)), 'MP4 pronto…');
   vHide(ActionProgressWrap);
   return new Blob(parts, { type: mime });
 }
@@ -1166,14 +1187,11 @@ async function exportVideoSlideshow(){
   try {
     let blobInfo;
     if (videoEditorState.enabled && videoHasSlides()){
-      const slides = videoEditorState.slides.map(slide => ({
-        ...slide,
-        transform: sanitizeVideoTransform(slide?.transform)
-      }));
+      const slides = buildVideoExportSlides(videoEditorState.slides);
       items = await filesToBitmapsVideoAdvanced(slides);
       const plan = buildAdvancedTimelinePlan(slides, T);
       const hasMotion = videoAdvancedHasMotionTransitions();
-      const forceRecorder = videoAdvancedRequiresRecorderFallback();
+      const forceRecorder = false;
       const encoderPreference = hasMotion ? currentVideoEncoderPreference() : 'auto';
       renderAdvancedAt(plan, items, W, H, 0);
       blobInfo = await exportVideoBlobPreferRecorder(

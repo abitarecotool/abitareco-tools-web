@@ -105,7 +105,7 @@ function getPreferredEncoderMode(mode='auto'){
 function videoAdvancedUsesComplexMotion(){
   return videoEditorState.slides.some(slide => {
     const type = slide?.transitionToNext?.type || 'none';
-    return type === 'zoomsoft' || type === 'slideleft' || type === 'slideright' || type === 'fadeblack';
+    return type === 'slideleft' || type === 'slideright' || type === 'fadeblack';
   });
 }
 function currentVideoEncoderPreference(){
@@ -119,7 +119,7 @@ function videoAdvancedHasMotionTransitions(){
   if (!(videoEditorState.enabled && videoHasSlides())) return false;
   return videoEditorState.slides.some(slide => {
     const type = slide?.transitionToNext?.type || 'none';
-    return type === 'zoomsoft' || type === 'fadeblack' || type === 'slideleft' || type === 'slideright';
+    return type === 'fadeblack' || type === 'slideleft' || type === 'slideright';
   });
 }
 function withVideoExportTimeout(promise, ms, label='Esportazione video'){
@@ -854,7 +854,7 @@ function buildVideoExportSlide(slide, bmp){
 function normalizeVideoTransitionForExport(transition){
   const type = transition?.type || 'none';
   const duration = Math.max(0, Number(transition?.duration) || 0);
-  if (type === 'zoomsoft') return { type:'zoomsoft_safe', duration };
+  if (type === 'zoomsoft') return { type:'crossfade_safe', duration };
   if (type === 'fadeblack') return { type:'fadeblack_safe', duration };
   return { type, duration };
 }
@@ -952,13 +952,14 @@ function drawTransitionFrame(ctx, currentItem, nextItem, transition, progress, W
     drawTransformedOn(ctx, nextItem?.bmp, nextItem, W, H, { dx: -(1 - p) * W });
     return;
   }
+  if (type === 'crossfade_safe'){
+    drawFallbackTransformedOn(ctx, currentItem?.bmp, W, H, 1);
+    drawFallbackTransformedOn(ctx, nextItem?.bmp, W, H, p);
+    return;
+  }
   if (type === 'zoomsoft_safe' || type === 'zoomsoft'){
-    const outScale = 1 + (p * 0.015);
-    const inScale = 1.015 - (p * 0.015);
-    const drewCur = drawScaledMotionCoverOn(ctx, currentItem?.bmp, W, H, { alpha: 1 - p, scaleMul: outScale });
-    const drewNext = drawScaledMotionCoverOn(ctx, nextItem?.bmp, W, H, { alpha: p, scaleMul: inScale });
-    if (!drewCur) drawFallbackTransformedOn(ctx, currentItem?.bmp, W, H, 1 - p);
-    if (!drewNext) drawFallbackTransformedOn(ctx, nextItem?.bmp, W, H, p);
+    drawFallbackTransformedOn(ctx, currentItem?.bmp, W, H, 1);
+    drawFallbackTransformedOn(ctx, nextItem?.bmp, W, H, p);
     return;
   }
   drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 });

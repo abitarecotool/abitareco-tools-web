@@ -108,7 +108,7 @@ function getPreferredEncoderMode(mode='auto'){
 function videoAdvancedUsesComplexMotion(){
   return videoEditorState.slides.some(slide => {
     const type = slide?.transitionToNext?.type || 'none';
-    return type === 'zoomsoft' || type === 'slideleft' || type === 'slideright' || type === 'fadeblack';
+    return type === 'slideleft' || type === 'slideright' || type === 'fadeblack';
   });
 }
 function currentVideoEncoderPreference(){
@@ -122,7 +122,7 @@ function videoAdvancedHasMotionTransitions(){
   if (!(videoEditorState.enabled && videoHasSlides())) return false;
   return videoEditorState.slides.some(slide => {
     const type = slide?.transitionToNext?.type || 'none';
-    return type === 'zoomsoft' || type === 'fadeblack' || type === 'slideleft' || type === 'slideright';
+    return type === 'fadeblack' || type === 'slideleft' || type === 'slideright';
   });
 }
 function withVideoExportTimeout(promise, ms, label='Esportazione video'){
@@ -192,6 +192,13 @@ function currentVideoTitle(){ return (VidTitle?.value || '').trim(); }
 function currentVideoDuration(){ return Math.max(1, parseFloat(VidDuration?.value || '30') || 30); }
 function currentVideoFade(){ return 1.0; }
 function currentVideoFps(){ return 30; }
+function videoAdvancedHasZoomSoftTransitions(){
+  if (!(videoEditorState.enabled && videoHasSlides())) return false;
+  return videoEditorState.slides.some(slide => (slide?.transitionToNext?.type || 'none') === 'zoomsoft');
+}
+function currentVideoExportFps(){
+  return videoAdvancedHasZoomSoftTransitions() ? 24 : currentVideoFps();
+}
 function currentVideoFormatLabel(){
   if (VidFmtV?.checked) return 'Verticale · 1080×1920';
   if (VidFmtS?.checked) return 'Quadrato · 1080×1080';
@@ -475,7 +482,7 @@ function buildAdvancedTimelinePlan(slides, totalDuration, fallbackFade=0.8){
   if (Math.abs(planned - totalDuration) > 1e-6) still += (totalDuration - planned) / count;
   const offsets = [0];
   for (let i = 1; i < count; i++) offsets[i] = Number((offsets[i-1] + still + (transitions[i-1]?.duration || 0)).toFixed(6));
-  return { still, offsets, transitions, frames: getStableExportFrameCount(totalDuration, currentVideoFps()), totalDuration };
+  return { still, offsets, transitions, frames: getStableExportFrameCount(totalDuration, currentVideoExportFps()), totalDuration };
 }
 function getTimelineClipSeconds(plan, idx){
   const transitionDur = plan?.transitions?.[idx]?.duration || 0;
@@ -1174,7 +1181,7 @@ async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference
   if (window.VideoEncoder && isMp4MuxerReady()) {
     const webCodecsTask = exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,encoderPreference});
     return {
-      blob: await withVideoExportTimeout(webCodecsTask, Math.max(90000, Math.round(T * 6000)), 'Esportazione MP4'),
+      blob: await withVideoExportTimeout(webCodecsTask, Math.max(300000, Math.round(T * 12000)), 'Esportazione MP4'),
       ext:'mp4'
     };
   }
@@ -1210,7 +1217,7 @@ async function exportVideoSlideshow(){
   if (!title){ alert('Inserisci “Nome video”.'); return; }
   if (!videoRecords().length){ alert('Carica una cartella con immagini.'); return; }
   const T = currentVideoDuration();
-  const fps = currentVideoFps();
+  const fps = currentVideoExportFps();
   const { W, H } = pickVideoSize();
   const bitrate = pickBitrate(W,H,fps);
   let items = [];

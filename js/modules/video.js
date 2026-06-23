@@ -132,21 +132,26 @@ function supportsMp4Recorder(){
   }
   return null;
 }
-async function supportsH264WebCodecs(W=1920, H=1080, fps=30){
-  if (!('VideoEncoder' in window)) return null;
+async function supportsH264WebCodecs(W=1920, H=1080, fps=30, bitrate=12e6){
+  if (!('VideoEncoder' in window)) return [];
   const codecCandidates = ['avc1.42E01E', 'avc1.4D401F', 'avc1.640028'];
   const accelCandidates = ['prefer-hardware', 'prefer-software', null];
+  const supported = [];
   for (const codec of codecCandidates){
     for (const accel of accelCandidates){
-      const cfg = { codec, width:W, height:H, framerate:fps };
+      const cfg = { codec, width:W, height:H, framerate:fps, bitrate, bitrateMode:'constant', avc:{ format:'annexb' } };
       if (accel) cfg.hardwareAcceleration = accel;
       try {
-        const test = await VideoEncoder.isConfigSupported(cfg);
-        if (test?.supported) return test.config || cfg;
+        if (typeof VideoEncoder.isConfigSupported === 'function') {
+          const test = await VideoEncoder.isConfigSupported(cfg);
+          if (test?.supported) supported.push(test.config || cfg);
+        } else {
+          supported.push(cfg);
+        }
       } catch {}
     }
   }
-  return null;
+  return supported;
 }
 function makeVideoSlideId(rec, idx){
   const base = String(rec?.relPath || rec?.file?.webkitRelativePath || rec?.file?.name || `slide-${idx+1}`);
@@ -833,58 +838,77 @@ async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}){
   if (!window.MP4Box) throw new Error('MP4Box.js non caricato');
   vShow(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Esportazione in corso…';
   VidCanvas.width = W; VidCanvas.height = H;
-  const cfg = await supportsH264WebCodecs(W, H, fps);
-  if (!cfg) throw new Error('H.264 WebCodecs non disponibile');
-  const encConfig = { ...cfg, width:W, height:H, framerate:fps, bitrate, bitrateMode:'constant', avc:{ format:'annexb' } };
-  const mp4 = MP4Box.createFile();
-  const chunks = [];
-  const segCtx = { nextFileStart: 0 };
-  mp4.onSegment = (id, user, buffer) => { buffer.fileStart = user.nextFileStart; user.nextFileStart += buffer.byteLength; chunks.push(buffer); };
-  let trackId = null;
-  const encoder = new VideoEncoder({
-    output: (chunk, meta) => {
-      const ts = chunk.timestamp;
-      const dur = chunk.duration || Math.round(1e6 / fps);
-      const key = (chunk.type === 'key');
-      const buf = new Uint8Array(chunk.byteLength); chunk.copyTo(buf);
-      if (!trackId && meta?.decoderConfig?.description){
-        trackId = mp4.addTrack({ timescale:1e6, width:W, height:H, h264:{ avcDecoderConfigRecord: meta.decoderConfig.description } });
-        mp4.setSegmentOptions(trackId, segCtx, { nbSamples:1e6 });
-        const inits = mp4.initializeSegmentation();
-        inits.forEach(seg => { seg.buffer.fileStart = segCtx.nextFileStart; segCtx.nextFileStart += seg.buffer.byteLength; chunks.push(seg.buffer); });
+  const cfgList = await supportsH264WebCodecs(W, H, fps, bitrate);
+  if (!cfgList.length) throw new Error('H.264 WebCodecs non disponibile');
+  let lastErr = null;
+  for (const encConfig of cfgList){
+    try {
+      const mp4 = MP4Box.createFile();
+      const chunks = [];
+      const segCtx = { nextFileStart: 0 };
+      mp4.onSegment = (id, user, buffer) => {
+        buffer.fileStart = user.nextFileStart;
+        user.nextFileStart += buffer.byteLength;
+        chunks.push(buffer);
+      };
+      let trackId = null;
+      const encoder = new VideoEncoder({
+        output: (chunk, meta) => {
+          const ts = chunk.timestamp;
+          const dur = chunk.duration || Math.round(1e6 / fps);
+          const key = (chunk.type === 'key');
+          const buf = new Uint8Array(chunk.byteLength);
+          chunk.copyTo(buf);
+          if (!trackId && meta?.decoderConfig?.description){
+            trackId = mp4.addTrack({ timescale:1e6, width:W, height:H, h264:{ avcDecoderConfigRecord: meta.decoderConfig.description } });
+            mp4.setSegmentOptions(trackId, segCtx, { nbSamples:1e6 });
+            const inits = mp4.initializeSegmentation();
+            inits.forEach(seg => {
+              seg.buffer.fileStart = segCtx.nextFileStart;
+              segCtx.nextFileStart += seg.buffer.byteLength;
+              chunks.push(seg.buffer);
+            });
+          }
+          if (!trackId) return;
+          mp4.addSample(trackId, buf.buffer, { dts:ts, cts:ts, duration:dur, is_sync:key });
+        },
+        error: e => { lastErr = e; }
+      });
+      encoder.configure(encConfig);
+      const totalFrames = Math.round(T * fps);
+      const frameDurUs = Math.round(1e6 / fps);
+      for (let f=0; f<totalFrames; f++){
+        renderFrame(f / fps);
+        const vf = new VideoFrame(VidCanvas, { timestamp: f * frameDurUs, duration: frameDurUs });
+        encoder.encode(vf, { keyFrame: (f===0) || (f % Math.max(1, fps*2) === 0) });
+        vf.close();
+        if ((f % fps) === 0){
+          ActionProgress.value = Math.round((f / Math.max(totalFrames, 1)) * 100);
+          await new Promise(r => setTimeout(r));
+        }
       }
-      mp4.addSample(trackId, buf.buffer, { dts:ts, cts:ts, duration:dur, is_sync:key });
-    },
-    error: e => console.error(e)
-  });
-  encoder.configure(encConfig);
-  const totalFrames = Math.round(T * fps);
-  const frameDurUs = Math.round(1e6 / fps);
-  for (let f=0; f<totalFrames; f++){
-    renderFrame(f / fps);
-    const vf = new VideoFrame(VidCanvas, { timestamp: f * frameDurUs });
-    encoder.encode(vf, { keyFrame: (f===0) || (f % (fps*2) === 0) });
-    vf.close();
-    if ((f % fps) === 0){
-      ActionProgress.value = Math.round((f / Math.max(totalFrames, 1)) * 100);
-      await new Promise(r => setTimeout(r));
+      await encoder.flush();
+      encoder.close();
+      mp4.flush();
+      vHide(ActionProgressWrap);
+      if (!chunks.length) throw new Error('Encoder MP4 senza output');
+      return new Blob(chunks, { type:'video/mp4' });
+    } catch (err) {
+      lastErr = err;
     }
   }
-  await encoder.flush();
-  encoder.close();
-  mp4.flush();
   vHide(ActionProgressWrap);
-  return new Blob(chunks, { type:'video/mp4' });
+  throw (lastErr || new Error('Impossibile generare MP4 con WebCodecs'));
 }
 async function exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime,bitrate}){
   vShow(ActionProgressWrap); ActionProgress.value = 0; ActionProgressLabel.textContent = 'Esportazione in corso…';
   VidCanvas.width = W; VidCanvas.height = H;
   const str = VidCanvas.captureStream(fps);
-  const rec = new MediaRecorder(str, { mimeType: mime, videoBitsPerSecond: bitrate, audioBitsPerSecond: 128000 });
+  const rec = new MediaRecorder(str, { mimeType: mime, videoBitsPerSecond: bitrate });
   const parts = [];
   rec.ondataavailable = e => { if (e.data?.size) parts.push(e.data); };
   const stopped = new Promise(res => rec.onstop = res);
-  rec.start();
+  rec.start(1000);
   const t0 = performance.now(); let rafId = 0;
   (function loop(){
     const now = performance.now();
@@ -893,12 +917,14 @@ async function exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime,bitr
     ActionProgress.value = Math.min(100, Math.round((tSec / Math.max(T, 0.001)) * 100));
     if (tSec < T) rafId = requestAnimationFrame(loop);
   })();
-  await new Promise(r => setTimeout(r, Math.max(0, T * 1000) + 150));
+  await new Promise(r => setTimeout(r, Math.max(0, T * 1000) + 250));
   renderFrame(T);
   try {
     const track = str.getVideoTracks?.()[0];
     track?.requestFrame?.();
   } catch {}
+  try { rec.requestData?.(); } catch {}
+  await new Promise(r => setTimeout(r, 120));
   rec.stop();
   if (rafId) cancelAnimationFrame(rafId);
   await stopped;
@@ -915,9 +941,12 @@ async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate}){
 }
 
 async function exportVideoBlobPreferRecorder(renderFrame, {T,fps,W,H,bitrate}){
-  const h264Cfg = await supportsH264WebCodecs(W, H, fps);
-  if (h264Cfg && window.MP4Box) {
-    return { blob: await exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}), ext:'mp4' };
+  if (window.VideoEncoder && window.MP4Box) {
+    try {
+      return { blob: await exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}), ext:'mp4' };
+    } catch (err) {
+      console.warn('Fallback WebM dopo tentativo MP4 WebCodecs fallito:', err);
+    }
   }
   const webmMime = (window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9'))
     ? 'video/webm;codecs=vp9'

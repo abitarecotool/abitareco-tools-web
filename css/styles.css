@@ -1516,4 +1516,5 @@ input#VidSlideZoom.input{
 .video-manage-card .video-transition-actions{ flex-wrap:nowrap; gap:10px; margin-bottom:14px; }
 .video-manage-card .video-transition-actions .btn-outline{ flex:1 1 0; padding-left:14px; padding-right:14px; }
 .video-manage-card .muted{ margin-top:8px; line-height:1.55; }
-.video-transition-card .muted{ line-height:1.55; }
+.video-transition-card .video-transition-actions{ margin-bottom:12px; }
+.video-transition-card .muted{ margin-top:6px; line-height:1.55; }

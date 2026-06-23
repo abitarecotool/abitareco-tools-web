@@ -47,7 +47,7 @@ const VIDEO_TRANSITION_LABELS = {
   slideright: 'Slide right',
   zoomsoft: 'Zoom soft'
 };
-const VIDEO_PREVIEW_MAX_HEIGHT = 680;
+const VIDEO_PREVIEW_MAX_HEIGHT = 470;
 
 const videoEditorState = {
   enabled: false,
@@ -358,24 +358,6 @@ function getTimelineClipSeconds(plan, idx){
   return idx < (plan.offsets.length - 1) ? plan.still + transitionDur : plan.still;
 }
 
-function syncVideoPreviewColumnHeight(){
-  const previewCard = document.querySelector('.video-preview-card');
-  const inspector = document.querySelector('.video-inspector-panel');
-  if (!previewCard || !inspector || !VideoPreviewStage) return;
-  const inspectorHeight = Math.max(0, Math.floor(inspector.getBoundingClientRect().height || 0));
-  if (!inspectorHeight) return;
-  previewCard.style.minHeight = `${inspectorHeight}px`;
-  previewCard.style.height = `${inspectorHeight}px`;
-  const head = previewCard.querySelector('.video-panel-head');
-  const controls = previewCard.querySelector('.video-preview-controls');
-  const cardStyles = window.getComputedStyle(previewCard);
-  const paddingTop = parseFloat(cardStyles.paddingTop || '0') || 0;
-  const paddingBottom = parseFloat(cardStyles.paddingBottom || '0') || 0;
-  const stageExtra = 14;
-  const target = inspectorHeight - paddingTop - paddingBottom - (head?.offsetHeight || 0) - (controls?.offsetHeight || 0) - stageExtra;
-  VideoPreviewStage.style.minHeight = `${Math.max(320, Math.floor(target))}px`;
-  VideoPreviewStage.style.height = `${Math.max(320, Math.floor(target))}px`;
-}
 function getVideoAdvancedSummary(){
   const total = videoEditorState.slides.length;
   const plan = buildAdvancedTimelinePlan(videoEditorState.slides, currentVideoDuration());
@@ -512,7 +494,6 @@ function renderVideoTimeline(){
 }
 function updateVideoPreviewRatio(){
   if (!VideoPreviewFrame || !VideoPreviewStage) return;
-  syncVideoPreviewColumnHeight();
   const { W, H } = pickVideoSize();
   const ratio = W / H;
   const stageRect = VideoPreviewStage.getBoundingClientRect();
@@ -588,7 +569,6 @@ function applyVideoPreviewTransform(){
   updateVideoSelectionInspector();
 }
 function renderVideoPreview(){
-  syncVideoPreviewColumnHeight();
   updateVideoPreviewRatio();
   const slide = ensureActiveVideoSlide();
   if (!slide || !videoEditorState.enabled) {
@@ -1121,7 +1101,6 @@ VideoPreviewFrame?.addEventListener('pointerup', endVideoPreviewPointer);
 VideoPreviewFrame?.addEventListener('pointercancel', endVideoPreviewPointer);
 window.addEventListener('resize', () => {
   if (!videoEditorState.enabled) return;
-  syncVideoPreviewColumnHeight();
   renderVideoPreview();
   renderVideoTimeline();
 });

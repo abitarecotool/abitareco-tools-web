@@ -64,6 +64,9 @@ const VidMusicFadeOut = $('#VidMusicFadeOut');
 const VideoMusicHint = $('#VideoMusicHint');
 const VideoMusicFileName = $('#VideoMusicFileName');
 const VideoMusicInput = $('#VideoMusicInput');
+const VidOverlayVeil = $('#VidOverlayVeil');
+const VidOverlayVeilOpacity = $('#VidOverlayVeilOpacity');
+const VideoVelinaHint = $('#VideoVelinaHint');
 
 if (!Array.isArray(window.pickedVideo)) window.pickedVideo = [];
 
@@ -102,10 +105,14 @@ const videoEditorState = {
   },
   musicDraft: {
     fileName: '',
-    volume: 18,
+    volume: 100,
     loop: true,
     fadeIn: true,
     fadeOut: true
+  },
+  veilDraft: {
+    enabled: false,
+    opacity: 100
   }
 };
 const VIDEO_INSPECTOR_MODES = [
@@ -117,13 +124,13 @@ const VIDEO_INSPECTOR_MODES = [
   },
   {
     key: 'overlay',
-    title: 'Gestione testi e PNG',
+    title: 'Testo e PNG',
     subtitle: 'Interfaccia compatta per layer grafici sopra le slide, senza toccare la logica di export già stabilizzata.',
     panel: () => VideoInspectorPanelOverlay
   },
   {
     key: 'music',
-    title: 'Gestione musica background',
+    title: 'Musica background',
     subtitle: 'Prepariamo una regia audio soft e ordinata dentro lo stesso box, mantenendo invariata l’altezza della colonna destra.',
     panel: () => VideoInspectorPanelMusic
   }
@@ -299,7 +306,7 @@ function syncVideoPhaseOneUi(){
     const textState = videoEditorState.overlayDraft.text?.trim()
       ? `Testo pronto: “${videoEditorState.overlayDraft.text.trim()}”.`
       : 'Aggiungi un testo o un PNG per iniziare a costruire il livello overlay.';
-    VideoOverlayHint.textContent = `${textState} Fase 1 UI: il layout è pronto e nella fase successiva collegheremo drag, posizionamento e export dei layer.`;
+    VideoOverlayHint.textContent = `${textState} Nella prossima fase collegheremo preview, drag e export dei layer.`;
   }
   if (VidMusicVolume) {
     VidMusicVolume.value = String(videoEditorState.musicDraft.volume);
@@ -317,7 +324,19 @@ function syncVideoPhaseOneUi(){
     const label = videoEditorState.musicDraft.fileName
       ? `Musica pronta con volume ${videoEditorState.musicDraft.volume}%.`
       : 'Puoi già impostare volume, loop e fade per la futura traccia background.';
-    VideoMusicHint.textContent = `${label} Fase 1 UI: non stiamo ancora toccando il motore export che ora funziona alla grande.`;
+    VideoMusicHint.textContent = `${label} L’integrazione audio reale arriverà nella fase successiva.`;
+  }
+  if (VidOverlayVeil) VidOverlayVeil.checked = !!videoEditorState.veilDraft.enabled;
+  if (VidOverlayVeilOpacity) {
+    VidOverlayVeilOpacity.value = String(videoEditorState.veilDraft.opacity);
+    VidOverlayVeilOpacity.disabled = !videoEditorState.veilDraft.enabled;
+    vUpdateSliderFill(VidOverlayVeilOpacity);
+  }
+  if (VideoVelinaHint) {
+    const veilState = videoEditorState.veilDraft.enabled
+      ? `Velina pronta con opacità ${videoEditorState.veilDraft.opacity}%.`
+      : 'Velina Abitare pronta da assets/comingsoon/velina.png.';
+    VideoVelinaHint.textContent = veilState;
   }
 }
 function videoRecords(){ return Array.isArray(window.pickedVideo) ? window.pickedVideo : []; }
@@ -1549,6 +1568,15 @@ VidMusicFadeOut?.addEventListener('change', () => {
   videoEditorState.musicDraft.fadeOut = !!VidMusicFadeOut.checked;
   syncVideoPhaseOneUi();
 });
+VidOverlayVeil?.addEventListener('change', () => {
+  videoEditorState.veilDraft.enabled = !!VidOverlayVeil.checked;
+  syncVideoPhaseOneUi();
+});
+VidOverlayVeilOpacity?.addEventListener('input', () => {
+  videoEditorState.veilDraft.opacity = Number(VidOverlayVeilOpacity.value || 100);
+  vUpdateSliderFill(VidOverlayVeilOpacity);
+  syncVideoPhaseOneUi();
+});
 BtnVideoResetOrder?.addEventListener('click', resetVideoSlideOrder);
 BtnVideoResetFrame?.addEventListener('click', () => resetVideoSlideTransform(currentActiveSlide()));
 BtnVideoCenterFrame?.addEventListener('click', () => centerVideoSlideTransform(currentActiveSlide()));
@@ -1688,6 +1716,7 @@ try { vUpdateSliderFill(VidSlideZoom); } catch {}
 try { vUpdateSliderFill(VidOverlayScale); } catch {}
 try { vUpdateSliderFill(VidOverlayOpacity); } catch {}
 try { vUpdateSliderFill(VidMusicVolume); } catch {}
+try { vUpdateSliderFill(VidOverlayVeilOpacity); } catch {}
 try { setVideoInspectorMode('transitions'); } catch {}
 try { syncVideoPhaseOneUi(); } catch {}
 try { syncVideoUiState(); } catch {}

@@ -766,6 +766,31 @@ function buildTimelineVideo(N, T, F, fps){
   for (let i=1;i<N;i++) offsets[i] = offsets[i-1] + seg[i-1];
   return { still, fade, offsets, frames };
 }
+
+function sanitizeVideoTransform(transform){
+  const safe = transform || {};
+  const x = Number.isFinite(Number(safe.x)) ? Number(safe.x) : 0;
+  const y = Number.isFinite(Number(safe.y)) ? Number(safe.y) : 0;
+  const scale = Number.isFinite(Number(safe.scale)) ? Number(safe.scale) : 1;
+  return {
+    x: vClamp(x, -3, 3),
+    y: vClamp(y, -3, 3),
+    scale: vClamp(scale, 0.1, 8)
+  };
+}
+function buildVideoExportSlide(slide, bmp){
+  return {
+    ...slide,
+    bmp,
+    transform: sanitizeVideoTransform(slide?.transform)
+  };
+}
+function drawFallbackTransformedOn(ctx, bmp, W, H, alpha=1){
+  const oldAlpha = ctx.globalAlpha;
+  ctx.globalAlpha = vClamp(Number(alpha), 0, 1);
+  drawCoverOn(ctx, bmp, W, H);
+  ctx.globalAlpha = oldAlpha;
+}
 function drawCoverOn(ctx, bmp, W, H){
   const iw=bmp.width, ih=bmp.height;
   const cr=W/H, ir=iw/ih;
@@ -777,49 +802,72 @@ function drawCoverOn(ctx, bmp, W, H){
   ctx.drawImage(bmp, dx, dy, dw, dh);
 }
 function drawTransformedOn(ctx, bmp, slide, W, H, opts={}){
-  const iw = bmp.width, ih = bmp.height;
+  if (!ctx || !bmp) return false;
+  const iw = Number(bmp.width) || 0;
+  const ih = Number(bmp.height) || 0;
+  if (!(iw > 0) || !(ih > 0) || !(W > 0) || !(H > 0)) return false;
+  const safeTransform = sanitizeVideoTransform(slide?.transform);
   const coverScale = Math.max(W / iw, H / ih);
-  const userScale  = Math.max(0.1, Number(slide?.transform?.scale || 1));
-  const extraScale = Math.max(0.1, Number(opts.scaleMul || 1));
-  const dxUser = (Number(slide?.transform?.x || 0) * W) + Number(opts.dx || 0);
-  const dyUser = (Number(slide?.transform?.y || 0) * H) + Number(opts.dy || 0);
+  if (!Number.isFinite(coverScale) || !(coverScale > 0)) {
+    drawFallbackTransformedOn(ctx, bmp, W, H, opts.alpha ?? 1);
+    return true;
+  }
+  const userScale  = Math.max(0.1, Number(safeTransform.scale || 1));
+  const extraScale = Math.max(0.1, Number.isFinite(Number(opts.scaleMul)) ? Number(opts.scaleMul) : 1);
+  const dxUser = (safeTransform.x * W) + (Number.isFinite(Number(opts.dx)) ? Number(opts.dx) : 0);
+  const dyUser = (safeTransform.y * H) + (Number.isFinite(Number(opts.dy)) ? Number(opts.dy) : 0);
   const drawScale = coverScale * userScale * extraScale;
   const dw = iw * drawScale;
   const dh = ih * drawScale;
+  if (!Number.isFinite(dw) || !Number.isFinite(dh) || !(dw > 0) || !(dh > 0)) {
+    drawFallbackTransformedOn(ctx, bmp, W, H, opts.alpha ?? 1);
+    return true;
+  }
   const x = ((W - dw) / 2) + dxUser;
   const y = ((H - dh) / 2) + dyUser;
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    drawFallbackTransformedOn(ctx, bmp, W, H, opts.alpha ?? 1);
+    return true;
+  }
   const oldAlpha = ctx.globalAlpha;
   if (opts.alpha != null) ctx.globalAlpha = vClamp(Number(opts.alpha), 0, 1);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(bmp, x, y, dw, dh);
+  try {
+    ctx.drawImage(bmp, x, y, dw, dh);
+  } catch (err) {
+    ctx.globalAlpha = oldAlpha;
+    drawFallbackTransformedOn(ctx, bmp, W, H, opts.alpha ?? 1);
+    return true;
+  }
   ctx.globalAlpha = oldAlpha;
+  return true;
 }
 function drawTransitionFrame(ctx, currentItem, nextItem, transition, progress, W, H){
   const type = transition?.type || 'crossfade';
   const p = vClamp(progress, 0, 1);
   if (type === 'fadeblack'){
-    if (p < 0.5) drawTransformedOn(ctx, currentItem.bmp, currentItem, W, H, { alpha: 1 - (p * 2) });
-    else drawTransformedOn(ctx, nextItem.bmp, nextItem, W, H, { alpha: (p - 0.5) * 2 });
+    if (p < 0.5) drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 - (p * 2) });
+    else drawTransformedOn(ctx, nextItem?.bmp, nextItem, W, H, { alpha: (p - 0.5) * 2 });
     return;
   }
   if (type === 'slideleft'){
-    drawTransformedOn(ctx, currentItem.bmp, currentItem, W, H, { dx: -p * W });
-    drawTransformedOn(ctx, nextItem.bmp, nextItem, W, H, { dx: (1 - p) * W });
+    drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { dx: -p * W });
+    drawTransformedOn(ctx, nextItem?.bmp, nextItem, W, H, { dx: (1 - p) * W });
     return;
   }
   if (type === 'slideright'){
-    drawTransformedOn(ctx, currentItem.bmp, currentItem, W, H, { dx: p * W });
-    drawTransformedOn(ctx, nextItem.bmp, nextItem, W, H, { dx: -(1 - p) * W });
+    drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { dx: p * W });
+    drawTransformedOn(ctx, nextItem?.bmp, nextItem, W, H, { dx: -(1 - p) * W });
     return;
   }
   if (type === 'zoomsoft'){
-    drawTransformedOn(ctx, currentItem.bmp, currentItem, W, H, { alpha: 1 - p, scaleMul: 1 + (p * 0.08) });
-    drawTransformedOn(ctx, nextItem.bmp, nextItem, W, H, { alpha: p, scaleMul: 1.08 - (p * 0.08) });
+    drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 - p, scaleMul: 1 + (p * 0.08) });
+    drawTransformedOn(ctx, nextItem?.bmp, nextItem, W, H, { alpha: p, scaleMul: 1.08 - (p * 0.08) });
     return;
   }
-  drawTransformedOn(ctx, currentItem.bmp, currentItem, W, H, { alpha:1 });
-  drawTransformedOn(ctx, nextItem.bmp, nextItem, W, H, { alpha:p });
+  drawTransformedOn(ctx, currentItem?.bmp, currentItem, W, H, { alpha: 1 });
+  drawTransformedOn(ctx, nextItem?.bmp, nextItem, W, H, { alpha: p });
 }
 function renderSimpleAt(tl, items, W, H, tSec){
   const { still, fade, offsets } = tl;
@@ -848,22 +896,27 @@ function renderAdvancedAt(tl, items, W, H, tSec){
   const ctx = VidCanvas.getContext('2d', { alpha:false });
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
+  if (!Array.isArray(items) || !items.length) return;
   let i = 0;
   for (; i < items.length; i++){
-    const start = tl.offsets[i];
-    const segDur = i < items.length - 1 ? (tl.still + (tl.transitions[i]?.duration || 0)) : tl.still;
+    const start = Number(tl?.offsets?.[i] || 0);
+    const segDur = i < items.length - 1 ? (Number(tl?.still || 0) + Number(tl?.transitions?.[i]?.duration || 0)) : Number(tl?.still || 0);
     if (tSec < start + segDur || i === items.length - 1) break;
   }
-  const start = tl.offsets[i] || 0;
-  const localT = tSec - start;
+  i = Math.max(0, Math.min(i, items.length - 1));
+  const start = Number(tl?.offsets?.[i] || 0);
+  const localT = Math.max(0, tSec - start);
   const cur = items[i];
-  const tr = tl.transitions[i] || { type:'none', duration:0 };
-  if (i < items.length - 1 && tr.type !== 'none' && tr.duration > 0 && localT > tl.still){
-    const progress = (localT - tl.still) / tr.duration;
+  const tr = tl?.transitions?.[i] || { type:'none', duration:0 };
+  if (!cur?.bmp) return;
+  if (i < items.length - 1 && tr.type !== 'none' && tr.duration > 0 && localT > Number(tl?.still || 0)){
+    const progress = (localT - Number(tl?.still || 0)) / Math.max(0.000001, tr.duration);
     drawTransitionFrame(ctx, cur, items[i+1], tr, progress, W, H);
     return;
   }
-  drawTransformedOn(ctx, cur.bmp, cur, W, H, { alpha:1 });
+  if (!drawTransformedOn(ctx, cur.bmp, cur, W, H, { alpha:1 })) {
+    drawCoverOn(ctx, cur.bmp, W, H);
+  }
 }
 async function filesToBitmapsVideo(recs){
   const arr = [];
@@ -872,7 +925,10 @@ async function filesToBitmapsVideo(recs){
 }
 async function filesToBitmapsVideoAdvanced(slides){
   const arr = [];
-  for (const slide of slides) arr.push({ ...slide, bmp: await loadImageBitmap(slide.file) });
+  for (const slide of slides || []){
+    const bmp = await loadImageBitmap(slide.file);
+    arr.push(buildVideoExportSlide(slide, bmp));
+  }
   return arr;
 }
 async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate}){
@@ -1026,14 +1082,19 @@ async function exportVideoSlideshow(){
   try {
     let blobInfo;
     if (videoEditorState.enabled && videoHasSlides()){
-      const slides = videoEditorState.slides.slice();
+      const slides = videoEditorState.slides.map(slide => ({
+        ...slide,
+        transform: sanitizeVideoTransform(slide?.transform)
+      }));
       items = await filesToBitmapsVideoAdvanced(slides);
       const plan = buildAdvancedTimelinePlan(slides, T);
+      renderAdvancedAt(plan, items, W, H, 0);
       blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderAdvancedAt(plan, items, W, H, tSec), {T,fps,W,H,bitrate});
     } else {
       const fade = currentVideoFade();
       items = await filesToBitmapsVideo(videoRecords());
       const tl = buildTimelineVideo(items.length, T, fade, fps);
+      renderSimpleAt(tl, items, W, H, 0);
       blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderSimpleAt(tl, items, W, H, tSec), {T,fps,W,H,bitrate});
     }
     downloadVideoBlob(blobInfo.blob, `${slugify(title)}.mp4`);

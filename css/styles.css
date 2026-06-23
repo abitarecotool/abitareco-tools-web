@@ -1200,7 +1200,7 @@ input[type="range"].input:focus,
 }
 .video-advanced-grid{
   display:grid;
-  grid-template-columns:minmax(0, 1.72fr) minmax(360px, 0.74fr);
+  grid-template-columns:minmax(0, 1.78fr) minmax(360px, 0.72fr);
   gap:18px;
   align-items:stretch;
 }
@@ -1218,11 +1218,12 @@ input[type="range"].input:focus,
   display:flex;
   flex-direction:column;
   gap:18px;
+  height:100%;
 }
 .video-preview-stage{
   margin-top:14px;
   flex:1;
-  min-height:600px;
+  min-height:640px;
   height:auto;
   display:flex;
   align-items:center;
@@ -1512,3 +1513,8 @@ input#VidSlideZoom.input{
 }
 
 .video-preview-card{ display:flex; flex-direction:column; flex:1; }
+
+.video-manage-card .video-transition-actions{ flex-wrap:nowrap; gap:10px; margin-bottom:12px; }
+.video-manage-card .video-transition-actions .btn-outline{ flex:1 1 0; padding-left:14px; padding-right:14px; }
+.video-manage-card .muted{ margin-top:8px; line-height:1.55; }
+.video-transition-card .muted{ line-height:1.55; }

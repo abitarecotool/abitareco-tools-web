@@ -496,8 +496,10 @@ function updateVideoPreviewRatio(){
   const { W, H } = pickVideoSize();
   const ratio = W / H;
   const stageRect = VideoPreviewStage.getBoundingClientRect();
+  const inspector = document.querySelector('.video-inspector-panel');
+  const inspectorHeight = inspector ? Math.floor(inspector.getBoundingClientRect().height || 0) : 0;
   const availableWidth = Math.max(220, Math.floor(stageRect.width || 0));
-  const availableHeight = Math.max(320, Math.floor(stageRect.height || VIDEO_PREVIEW_MAX_HEIGHT));
+  const availableHeight = Math.max(340, Math.min(VIDEO_PREVIEW_MAX_HEIGHT, inspectorHeight || VIDEO_PREVIEW_MAX_HEIGHT));
   let width = Math.round(availableHeight * ratio);
   let height = availableHeight;
   if (width > availableWidth){
@@ -938,7 +940,7 @@ async function exportVideoSlideshow(){
     const F = currentVideoFade();
     const items = await filesToBitmapsVideo(videoRecords());
     const tl = buildTimelineVideo(items.length, T, F, fps);
-    blobInfo = await exportVideoBlob((tSec) => renderSimpleAt(tl, items, W, H, tSec), {T,fps,W,H,bitrate});
+    blobInfo = await exportVideoBlobPreferRecorder((tSec) => renderSimpleAt(tl, items, W, H, tSec), {T,fps,W,H,bitrate});
   }
   downloadVideoBlob(blobInfo.blob, `${slugify(title)}.${blobInfo.ext}`);
 }

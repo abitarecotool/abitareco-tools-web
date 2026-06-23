@@ -1206,7 +1206,7 @@ input[type="range"].input:focus,
 }
 .video-preview-panel,
 .video-inspector-panel{ min-width:0; }
-.video-preview-panel{ display:flex; }
+.video-preview-panel{ display:flex; height:100%; }
 .video-panel-card{
   background:var(--white);
   border:1px solid var(--gray-200);
@@ -1283,6 +1283,7 @@ input[type="range"].input:focus,
   line-height:1.6;
 }
 .video-preview-controls{
+  margin-top:auto;
   display:flex;
   align-items:flex-end;
   justify-content:space-between;
@@ -1514,7 +1515,7 @@ input#VidSlideZoom.input{
 
 .video-preview-card{ display:flex; flex-direction:column; flex:1; }
 
-.video-manage-card .video-transition-actions{ flex-wrap:nowrap; gap:10px; margin-bottom:12px; }
+.video-manage-card .video-transition-actions{ flex-wrap:nowrap; gap:10px; margin-bottom:18px; }
 .video-manage-card .video-transition-actions .btn-outline{ flex:1 1 0; padding-left:14px; padding-right:14px; }
 .video-manage-card .muted{ margin-top:8px; line-height:1.55; }
 .video-transition-card .muted{ line-height:1.55; }

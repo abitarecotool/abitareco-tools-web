@@ -199,6 +199,9 @@ function videoAdvancedHasZoomSoftTransitions(){
 function currentVideoExportFps(){
   return videoAdvancedHasZoomSoftTransitions() ? 24 : currentVideoFps();
 }
+function videoAdvancedNeedsAllKeyframes(){
+  return videoAdvancedHasZoomSoftTransitions();
+}
 function currentVideoFormatLabel(){
   if (VidFmtV?.checked) return 'Verticale · 1080×1920';
   if (VidFmtS?.checked) return 'Quadrato · 1080×1080';
@@ -1063,7 +1066,7 @@ async function filesToBitmapsVideoAdvanced(slides){
   }
   return arr;
 }
-async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto'}){
+async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto',forceAllKeyframes=false}){
   if (!isMp4MuxerReady()) throw new Error('mp4-muxer non caricato');
   vShow(ActionProgressWrap);
   if (ActionProgress) ActionProgress.value = 0;
@@ -1109,7 +1112,7 @@ async function exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,en
           duration: frameDurUs
         });
         encoder.encode(frame, {
-          keyFrame: (f === 0) || (f % Math.max(1, Math.round(fps * VIDEO_EXPORT_KEYFRAME_SECONDS)) === 0)
+          keyFrame: forceAllKeyframes || (f === 0) || (f % Math.max(1, Math.round(fps * VIDEO_EXPORT_KEYFRAME_SECONDS)) === 0)
         });
         frame.close();
         if (encoderErr) throw encoderErr;
@@ -1170,7 +1173,7 @@ async function exportWithMediaRecorderRenderer(renderFrame, {T,fps,W,H,mime,bitr
   vHide(ActionProgressWrap);
   return new Blob(parts, { type: mime });
 }
-async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto',forceRecorder=false}){
+async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto',forceRecorder=false,forceAllKeyframes=false}){
   const mp4Mime = supportsMp4Recorder();
   if (forceRecorder) {
     if (mp4Mime) {
@@ -1179,7 +1182,7 @@ async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference
     throw new Error('Questo browser non supporta il fallback MP4 richiesto per questa transizione. Apri il tool con Chrome o Edge desktop aggiornato.');
   }
   if (window.VideoEncoder && isMp4MuxerReady()) {
-    const webCodecsTask = exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,encoderPreference});
+    const webCodecsTask = exportWithWebCodecsMP4Renderer(renderFrame, {T,fps,W,H,bitrate,encoderPreference,forceAllKeyframes});
     return {
       blob: await withVideoExportTimeout(webCodecsTask, Math.max(300000, Math.round(T * 12000)), 'Esportazione MP4'),
       ext:'mp4'
@@ -1191,9 +1194,9 @@ async function exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference
   throw new Error('Questo browser non supporta un export MP4 stabile. Apri il tool con Chrome o Edge desktop aggiornato.');
 }
 
-async function exportVideoBlobPreferRecorder(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto',forceRecorder=false}){
+async function exportVideoBlobPreferRecorder(renderFrame, {T,fps,W,H,bitrate,encoderPreference='auto',forceRecorder=false,forceAllKeyframes=false}){
   try {
-    return await exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference,forceRecorder});
+    return await exportVideoBlob(renderFrame, {T,fps,W,H,bitrate,encoderPreference,forceRecorder,forceAllKeyframes});
   } catch (err) {
     console.warn('Export MP4 non disponibile:', err);
     throw err;
@@ -1229,11 +1232,12 @@ async function exportVideoSlideshow(){
       const plan = buildAdvancedTimelinePlan(slides, T);
       const hasMotion = videoAdvancedHasMotionTransitions();
       const forceRecorder = false;
+      const forceAllKeyframes = videoAdvancedNeedsAllKeyframes();
       const encoderPreference = hasMotion ? currentVideoEncoderPreference() : 'auto';
       renderAdvancedAt(plan, items, W, H, 0);
       blobInfo = await exportVideoBlobPreferRecorder(
         (tSec) => renderAdvancedAt(plan, items, W, H, tSec),
-        { T, fps, W, H, bitrate, encoderPreference, forceRecorder }
+        { T, fps, W, H, bitrate, encoderPreference, forceRecorder, forceAllKeyframes }
       );
     } else {
       const fade = currentVideoFade();

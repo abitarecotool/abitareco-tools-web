@@ -17,7 +17,7 @@
  <link rel="preconnect" href="https://fonts.googleapis.com" />
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
- <link rel="stylesheet" href="./css/styles.css?v=20260623_slideshowpro3" />
+ <link rel="stylesheet" href="./css/styles.css?v=20260624_slideshowhotfix1" />
  <link rel="stylesheet" href="./css/modules/images.css?v=20260612_pdfcompress6" />
  <link rel="stylesheet" href="./css/modules/platform.css?v=20260526_platform7" />
  <link rel="stylesheet" href="./css/modules/cropzoom.css" />
@@ -444,15 +444,14 @@
    <aside class="video-inspector-panel">
     <div class="video-panel-card video-transition-card video-inspector-carousel-card">
      <div class="video-panel-head video-panel-head--carousel">
-      <div>
-       <div class="video-panel-headline-row">
-        <button id="BtnVideoInspectorPrev" type="button" class="video-inspector-nav" aria-label="Scheda precedente">←</button>
-        <h5 id="VideoInspectorTitle">Transizioni</h5>
-        <button id="BtnVideoInspectorNext" type="button" class="video-inspector-nav" aria-label="Scheda successiva">→</button>
-       </div>
+      <div class="video-panel-head-main">
+       <h5 id="VideoInspectorTitle">Transizioni</h5>
        <p id="VideoInspectorSubtitle" class="muted">Usa Shift per selezioni multiple contigue oppure Ctrl/Cmd + click per aggiungere o togliere singole slide.</p>
       </div>
-      <span id="VideoInspectorCounter" class="video-panel-kicker">1 / 3</span>
+      <div class="video-inspector-navbox" aria-label="Navigazione pannelli slideshow">
+       <button id="BtnVideoInspectorPrev" type="button" class="video-inspector-nav" aria-label="Scheda precedente">←</button>
+       <button id="BtnVideoInspectorNext" type="button" class="video-inspector-nav" aria-label="Scheda successiva">→</button>
+      </div>
      </div>
      <div class="video-inspector-carousel-body">
       <section id="VideoInspectorPanelTransitions" class="video-inspector-panel-view">
@@ -582,6 +581,14 @@
        <button id="BtnVideoRemoveSelected" type="button" class="btn-outline">Rimuovi</button>
        <button id="BtnVideoReplaceSelected" type="button" class="btn-outline">Sostituisci</button>
        <button id="BtnVideoAddImages" type="button" class="btn-outline">Aggiungi</button>
+      </div>
+      <div class="video-manage-velina-box">
+       <label class="video-manage-check"><input id="VidOverlayVeil" type="checkbox" /> <span>Velina sopra immagine</span></label>
+       <div class="video-slider-group video-slider-group--compact video-slider-group--veil">
+        <label for="VidOverlayVeilOpacity">Opacità velina</label>
+        <input id="VidOverlayVeilOpacity" class="input video-red-range" type="range" min="10" max="100" step="1" value="100" />
+       </div>
+       <p id="VideoVelinaHint" class="video-inline-meta muted">Velina Abitare pronta da assets/comingsoon/velina.png.</p>
       </div>
       <p id="VideoManageHint" class="muted">Seleziona almeno una slide per attivare le azioni.</p>
       <input id="VideoReplaceInput" type="file" accept="image/*" class="hidden" />

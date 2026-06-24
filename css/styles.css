@@ -1729,3 +1729,180 @@ input#VidOverlayPngOpacity.input{
 @media (max-width: 760px){
   .video-text-toolbar{ padding:10px; }
 }
+
+
+/* ============================================================
+   VIDEO SLIDESHOW · UI realignment hotfix
+   ============================================================ */
+.video-panel-head--carousel{
+  align-items:flex-start !important;
+}
+.video-panel-head-main{
+  min-width:0;
+  flex:1 1 auto;
+}
+.video-panel-head-main h5{
+  margin:0 0 4px !important;
+}
+.video-inspector-navbox{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:4px;
+  border:1px solid rgba(196,22,43,.16);
+  border-radius:999px;
+  background:rgba(196,22,43,.05);
+  flex:0 0 auto;
+}
+.video-inspector-nav{
+  width:34px;
+  height:34px;
+  border-radius:999px;
+  border:0;
+  background:var(--white);
+  color:var(--red);
+  font:800 16px/1 var(--font);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+#VideoInspectorCounter{ display:none !important; }
+.video-panel-headline-row{ display:none !important; }
+.video-inspector-carousel-body{
+  margin-top:12px !important;
+}
+.video-inspector-panel-view{
+  overflow:auto !important;
+  padding-right:4px !important;
+}
+.video-transition-actions--triple{
+  display:grid !important;
+  grid-template-columns:repeat(3, minmax(0,1fr));
+  gap:10px;
+}
+.video-transition-actions--triple .btn-primary,
+.video-transition-actions--triple .btn-outline{
+  width:100%;
+  min-width:0 !important;
+}
+.video-compact-grid--overlay{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 110px;
+  align-items:end;
+  gap:12px;
+}
+.video-compact-grid--overlay .form-group{
+  margin-bottom:10px !important;
+}
+.video-color-input{
+  padding:4px 6px !important;
+  height:41px !important;
+}
+.video-text-toolbar{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:12px;
+  border:1px solid var(--gray-200);
+  border-radius:12px;
+  background:var(--gray-50);
+  margin:0 0 12px;
+}
+.video-text-tool{
+  min-width:46px;
+  height:36px;
+  padding:0 14px;
+  border-radius:10px;
+  border:1px solid var(--gray-300);
+  background:var(--white);
+  color:var(--navy);
+  font:700 13px/1 var(--font);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.video-text-tool.is-active{
+  background:var(--red);
+  color:var(--white);
+  border-color:var(--red);
+}
+.video-text-color-chip{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:54px;
+  height:36px;
+  border:1px solid var(--gray-300);
+  border-radius:10px;
+  background:var(--white);
+  overflow:hidden;
+}
+.video-text-color-chip input{
+  position:absolute;
+  inset:0;
+  opacity:0;
+}
+.video-text-color-chip span{
+  font:700 11px/1 var(--font);
+  color:var(--navy);
+  pointer-events:none;
+}
+.video-overlay-textarea{
+  min-height:90px !important;
+  height:90px !important;
+  resize:vertical;
+  font-family:var(--font) !important;
+  font-size:14px !important;
+  line-height:1.45 !important;
+  margin-bottom:12px !important;
+}
+.video-png-controls{
+  padding:12px;
+  border:1px solid var(--gray-200);
+  border-radius:12px;
+  background:var(--gray-50);
+  margin-bottom:10px;
+}
+.video-png-controls-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+.video-png-controls-head strong{
+  color:var(--navy);
+  font-size:13px;
+}
+.video-manage-velina-box{
+  margin:0 0 10px;
+  padding:12px 14px;
+  border:1px solid var(--gray-200);
+  border-radius:12px;
+  background:var(--gray-50);
+}
+.video-manage-check{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:600;
+  margin-bottom:10px;
+}
+.video-slider-group--veil{
+  min-width:0;
+  margin-bottom:0 !important;
+}
+.video-slider-group--veil label{
+  margin-bottom:8px;
+}
+@media (max-width: 760px){
+  .video-transition-actions--triple{
+    grid-template-columns:1fr;
+  }
+  .video-compact-grid--overlay{
+    grid-template-columns:1fr;
+  }
+}

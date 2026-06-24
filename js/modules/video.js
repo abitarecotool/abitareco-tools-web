@@ -64,13 +64,6 @@ const VidMusicFadeOut = $('#VidMusicFadeOut');
 const VideoMusicHint = $('#VideoMusicHint');
 const VideoMusicFileName = $('#VideoMusicFileName');
 const VideoMusicInput = $('#VideoMusicInput');
-const BtnVideoTextBold = $('#BtnVideoTextBold');
-const BtnVideoTextItalic = $('#BtnVideoTextItalic');
-const VidOverlayColorPrimary = $('#VidOverlayColorPrimary');
-const VidOverlayColorSecondary = $('#VidOverlayColorSecondary');
-const BtnVideoTextColorSplit = $('#BtnVideoTextColorSplit');
-const VidOverlayPngScale = $('#VidOverlayPngScale');
-const VidOverlayPngOpacity = $('#VidOverlayPngOpacity');
 
 if (!Array.isArray(window.pickedVideo)) window.pickedVideo = [];
 
@@ -103,19 +96,13 @@ const videoEditorState = {
     font: 'PPPANGAIA',
     text: '',
     color: '#ffffff',
-    colorSecondary: '#c4162b',
-    useSecondary: false,
-    bold: true,
-    italic: false,
     scale: 1,
     opacity: 100,
-    pngName: '',
-    pngScale: 1,
-    pngOpacity: 100
+    pngName: ''
   },
   musicDraft: {
     fileName: '',
-    volume: 100,
+    volume: 18,
     loop: true,
     fadeIn: true,
     fadeOut: true
@@ -130,13 +117,13 @@ const VIDEO_INSPECTOR_MODES = [
   },
   {
     key: 'overlay',
-    title: 'Testo e PNG',
+    title: 'Gestione testi e PNG',
     subtitle: 'Interfaccia compatta per layer grafici sopra le slide, senza toccare la logica di export già stabilizzata.',
     panel: () => VideoInspectorPanelOverlay
   },
   {
     key: 'music',
-    title: 'Musica background',
+    title: 'Gestione musica background',
     subtitle: 'Prepariamo una regia audio soft e ordinata dentro lo stesso box, mantenendo invariata l’altezza della colonna destra.',
     panel: () => VideoInspectorPanelMusic
   }
@@ -294,11 +281,6 @@ function cycleVideoInspectorMode(step){
 function syncVideoPhaseOneUi(){
   if (VidOverlayFont) VidOverlayFont.value = videoEditorState.overlayDraft.font;
   if (VidOverlayColor) VidOverlayColor.value = videoEditorState.overlayDraft.color;
-  if (VidOverlayColorPrimary) VidOverlayColorPrimary.value = videoEditorState.overlayDraft.color;
-  if (VidOverlayColorSecondary) VidOverlayColorSecondary.value = videoEditorState.overlayDraft.colorSecondary;
-  BtnVideoTextBold?.classList.toggle('is-active', !!videoEditorState.overlayDraft.bold);
-  BtnVideoTextItalic?.classList.toggle('is-active', !!videoEditorState.overlayDraft.italic);
-  BtnVideoTextColorSplit?.classList.toggle('is-active', !!videoEditorState.overlayDraft.useSecondary);
   if (VidOverlayText) VidOverlayText.value = videoEditorState.overlayDraft.text;
   if (VidOverlayScale) {
     VidOverlayScale.value = String(videoEditorState.overlayDraft.scale);
@@ -308,28 +290,16 @@ function syncVideoPhaseOneUi(){
     VidOverlayOpacity.value = String(videoEditorState.overlayDraft.opacity);
     vUpdateSliderFill(VidOverlayOpacity);
   }
-  if (VidOverlayPngScale) {
-    VidOverlayPngScale.value = String(videoEditorState.overlayDraft.pngScale);
-    vUpdateSliderFill(VidOverlayPngScale);
-  }
-  if (VidOverlayPngOpacity) {
-    VidOverlayPngOpacity.value = String(videoEditorState.overlayDraft.pngOpacity);
-    vUpdateSliderFill(VidOverlayPngOpacity);
-  }
   if (VideoOverlayAssetName) {
     VideoOverlayAssetName.textContent = videoEditorState.overlayDraft.pngName
       ? `PNG pronto: ${videoEditorState.overlayDraft.pngName}`
       : 'Nessun PNG selezionato.';
   }
   if (VideoOverlayHint) {
-    const parts = [];
-    if (videoEditorState.overlayDraft.text?.trim()) parts.push(`Testo pronto: “${videoEditorState.overlayDraft.text.trim()}”.`);
-    else parts.push('Aggiungi un testo o un PNG per iniziare a costruire il livello overlay.');
-    if (videoEditorState.overlayDraft.bold) parts.push('Grassetto attivo.');
-    if (videoEditorState.overlayDraft.italic) parts.push('Corsivo attivo.');
-    if (videoEditorState.overlayDraft.useSecondary) parts.push('Modalità 2 colori attiva.');
-    if (videoEditorState.overlayDraft.pngName) parts.push(`PNG con scala ${Number(videoEditorState.overlayDraft.pngScale || 1).toFixed(2)} e opacità ${videoEditorState.overlayDraft.pngOpacity}%.`);
-    VideoOverlayHint.textContent = `${parts.join(' ')} Nella prossima fase collegheremo preview, drag e export dei layer.`;
+    const textState = videoEditorState.overlayDraft.text?.trim()
+      ? `Testo pronto: “${videoEditorState.overlayDraft.text.trim()}”.`
+      : 'Aggiungi un testo o un PNG per iniziare a costruire il livello overlay.';
+    VideoOverlayHint.textContent = `${textState} Fase 1 UI: il layout è pronto e nella fase successiva collegheremo drag, posizionamento e export dei layer.`;
   }
   if (VidMusicVolume) {
     VidMusicVolume.value = String(videoEditorState.musicDraft.volume);
@@ -347,7 +317,7 @@ function syncVideoPhaseOneUi(){
     const label = videoEditorState.musicDraft.fileName
       ? `Musica pronta con volume ${videoEditorState.musicDraft.volume}%.`
       : 'Puoi già impostare volume, loop e fade per la futura traccia background.';
-    VideoMusicHint.textContent = `${label} L’integrazione audio reale arriverà nella fase successiva.`;
+    VideoMusicHint.textContent = `${label} Fase 1 UI: non stiamo ancora toccando il motore export che ora funziona alla grande.`;
   }
 }
 function videoRecords(){ return Array.isArray(window.pickedVideo) ? window.pickedVideo : []; }
@@ -1515,10 +1485,7 @@ BtnVideoOverlayAddPng?.addEventListener('click', () => {
   VideoOverlayPngInput?.click();
 });
 BtnVideoOverlayRemove?.addEventListener('click', () => {
-  videoEditorState.overlayDraft = {
-    kind:'text', font:'PPPANGAIA', text:'', color:'#ffffff', colorSecondary:'#c4162b',
-    useSecondary:false, bold:true, italic:false, scale:1, opacity:100, pngName:'', pngScale:1, pngOpacity:100
-  };
+  videoEditorState.overlayDraft = { kind:'text', font:'PPPANGAIA', text:'', color:'#ffffff', scale:1, opacity:100, pngName:'' };
   syncVideoPhaseOneUi();
 });
 VideoOverlayPngInput?.addEventListener('change', () => {
@@ -1529,34 +1496,12 @@ VideoOverlayPngInput?.addEventListener('change', () => {
   syncVideoPhaseOneUi();
   VideoOverlayPngInput.value = '';
 });
-BtnVideoTextBold?.addEventListener('click', () => {
-  videoEditorState.overlayDraft.bold = !videoEditorState.overlayDraft.bold;
-  syncVideoPhaseOneUi();
-});
-BtnVideoTextItalic?.addEventListener('click', () => {
-  videoEditorState.overlayDraft.italic = !videoEditorState.overlayDraft.italic;
-  syncVideoPhaseOneUi();
-});
-BtnVideoTextColorSplit?.addEventListener('click', () => {
-  videoEditorState.overlayDraft.useSecondary = !videoEditorState.overlayDraft.useSecondary;
-  syncVideoPhaseOneUi();
-});
 VidOverlayFont?.addEventListener('change', () => {
   videoEditorState.overlayDraft.font = VidOverlayFont.value || 'PPPANGAIA';
   syncVideoPhaseOneUi();
 });
 VidOverlayColor?.addEventListener('input', () => {
   videoEditorState.overlayDraft.color = VidOverlayColor.value || '#ffffff';
-  if (VidOverlayColorPrimary) VidOverlayColorPrimary.value = videoEditorState.overlayDraft.color;
-  syncVideoPhaseOneUi();
-});
-VidOverlayColorPrimary?.addEventListener('input', () => {
-  videoEditorState.overlayDraft.color = VidOverlayColorPrimary.value || '#ffffff';
-  if (VidOverlayColor) VidOverlayColor.value = videoEditorState.overlayDraft.color;
-  syncVideoPhaseOneUi();
-});
-VidOverlayColorSecondary?.addEventListener('input', () => {
-  videoEditorState.overlayDraft.colorSecondary = VidOverlayColorSecondary.value || '#c4162b';
   syncVideoPhaseOneUi();
 });
 VidOverlayText?.addEventListener('input', () => {
@@ -1571,16 +1516,6 @@ VidOverlayScale?.addEventListener('input', () => {
 VidOverlayOpacity?.addEventListener('input', () => {
   videoEditorState.overlayDraft.opacity = Number(VidOverlayOpacity.value || 100);
   vUpdateSliderFill(VidOverlayOpacity);
-  syncVideoPhaseOneUi();
-});
-VidOverlayPngScale?.addEventListener('input', () => {
-  videoEditorState.overlayDraft.pngScale = Number(VidOverlayPngScale.value || 1);
-  vUpdateSliderFill(VidOverlayPngScale);
-  syncVideoPhaseOneUi();
-});
-VidOverlayPngOpacity?.addEventListener('input', () => {
-  videoEditorState.overlayDraft.pngOpacity = Number(VidOverlayPngOpacity.value || 100);
-  vUpdateSliderFill(VidOverlayPngOpacity);
   syncVideoPhaseOneUi();
 });
 BtnVideoMusicAdd?.addEventListener('click', () => {
@@ -1752,8 +1687,6 @@ window.addEventListener('resize', () => {
 try { vUpdateSliderFill(VidSlideZoom); } catch {}
 try { vUpdateSliderFill(VidOverlayScale); } catch {}
 try { vUpdateSliderFill(VidOverlayOpacity); } catch {}
-try { vUpdateSliderFill(VidOverlayPngScale); } catch {}
-try { vUpdateSliderFill(VidOverlayPngOpacity); } catch {}
 try { vUpdateSliderFill(VidMusicVolume); } catch {}
 try { setVideoInspectorMode('transitions'); } catch {}
 try { syncVideoPhaseOneUi(); } catch {}

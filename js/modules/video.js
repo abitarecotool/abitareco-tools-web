@@ -64,9 +64,13 @@ const VidMusicFadeOut = $('#VidMusicFadeOut');
 const VideoMusicHint = $('#VideoMusicHint');
 const VideoMusicFileName = $('#VideoMusicFileName');
 const VideoMusicInput = $('#VideoMusicInput');
-const VidOverlayVeil = $('#VidOverlayVeil');
-const VidOverlayVeilOpacity = $('#VidOverlayVeilOpacity');
-const VideoVelinaHint = $('#VideoVelinaHint');
+const BtnVideoTextBold = $('#BtnVideoTextBold');
+const BtnVideoTextItalic = $('#BtnVideoTextItalic');
+const VidOverlayColorPrimary = $('#VidOverlayColorPrimary');
+const VidOverlayColorSecondary = $('#VidOverlayColorSecondary');
+const BtnVideoTextColorSplit = $('#BtnVideoTextColorSplit');
+const VidOverlayPngScale = $('#VidOverlayPngScale');
+const VidOverlayPngOpacity = $('#VidOverlayPngOpacity');
 
 if (!Array.isArray(window.pickedVideo)) window.pickedVideo = [];
 
@@ -99,9 +103,15 @@ const videoEditorState = {
     font: 'PPPANGAIA',
     text: '',
     color: '#ffffff',
+    colorSecondary: '#c4162b',
+    useSecondary: false,
+    bold: true,
+    italic: false,
     scale: 1,
     opacity: 100,
-    pngName: ''
+    pngName: '',
+    pngScale: 1,
+    pngOpacity: 100
   },
   musicDraft: {
     fileName: '',
@@ -109,10 +119,6 @@ const videoEditorState = {
     loop: true,
     fadeIn: true,
     fadeOut: true
-  },
-  veilDraft: {
-    enabled: false,
-    opacity: 100
   }
 };
 const VIDEO_INSPECTOR_MODES = [
@@ -288,6 +294,11 @@ function cycleVideoInspectorMode(step){
 function syncVideoPhaseOneUi(){
   if (VidOverlayFont) VidOverlayFont.value = videoEditorState.overlayDraft.font;
   if (VidOverlayColor) VidOverlayColor.value = videoEditorState.overlayDraft.color;
+  if (VidOverlayColorPrimary) VidOverlayColorPrimary.value = videoEditorState.overlayDraft.color;
+  if (VidOverlayColorSecondary) VidOverlayColorSecondary.value = videoEditorState.overlayDraft.colorSecondary;
+  BtnVideoTextBold?.classList.toggle('is-active', !!videoEditorState.overlayDraft.bold);
+  BtnVideoTextItalic?.classList.toggle('is-active', !!videoEditorState.overlayDraft.italic);
+  BtnVideoTextColorSplit?.classList.toggle('is-active', !!videoEditorState.overlayDraft.useSecondary);
   if (VidOverlayText) VidOverlayText.value = videoEditorState.overlayDraft.text;
   if (VidOverlayScale) {
     VidOverlayScale.value = String(videoEditorState.overlayDraft.scale);
@@ -297,16 +308,28 @@ function syncVideoPhaseOneUi(){
     VidOverlayOpacity.value = String(videoEditorState.overlayDraft.opacity);
     vUpdateSliderFill(VidOverlayOpacity);
   }
+  if (VidOverlayPngScale) {
+    VidOverlayPngScale.value = String(videoEditorState.overlayDraft.pngScale);
+    vUpdateSliderFill(VidOverlayPngScale);
+  }
+  if (VidOverlayPngOpacity) {
+    VidOverlayPngOpacity.value = String(videoEditorState.overlayDraft.pngOpacity);
+    vUpdateSliderFill(VidOverlayPngOpacity);
+  }
   if (VideoOverlayAssetName) {
     VideoOverlayAssetName.textContent = videoEditorState.overlayDraft.pngName
       ? `PNG pronto: ${videoEditorState.overlayDraft.pngName}`
       : 'Nessun PNG selezionato.';
   }
   if (VideoOverlayHint) {
-    const textState = videoEditorState.overlayDraft.text?.trim()
-      ? `Testo pronto: “${videoEditorState.overlayDraft.text.trim()}”.`
-      : 'Aggiungi un testo o un PNG per iniziare a costruire il livello overlay.';
-    VideoOverlayHint.textContent = `${textState} Nella prossima fase collegheremo preview, drag e export dei layer.`;
+    const parts = [];
+    if (videoEditorState.overlayDraft.text?.trim()) parts.push(`Testo pronto: “${videoEditorState.overlayDraft.text.trim()}”.`);
+    else parts.push('Aggiungi un testo o un PNG per iniziare a costruire il livello overlay.');
+    if (videoEditorState.overlayDraft.bold) parts.push('Grassetto attivo.');
+    if (videoEditorState.overlayDraft.italic) parts.push('Corsivo attivo.');
+    if (videoEditorState.overlayDraft.useSecondary) parts.push('Modalità 2 colori attiva.');
+    if (videoEditorState.overlayDraft.pngName) parts.push(`PNG con scala ${Number(videoEditorState.overlayDraft.pngScale || 1).toFixed(2)} e opacità ${videoEditorState.overlayDraft.pngOpacity}%.`);
+    VideoOverlayHint.textContent = `${parts.join(' ')} Nella prossima fase collegheremo preview, drag e export dei layer.`;
   }
   if (VidMusicVolume) {
     VidMusicVolume.value = String(videoEditorState.musicDraft.volume);
@@ -325,18 +348,6 @@ function syncVideoPhaseOneUi(){
       ? `Musica pronta con volume ${videoEditorState.musicDraft.volume}%.`
       : 'Puoi già impostare volume, loop e fade per la futura traccia background.';
     VideoMusicHint.textContent = `${label} L’integrazione audio reale arriverà nella fase successiva.`;
-  }
-  if (VidOverlayVeil) VidOverlayVeil.checked = !!videoEditorState.veilDraft.enabled;
-  if (VidOverlayVeilOpacity) {
-    VidOverlayVeilOpacity.value = String(videoEditorState.veilDraft.opacity);
-    VidOverlayVeilOpacity.disabled = !videoEditorState.veilDraft.enabled;
-    vUpdateSliderFill(VidOverlayVeilOpacity);
-  }
-  if (VideoVelinaHint) {
-    const veilState = videoEditorState.veilDraft.enabled
-      ? `Velina pronta con opacità ${videoEditorState.veilDraft.opacity}%.`
-      : 'Velina Abitare pronta da assets/comingsoon/velina.png.';
-    VideoVelinaHint.textContent = veilState;
   }
 }
 function videoRecords(){ return Array.isArray(window.pickedVideo) ? window.pickedVideo : []; }
@@ -1504,7 +1515,10 @@ BtnVideoOverlayAddPng?.addEventListener('click', () => {
   VideoOverlayPngInput?.click();
 });
 BtnVideoOverlayRemove?.addEventListener('click', () => {
-  videoEditorState.overlayDraft = { kind:'text', font:'PPPANGAIA', text:'', color:'#ffffff', scale:1, opacity:100, pngName:'' };
+  videoEditorState.overlayDraft = {
+    kind:'text', font:'PPPANGAIA', text:'', color:'#ffffff', colorSecondary:'#c4162b',
+    useSecondary:false, bold:true, italic:false, scale:1, opacity:100, pngName:'', pngScale:1, pngOpacity:100
+  };
   syncVideoPhaseOneUi();
 });
 VideoOverlayPngInput?.addEventListener('change', () => {
@@ -1515,12 +1529,34 @@ VideoOverlayPngInput?.addEventListener('change', () => {
   syncVideoPhaseOneUi();
   VideoOverlayPngInput.value = '';
 });
+BtnVideoTextBold?.addEventListener('click', () => {
+  videoEditorState.overlayDraft.bold = !videoEditorState.overlayDraft.bold;
+  syncVideoPhaseOneUi();
+});
+BtnVideoTextItalic?.addEventListener('click', () => {
+  videoEditorState.overlayDraft.italic = !videoEditorState.overlayDraft.italic;
+  syncVideoPhaseOneUi();
+});
+BtnVideoTextColorSplit?.addEventListener('click', () => {
+  videoEditorState.overlayDraft.useSecondary = !videoEditorState.overlayDraft.useSecondary;
+  syncVideoPhaseOneUi();
+});
 VidOverlayFont?.addEventListener('change', () => {
   videoEditorState.overlayDraft.font = VidOverlayFont.value || 'PPPANGAIA';
   syncVideoPhaseOneUi();
 });
 VidOverlayColor?.addEventListener('input', () => {
   videoEditorState.overlayDraft.color = VidOverlayColor.value || '#ffffff';
+  if (VidOverlayColorPrimary) VidOverlayColorPrimary.value = videoEditorState.overlayDraft.color;
+  syncVideoPhaseOneUi();
+});
+VidOverlayColorPrimary?.addEventListener('input', () => {
+  videoEditorState.overlayDraft.color = VidOverlayColorPrimary.value || '#ffffff';
+  if (VidOverlayColor) VidOverlayColor.value = videoEditorState.overlayDraft.color;
+  syncVideoPhaseOneUi();
+});
+VidOverlayColorSecondary?.addEventListener('input', () => {
+  videoEditorState.overlayDraft.colorSecondary = VidOverlayColorSecondary.value || '#c4162b';
   syncVideoPhaseOneUi();
 });
 VidOverlayText?.addEventListener('input', () => {
@@ -1535,6 +1571,16 @@ VidOverlayScale?.addEventListener('input', () => {
 VidOverlayOpacity?.addEventListener('input', () => {
   videoEditorState.overlayDraft.opacity = Number(VidOverlayOpacity.value || 100);
   vUpdateSliderFill(VidOverlayOpacity);
+  syncVideoPhaseOneUi();
+});
+VidOverlayPngScale?.addEventListener('input', () => {
+  videoEditorState.overlayDraft.pngScale = Number(VidOverlayPngScale.value || 1);
+  vUpdateSliderFill(VidOverlayPngScale);
+  syncVideoPhaseOneUi();
+});
+VidOverlayPngOpacity?.addEventListener('input', () => {
+  videoEditorState.overlayDraft.pngOpacity = Number(VidOverlayPngOpacity.value || 100);
+  vUpdateSliderFill(VidOverlayPngOpacity);
   syncVideoPhaseOneUi();
 });
 BtnVideoMusicAdd?.addEventListener('click', () => {
@@ -1566,15 +1612,6 @@ VidMusicFadeIn?.addEventListener('change', () => {
 });
 VidMusicFadeOut?.addEventListener('change', () => {
   videoEditorState.musicDraft.fadeOut = !!VidMusicFadeOut.checked;
-  syncVideoPhaseOneUi();
-});
-VidOverlayVeil?.addEventListener('change', () => {
-  videoEditorState.veilDraft.enabled = !!VidOverlayVeil.checked;
-  syncVideoPhaseOneUi();
-});
-VidOverlayVeilOpacity?.addEventListener('input', () => {
-  videoEditorState.veilDraft.opacity = Number(VidOverlayVeilOpacity.value || 100);
-  vUpdateSliderFill(VidOverlayVeilOpacity);
   syncVideoPhaseOneUi();
 });
 BtnVideoResetOrder?.addEventListener('click', resetVideoSlideOrder);
@@ -1715,8 +1752,9 @@ window.addEventListener('resize', () => {
 try { vUpdateSliderFill(VidSlideZoom); } catch {}
 try { vUpdateSliderFill(VidOverlayScale); } catch {}
 try { vUpdateSliderFill(VidOverlayOpacity); } catch {}
+try { vUpdateSliderFill(VidOverlayPngScale); } catch {}
+try { vUpdateSliderFill(VidOverlayPngOpacity); } catch {}
 try { vUpdateSliderFill(VidMusicVolume); } catch {}
-try { vUpdateSliderFill(VidOverlayVeilOpacity); } catch {}
 try { setVideoInspectorMode('transitions'); } catch {}
 try { syncVideoPhaseOneUi(); } catch {}
 try { syncVideoUiState(); } catch {}

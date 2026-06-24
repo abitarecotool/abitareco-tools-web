@@ -17,7 +17,7 @@
  <link rel="preconnect" href="https://fonts.googleapis.com" />
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
- <link rel="stylesheet" href="./css/styles.css?v=20260623_slideshowpro2" />
+ <link rel="stylesheet" href="./css/styles.css?v=20260623_slideshowpro3" />
  <link rel="stylesheet" href="./css/modules/images.css?v=20260612_pdfcompress6" />
  <link rel="stylesheet" href="./css/modules/platform.css?v=20260526_platform7" />
  <link rel="stylesheet" href="./css/modules/cropzoom.css" />
@@ -444,14 +444,15 @@
    <aside class="video-inspector-panel">
     <div class="video-panel-card video-transition-card video-inspector-carousel-card">
      <div class="video-panel-head video-panel-head--carousel">
-      <div class="video-panel-head-main">
-       <h5 id="VideoInspectorTitle">Transizioni</h5>
+      <div>
+       <div class="video-panel-headline-row">
+        <button id="BtnVideoInspectorPrev" type="button" class="video-inspector-nav" aria-label="Scheda precedente">←</button>
+        <h5 id="VideoInspectorTitle">Transizioni</h5>
+        <button id="BtnVideoInspectorNext" type="button" class="video-inspector-nav" aria-label="Scheda successiva">→</button>
+       </div>
        <p id="VideoInspectorSubtitle" class="muted">Usa Shift per selezioni multiple contigue oppure Ctrl/Cmd + click per aggiungere o togliere singole slide.</p>
       </div>
-      <div class="video-inspector-navbox" aria-label="Navigazione pannelli slideshow">
-       <button id="BtnVideoInspectorPrev" type="button" class="video-inspector-nav" aria-label="Scheda precedente">←</button>
-       <button id="BtnVideoInspectorNext" type="button" class="video-inspector-nav" aria-label="Scheda successiva">→</button>
-      </div>
+      <span id="VideoInspectorCounter" class="video-panel-kicker">1 / 3</span>
      </div>
      <div class="video-inspector-carousel-body">
       <section id="VideoInspectorPanelTransitions" class="video-inspector-panel-view">
@@ -504,20 +505,46 @@
           <input id="VidOverlayColor" class="input video-color-input" type="color" value="#ffffff" />
          </div>
         </div>
+        <div class="video-text-toolbar" aria-label="Stile testo overlay">
+         <button id="BtnVideoTextBold" type="button" class="video-text-tool is-active" title="Grassetto"><strong>B</strong></button>
+         <button id="BtnVideoTextItalic" type="button" class="video-text-tool" title="Corsivo"><em>I</em></button>
+         <label class="video-text-color-chip" title="Colore primario testo">
+          <input id="VidOverlayColorPrimary" type="color" value="#ffffff" />
+          <span>A</span>
+         </label>
+         <label class="video-text-color-chip video-text-color-chip--secondary" title="Secondo colore testo">
+          <input id="VidOverlayColorSecondary" type="color" value="#c4162b" />
+          <span>A/B</span>
+         </label>
+         <button id="BtnVideoTextColorSplit" type="button" class="video-text-tool" title="Attiva secondo colore">2 colori</button>
+        </div>
         <div class="form-group form-group--tight">
          <label for="VidOverlayText">Contenuto testo</label>
          <textarea id="VidOverlayText" class="input video-overlay-textarea" rows="3" placeholder="Scrivi il testo e usa invio per andare a capo"></textarea>
         </div>
         <div class="video-slider-group video-slider-group--compact">
-         <label for="VidOverlayScale">Scala elemento</label>
+         <label for="VidOverlayScale">Scala testo</label>
          <input id="VidOverlayScale" class="input video-red-range" type="range" min="0.4" max="2.4" step="0.01" value="1" />
         </div>
         <div class="video-slider-group video-slider-group--compact">
-         <label for="VidOverlayOpacity">Opacità</label>
+         <label for="VidOverlayOpacity">Opacità testo</label>
          <input id="VidOverlayOpacity" class="input video-red-range" type="range" min="10" max="100" step="1" value="100" />
         </div>
-        <p id="VideoOverlayHint" class="muted video-muted-compact">UI pronta per testo multilinea, PNG, scala e opacità. Nella prossima fase colleghiamo anteprima e posizionamento interattivo.</p>
-        <p id="VideoOverlayAssetName" class="video-inline-meta muted">Nessun PNG selezionato.</p>
+        <div class="video-png-controls">
+         <div class="video-png-controls-head">
+          <strong>Controlli PNG</strong>
+          <span id="VideoOverlayAssetName" class="video-inline-meta muted">Nessun PNG selezionato.</span>
+         </div>
+         <div class="video-slider-group video-slider-group--compact">
+          <label for="VidOverlayPngScale">Grandezza PNG</label>
+          <input id="VidOverlayPngScale" class="input video-red-range" type="range" min="0.3" max="2.5" step="0.01" value="1" />
+         </div>
+         <div class="video-slider-group video-slider-group--compact">
+          <label for="VidOverlayPngOpacity">Opacità PNG</label>
+          <input id="VidOverlayPngOpacity" class="input video-red-range" type="range" min="10" max="100" step="1" value="100" />
+         </div>
+        </div>
+        <p id="VideoOverlayHint" class="muted video-muted-compact">UI pronta per testo formattato, doppio colore e controlli PNG dedicati. Nella prossima fase colleghiamo anteprima e posizionamento interattivo.</p>
         <input id="VideoOverlayPngInput" type="file" accept="image/png" class="hidden" />
        </div>
       </section>
@@ -529,14 +556,14 @@
         </div>
         <div class="video-slider-group video-slider-group--compact">
          <label for="VidMusicVolume">Volume background</label>
-         <input id="VidMusicVolume" class="input video-red-range" type="range" min="0" max="100" step="1" value="100" />
+         <input id="VidMusicVolume" class="input" type="range" min="0" max="100" step="1" value="18" />
         </div>
         <div class="video-compact-checks">
          <label><input id="VidMusicLoop" type="checkbox" checked /> <span>Loop automatico</span></label>
          <label><input id="VidMusicFadeIn" type="checkbox" checked /> <span>Fade in soft</span></label>
          <label><input id="VidMusicFadeOut" type="checkbox" checked /> <span>Fade out finale</span></label>
         </div>
-        <p id="VideoMusicHint" class="muted video-muted-compact">UI pronta per volume, loop e fade. Nella fase successiva colleghiamo il mix reale in export.</p>
+        <p id="VideoMusicHint" class="muted">Fase 1 UI: predisposizione della traccia audio background senza toccare la pipeline export che ora funziona. Nella fase successiva collegheremo mix audio e volume finale.</p>
         <p id="VideoMusicFileName" class="video-inline-meta muted">Nessun file musicale selezionato.</p>
         <input id="VideoMusicInput" type="file" accept="audio/*" class="hidden" />
        </div>
@@ -555,14 +582,6 @@
        <button id="BtnVideoRemoveSelected" type="button" class="btn-outline">Rimuovi</button>
        <button id="BtnVideoReplaceSelected" type="button" class="btn-outline">Sostituisci</button>
        <button id="BtnVideoAddImages" type="button" class="btn-outline">Aggiungi</button>
-      </div>
-      <div class="video-manage-velina-box">
-       <label class="video-manage-check"><input id="VidOverlayVeil" type="checkbox" /> <span>Velina sopra immagine</span></label>
-       <div class="video-slider-group video-slider-group--compact video-slider-group--veil">
-        <label for="VidOverlayVeilOpacity">Opacità velina</label>
-        <input id="VidOverlayVeilOpacity" class="input video-red-range" type="range" min="10" max="100" step="1" value="100" />
-       </div>
-       <p id="VideoVelinaHint" class="video-inline-meta muted">Velina Abitare pronta da assets/comingsoon/velina.png.</p>
       </div>
       <p id="VideoManageHint" class="muted">Seleziona almeno una slide per attivare le azioni.</p>
       <input id="VideoReplaceInput" type="file" accept="image/*" class="hidden" />
@@ -1035,7 +1054,7 @@
   <script src="./js/modules/pdfcompress.js?v=20260612_pdfcompress6"></script>
  <script src="./js/modules/platform.js?v=20260526_platform7"></script>
  <script src="./js/modules/rename.js"></script>
- <script src="./js/modules/video.js?v=20260623_slideshowpro2"></script>
+ <script src="./js/modules/video.js?v=20260623_slideshowpro3"></script>
  <script src="./js/modules/watermark.js?v=20260615_comingsoonopts2"></script>
  <script src="./js/modules/bv.js"></script>
  <script src="./js/modules/bv_preview.js"></script>

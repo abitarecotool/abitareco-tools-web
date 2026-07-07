@@ -1,4 +1,4 @@
-/* ============================== PDF → JPG ============================= */
+/* ============================== PDF -> JPG ============================= */
 async function ensurePdfJs(){
   if (window.pdfjsLib) return;
   await new Promise((resolve,reject)=>{
@@ -24,16 +24,33 @@ function sanitizeZipName(name){
   return out || 'EXPORT_PDF2JPG';
 }
 
+function formatBytesPdf2Jpg(bytes){
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 MB';
+  const mb = bytes / (1024 * 1024);
+  return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+function setPdf2JpgProgress(done, total, label){
+  if (ActionProgress){
+    ActionProgress.max = 100;
+    ActionProgress.value = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+  }
+  if (ActionProgressLabel){
+    const pct = total > 0 ? ` ${Math.min(100, Math.round((done / total) * 100))}%` : '';
+    ActionProgressLabel.textContent = label ? `${label}${pct}` : pct.trim();
+  }
+}
+
 async function triggerZipDownload(zip, filename){
   const blob = await zip.generateAsync(
     {
       type: 'blob',
-      compression: 'DEFLATE',
-      compressionOptions: { level: 4 }
+      compression: 'STORE',
+      streamFiles: true
     },
     (meta)=>{
       if (ActionProgressLabel) {
-        ActionProgressLabel.textContent = `Compressione ZIP… ${Math.round(meta.percent || 0)}%`;
+        ActionProgressLabel.textContent = `Creo ZIP ${filename}... ${Math.round(meta.percent || 0)}%`;
       }
     }
   );
@@ -46,15 +63,25 @@ async function triggerZipDownload(zip, filename){
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 30000);
-  await sleep(80);
+  await sleep(120);
 }
 
 function computeSafeScale(page, desiredScale, maxPixels){
   const probe = page.getViewport({ scale: 1 });
-  const desiredPixels = probe.width * probe.height * desiredScale * desiredScale;
+  const nativePixels = Math.max(1, probe.width * probe.height);
+  const desiredPixels = nativePixels * desiredScale * desiredScale;
   if (desiredPixels <= maxPixels) return desiredScale;
-  const ratio = Math.sqrt(maxPixels / (probe.width * probe.height));
-  return Math.max(1, desiredScale * ratio);
+  return Math.max(1, Math.sqrt(maxPixels / nativePixels));
+}
+
+function getPdf2JpgProfile(totalPages){
+  if (totalPages >= 40){
+    return { dpi: 160, maxPixels: 7_000_000, targetBytes: 1.1 * 1024 * 1024 };
+  }
+  if (totalPages >= 15){
+    return { dpi: 180, maxPixels: 9_000_000, targetBytes: 1.25 * 1024 * 1024 };
+  }
+  return { dpi: 220, maxPixels: 12_000_000, targetBytes: 1.5 * 1024 * 1024 };
 }
 
 async function canvasToJpegBlob(canvas, quality){
@@ -73,18 +100,19 @@ async function downscaleCanvas(sourceCanvas, scale){
 }
 
 async function fitJpegUnderTarget(canvas, targetBytes){
-  const qualities = [0.9, 0.84, 0.78, 0.72, 0.66, 0.60, 0.54];
+  const qualities = [0.88, 0.80, 0.70, 0.60];
   let bestBlob = null;
 
   for (const q of qualities){
     const blob = await canvasToJpegBlob(canvas, q);
     bestBlob = blob;
     if (blob.size <= targetBytes) return { blob, canvas };
+    await sleep(0);
   }
 
   let workCanvas = canvas;
   for (let i = 0; i < 3; i++){
-    const ratio = Math.min(0.86, Math.max(0.55, Math.sqrt(targetBytes / Math.max(bestBlob.size, 1)) * 0.96));
+    const ratio = Math.min(0.88, Math.max(0.58, Math.sqrt(targetBytes / Math.max(bestBlob.size, 1)) * 0.97));
     const scaled = await downscaleCanvas(workCanvas, ratio);
     if (workCanvas !== canvas){
       workCanvas.width = 1;
@@ -97,10 +125,28 @@ async function fitJpegUnderTarget(canvas, targetBytes){
       const blob = await canvasToJpegBlob(workCanvas, q);
       bestBlob = blob;
       if (blob.size <= targetBytes) return { blob, canvas: workCanvas };
+      await sleep(0);
     }
   }
 
   return { blob: bestBlob, canvas: workCanvas };
+}
+
+async function countPdfPagesForExport(file){
+  const ab = await file.arrayBuffer();
+  const loadingTask = window.pdfjsLib.getDocument({
+    data: ab,
+    isEvalSupported: false,
+    disableFontFace: true,
+    verbosity: 0
+  });
+  const pdf = await loadingTask.promise;
+  try {
+    return pdf.numPages || 0;
+  } finally {
+    try { pdf.cleanup && pdf.cleanup(); } catch(_){}
+    try { pdf.destroy && pdf.destroy(); } catch(_){}
+  }
 }
 
 async function exportPdfToJpg(){
@@ -112,49 +158,57 @@ async function exportPdfToJpg(){
 
   await ensurePdfJs();
 
-  const TARGET_JPG_BYTES = 1.5 * 1024 * 1024;
-  const MAX_PAGE_PIXELS = 12_000_000;
-  const PREFERRED_DPI = 220;
   const ZIP_SOFT_LIMIT = 120 * 1024 * 1024;
   const stamp = new Date().toISOString().replace(/[:\-T]/g,'').slice(0,15);
   const baseZipName = sanitizeZipName(`EXPORT_PDF2JPG-${stamp}`);
-
-  let zipPart = 1;
-  let zip = new JSZip();
-  let zipBytes = 0;
-  let zipEntries = 0;
-  let convertedPages = 0;
-  let totalPdfProcessed = 0;
+  const pdfInfos = [];
 
   showEl(ActionProgressWrap);
-  ActionProgress.value = 0;
-  ActionProgressLabel.textContent = 'Preparazione esportazione…';
-
-  async function flushCurrentZip(forceLabel){
-    if (!zipEntries) return;
-    const partName = `${baseZipName}-part${String(zipPart).padStart(2,'0')}.zip`;
-    if (ActionProgressLabel) {
-      ActionProgressLabel.textContent = forceLabel || `Creo archivio ${zipPart}…`;
-    }
-    await triggerZipDownload(zip, partName);
-    zipPart += 1;
-    zip = new JSZip();
-    zipBytes = 0;
-    zipEntries = 0;
-    await sleep(50);
-  }
+  setPdf2JpgProgress(0, 100, 'Analisi PDF...');
 
   try {
+    let scanned = 0;
     for (const rec of pdfs){
+      const file = rec.file;
+      if (ActionProgressLabel) ActionProgressLabel.textContent = `Analisi ${file.name}...`;
+      const pages = await countPdfPagesForExport(file);
+      pdfInfos.push({ rec, pages });
+      scanned += 1;
+      setPdf2JpgProgress(scanned, pdfs.length, `Analisi PDF ${scanned}/${pdfs.length}...`);
+      await sleep(0);
+    }
+
+    const totalPages = pdfInfos.reduce((sum, info) => sum + (info.pages || 0), 0);
+    const profile = getPdf2JpgProfile(totalPages);
+    let zipPart = 1;
+    let zip = new JSZip();
+    let zipBytes = 0;
+    let zipEntries = 0;
+    let convertedPages = 0;
+
+    async function flushCurrentZip(forceLabel){
+      if (!zipEntries) return;
+      const partName = `${baseZipName}-part${String(zipPart).padStart(2,'0')}.zip`;
+      if (ActionProgressLabel) {
+        ActionProgressLabel.textContent = forceLabel || `Creo archivio ${zipPart}...`;
+      }
+      await triggerZipDownload(zip, partName);
+      zipPart += 1;
+      zip = new JSZip();
+      zipBytes = 0;
+      zipEntries = 0;
+      await sleep(80);
+    }
+
+    setPdf2JpgProgress(0, totalPages, `Converto 0/${totalPages} pagine...`);
+
+    for (const info of pdfInfos){
+      const rec = info.rec;
       const file = rec.file;
       const relPath = rec.relPath || file.name;
       const relFolder = relPath.includes('/') ? relPath.slice(0, relPath.lastIndexOf('/')) : '';
       const baseName = file.name.replace(/\.pdf$/i, '');
       const prefixDir = `_EXPORT_PDF2JPG/${relFolder ? relFolder + '/' : ''}`;
-
-      if (ActionProgressLabel) {
-        ActionProgressLabel.textContent = `Apro ${file.name}…`;
-      }
 
       const ab = await file.arrayBuffer();
       const loadingTask = window.pdfjsLib.getDocument({
@@ -168,16 +222,14 @@ async function exportPdfToJpg(){
 
       try {
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++){
-          if (ActionProgressLabel) {
-            ActionProgressLabel.textContent = `Converto ${file.name} · pagina ${pageNum}/${pdf.numPages}…`;
-          }
+          setPdf2JpgProgress(convertedPages, totalPages, `Converto ${file.name} pagina ${pageNum}/${pdf.numPages}...`);
 
           const page = await pdf.getPage(pageNum);
           let canvas = null;
 
           try {
-            const desiredScale = PREFERRED_DPI / 72;
-            const safeScale = computeSafeScale(page, desiredScale, MAX_PAGE_PIXELS);
+            const desiredScale = profile.dpi / 72;
+            const safeScale = computeSafeScale(page, desiredScale, profile.maxPixels);
             const viewport = page.getViewport({ scale: safeScale });
 
             canvas = document.createElement('canvas');
@@ -187,9 +239,11 @@ async function exportPdfToJpg(){
             const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: false });
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            await page.render({ canvasContext: ctx, viewport }).promise;
-            let fit = await fitJpegUnderTarget(canvas, TARGET_JPG_BYTES);
+            await page.render({ canvasContext: ctx, viewport, background: '#ffffff' }).promise;
+            let fit = await fitJpegUnderTarget(canvas, profile.targetBytes);
             let blob = fit.blob;
 
             if (fit.canvas !== canvas){
@@ -200,14 +254,15 @@ async function exportPdfToJpg(){
             }
 
             if (zipEntries > 0 && (zipBytes + blob.size) > ZIP_SOFT_LIMIT){
-              await flushCurrentZip(`Archivio ${zipPart} pronto, preparo il successivo…`);
+              await flushCurrentZip(`Archivio ${zipPart} pronto, preparo il successivo...`);
             }
 
             const suffix = pdf.numPages > 1 ? `-${String(pageNum).padStart(2,'0')}` : '';
-            zip.file(`${prefixDir}${baseName}${suffix}.jpg`, blob, { binary: true });
+            zip.file(`${prefixDir}${baseName}${suffix}.jpg`, blob, { binary: true, compression: 'STORE' });
             zipBytes += blob.size;
             zipEntries += 1;
             convertedPages += 1;
+            setPdf2JpgProgress(convertedPages, totalPages, `Convertite ${convertedPages}/${totalPages} pagine - ZIP ${formatBytesPdf2Jpg(zipBytes)}`);
           } finally {
             try { page.cleanup && page.cleanup(); } catch(_){}
             if (canvas){
@@ -217,29 +272,24 @@ async function exportPdfToJpg(){
             }
           }
 
-          if (convertedPages % 2 === 0) await sleep(0);
+          await sleep(0);
         }
       } finally {
         try { pdf.cleanup && pdf.cleanup(); } catch(_){}
         try { pdf.destroy && pdf.destroy(); } catch(_){}
       }
-
-      totalPdfProcessed += 1;
-      ActionProgress.value = Math.round((totalPdfProcessed / pdfs.length) * 100);
-      await sleep(0);
     }
 
-    await flushCurrentZip('Creo ZIP finale…');
-    ActionProgress.value = 100;
-    ActionProgressLabel.textContent = zipPart > 2
+    await flushCurrentZip('Creo ZIP finale...');
+    setPdf2JpgProgress(100, 100, zipPart > 2
       ? `Esportazione completata: ${zipPart - 1} archivi ZIP creati.`
-      : 'Esportazione completata.';
+      : 'Esportazione completata.');
 
-    setTimeout(() => hideEl(ActionProgressWrap), 1200);
+    setTimeout(() => hideEl(ActionProgressWrap), 1400);
   } catch (err){
     console.error('[PDF2JPG] Export error:', err);
     hideEl(ActionProgressWrap);
-    alert('Si è verificato un problema durante l\'esportazione PDF → JPG. Riprova con un set più piccolo oppure verifica i PDF caricati.');
+    alert('Si e\' verificato un problema durante l\'esportazione PDF to JPG. Riprova con un set piu piccolo oppure verifica il PDF caricato.');
     throw err;
   }
 }

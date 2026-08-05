@@ -16,7 +16,6 @@
   const cfg = window.ABITARE_SUPABASE || {};
   const SUPABASE_URL = String(cfg.url || '').trim();
   const SUPABASE_ANON_KEY = String(cfg.anonKey || '').trim();
-  const LEGACY_FALLBACK = cfg.legacyFallback === true;
   let supabaseClient = null;
   let appLoadPromise = null;
 
@@ -40,18 +39,31 @@
     if (!raw || typeof raw !== 'object') return null;
     if (raw.payload && typeof raw.payload === 'object') raw = raw.payload;
     if (!raw.email || !raw.role) return null;
+    const remember = !!raw.remember;
     const payload = {
       email: String(raw.email || '').trim().toLowerCase(),
       role: raw.role,
       brand: raw.brand || null,
-      remember: true,
-      loginAt: Number(raw.loginAt || now()),
-      expiresAt: Number(raw.expiresAt || (now() + REMEMBER_MS))
+      remember: remember,
+      loginAt: Number(raw.loginAt || now())
     };
-    if (!payload.email || !Number.isFinite(payload.expiresAt) || now() > payload.expiresAt){ clearUser(); return null; }
+    if (!payload.email) return null;
+    if (remember){
+      const expiresAt = Number(raw.expiresAt || (payload.loginAt + REMEMBER_MS));
+      if (!Number.isFinite(expiresAt) || now() > expiresAt){ clearUser(); return null; }
+      payload.expiresAt = expiresAt;
+    }
     return payload;
   }
   function readStored(){
+    try {
+      const rawS = sessionStorage.getItem(KEY);
+      if (rawS){
+        const data = normalizePayload(JSON.parse(rawS));
+        if (data) return data;
+        sessionStorage.removeItem(KEY);
+      }
+    } catch { try { sessionStorage.removeItem(KEY); } catch {} }
     try {
       const rawL = localStorage.getItem(KEY);
       if (rawL){
@@ -62,17 +74,11 @@
     } catch { try { localStorage.removeItem(KEY); } catch {} }
     return null;
   }
-  function storeUser(user){
-    try {
-      localStorage.setItem(KEY, JSON.stringify({
-        email: user.email,
-        role: user.role,
-        brand: user.brand || null,
-        remember: true,
-        loginAt: now(),
-        expiresAt: now() + REMEMBER_MS
-      }));
-    } catch {}
+  function storeUser(user, remember){
+    clearUser();
+    const payload = { email:user.email, role:user.role, brand:user.brand || null, remember:!!remember, loginAt:now() };
+    if (remember) payload.expiresAt = payload.loginAt + REMEMBER_MS;
+    try { (remember ? localStorage : sessionStorage).setItem(KEY, JSON.stringify(payload)); } catch {}
   }
 
   function showOverlay(){
@@ -116,12 +122,17 @@
   }
 
   function loadOneScript(src){
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
+      if (!src) return resolve(false);
       const s = document.createElement('script');
       s.src = src;
       s.async = false;
-      s.onload = resolve;
-      s.onerror = () => reject(new Error('Errore caricamento script: ' + src));
+      s.onload = () => resolve(true);
+      // Importante: se una CDN esterna fallisce, il tool non deve rimanere bloccato sul logo.
+      s.onerror = () => {
+        console.warn('[Auth] Script non caricato, continuo comunque:', src);
+        resolve(false);
+      };
       document.body.appendChild(s);
     });
   }
@@ -131,7 +142,6 @@
       const nodes = Array.from(document.querySelectorAll('script[data-app-src]'));
       for (const node of nodes){
         const src = node.getAttribute('data-app-src');
-        if (!src) continue;
         await loadOneScript(src);
         node.remove();
       }
@@ -229,17 +239,22 @@
     const remEl = document.getElementById('AuthRemember');
     const btn = document.getElementById('AuthConfirm');
     bindPasswordToggle();
-    if (remEl){ remEl.checked = true; remEl.disabled = true; remEl.title = 'La sessione resta attiva automaticamente.'; }
+    if (remEl){
+      remEl.checked = false;
+      remEl.disabled = false;
+      remEl.title = 'Seleziona per mantenere la sessione attiva anche nei prossimi giorni.';
+    }
     const doLogin = async () => {
       const email = (emailEl?.value || '').trim().toLowerCase();
       const pass = passEl?.value || '';
+      const remember = !!remEl?.checked;
       if (!email || !pass){ setError('Compila Email e Password.'); return; }
       setError(''); setLoginBusy(true);
       try {
         const user = await loginWithSupabase(email, pass);
         if (!user){ setError('Credenziali non valide.'); return; }
         try { localStorage.removeItem(FORCE_KEY); } catch {}
-        storeUser(user);
+        storeUser(user, remember);
         await enterApp(user);
       } catch (err) {
         console.warn('[Auth] Login error', err);
@@ -268,18 +283,6 @@
     }
     const storedUser = readStored();
     if (storedUser){ await enterApp(storedUser); return; }
-    try {
-      const client = getSupabase();
-      if (client){
-        const { data } = await client.auth.getSession();
-        if (data && data.session && data.session.user && data.session.user.email){
-          const user = profileFromEmail(data.session.user.email, data.session.user);
-          storeUser(user);
-          await enterApp(user);
-          return;
-        }
-      }
-    } catch {}
     hidePreloader(); showOverlay();
     try { document.getElementById('AuthEmail')?.focus({ preventScroll:true }); } catch {}
   }

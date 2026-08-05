@@ -2,28 +2,62 @@
 (function(){
   'use strict';
 
-  const USERS = {
-    'admin@abitareco.it': { password: 'Abitare52!', role: 'admin' },
-    'marketing@abitareco.it': { password: 'Abitare52!', role: 'marketing' },
-    'tecnico@abitareco.it': { password: 'Abitare52!', role: 'tecnico' },
+  // Profili/permessi lato UI. Le password NON sono piu nel codice quando Supabase e configurato.
+  // In Supabase crea gli utenti con queste email. Puoi anche impostare user_metadata.role e
+  // user_metadata.brand per sovrascrivere questi default.
+  const USER_PROFILES = {
+    'admin@abitareco.it': { role: 'admin' },
+    'marketing@abitareco.it': { role: 'marketing' },
+    'tecnico@abitareco.it': { role: 'tecnico' },
     'info@riabitareco.it': {
-      password: 'Abitare52!',
       role: 'riabitare',
       brand: { label: 'RiAbitare Co.', logo: './assets/logo-riabitareco.png' }
     },
     'info@abitarecommercial.it': {
-      password: 'Abitare52!',
       role: 'commercial',
       brand: { label: 'Abitare Commercial', logo: './assets/logo-commercial.png' }
     }
   };
 
+  // Fallback temporaneo: serve solo finche non inserisci url/anonKey Supabase.
+  // Dopo il collegamento Supabase puoi disattivarlo in js/core/supabase-config.js.
+  const LEGACY_USERS = {
+    'admin@abitareco.it': { password: 'Abitare52!', role: 'admin' },
+    'marketing@abitareco.it': { password: 'Abitare52!', role: 'marketing' },
+    'tecnico@abitareco.it': { password: 'Abitare52!', role: 'tecnico' },
+    'info@riabitareco.it': { password: 'Abitare52!', role: 'riabitare', brand: { label: 'RiAbitare Co.', logo: './assets/logo-riabitareco.png' } },
+    'info@abitarecommercial.it': { password: 'Abitare52!', role: 'commercial', brand: { label: 'Abitare Commercial', logo: './assets/logo-commercial.png' } }
+  };
+
   const KEY = 'abitare_tools_auth_user';
   const FORCE_KEY = 'abitare_tools_force_login';
-  const REMEMBER_HOURS = 24;
+  const REMEMBER_HOURS = 24 * 30;
   const REMEMBER_MS = REMEMBER_HOURS * 60 * 60 * 1000;
+  const cfg = window.ABITARE_SUPABASE || {};
+  const SUPABASE_URL = String(cfg.url || '').trim();
+  const SUPABASE_ANON_KEY = String(cfg.anonKey || '').trim();
+  const LEGACY_FALLBACK = cfg.legacyFallback !== false;
+  let supabaseClient = null;
 
   function now(){ return Date.now(); }
+
+  function hasSupabaseConfig(){
+    return !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase && window.supabase.createClient);
+  }
+
+  function getSupabase(){
+    if (!hasSupabaseConfig()) return null;
+    if (!supabaseClient){
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
+      });
+    }
+    return supabaseClient;
+  }
 
   function clearUser(){
     try { sessionStorage.removeItem(KEY); } catch {}
@@ -33,7 +67,6 @@
   function normalizePayload(raw){
     if (!raw || typeof raw !== 'object') return null;
 
-    // Compatibilità con sessionfix.js: formato { v, exp, payload }
     if (raw.payload && typeof raw.payload === 'object') {
       const exp = Number(raw.exp || 0);
       if (!Number.isFinite(exp) || exp <= now()) {
@@ -134,12 +167,30 @@
     const pl = document.getElementById('AuthPreloader');
     if (!pl) return;
     pl.classList.add('fade-out');
-    setTimeout(() => { pl.style.display = 'none'; }, 420);
+    setTimeout(() => { pl.style.display = 'none'; }, 160);
   }
 
   function setError(msg){
     const err = document.getElementById('AuthError');
     if (err) err.textContent = msg || '';
+  }
+
+  function setLoginBusy(isBusy){
+    const btn = document.getElementById('AuthConfirm');
+    if (!btn) return;
+    btn.disabled = !!isBusy;
+    btn.textContent = isBusy ? 'Accesso...' : 'Accedi';
+  }
+
+  function profileFromEmail(email, supabaseUser){
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const meta = (supabaseUser && supabaseUser.user_metadata) ? supabaseUser.user_metadata : {};
+    const base = USER_PROFILES[cleanEmail] || {};
+    return {
+      email: cleanEmail,
+      role: meta.role || base.role || 'marketing',
+      brand: meta.brand || base.brand || null
+    };
   }
 
   function bindUserMenu(user){
@@ -179,8 +230,9 @@
       });
     }
 
-    btn.onclick = () => {
+    btn.onclick = async () => {
       try { localStorage.setItem(FORCE_KEY, '1'); } catch {}
+      try { await getSupabase()?.auth.signOut(); } catch {}
       clearUser();
       const url = new URL(location.href);
       url.searchParams.set('logout', '1');
@@ -218,6 +270,14 @@
     } catch {}
   }
 
+  function enterApp(user){
+    hideOverlay();
+    try { window.applyGuards && window.applyGuards(user); } catch {}
+    try { bindUserMenu(user); } catch {}
+    try { applyBrand(user); } catch {}
+    try { window.selectMode && window.selectMode('welcome'); } catch {}
+  }
+
   function bindPasswordToggle(){
     const passEl = document.getElementById('AuthPassword');
     const toggleBtn = document.getElementById('AuthTogglePassword');
@@ -247,6 +307,26 @@
     });
   }
 
+  async function loginWithSupabase(email, pass){
+    const client = getSupabase();
+    if (!client) return null;
+
+    const { data, error } = await client.auth.signInWithPassword({
+      email: email,
+      password: pass
+    });
+
+    if (error) throw error;
+    if (!data || !data.user) throw new Error('Login non completato.');
+    return profileFromEmail(email, data.user);
+  }
+
+  function loginWithLegacy(email, pass){
+    const u = LEGACY_USERS[email];
+    if (!u || u.password !== pass) return null;
+    return { email, role: u.role, brand: u.brand || null };
+  }
+
   function initLogin(){
     const emailEl = document.getElementById('AuthEmail');
     const passEl = document.getElementById('AuthPassword');
@@ -260,7 +340,7 @@
       if (remEl) remEl.checked = !!(remembered && remembered.remember);
     } catch {}
 
-    const doLogin = () => {
+    const doLogin = async () => {
       const email = (emailEl?.value || '').trim().toLowerCase();
       const pass = (passEl?.value || '').trim();
       const remember = !!remEl?.checked;
@@ -270,23 +350,34 @@
         return;
       }
 
-      const u = USERS[email];
-      if (!u || u.password !== pass){
-        setError('Credenziali non valide.');
-        return;
-      }
-
       setError('');
-      try { localStorage.removeItem(FORCE_KEY); } catch {}
+      setLoginBusy(true);
 
-      const user = { email, role: u.role, brand: u.brand || null };
-      storeUser(user, remember);
-      hideOverlay();
+      try {
+        let user = null;
 
-      try { window.applyGuards && window.applyGuards(user); } catch {}
-      try { bindUserMenu(user); } catch {}
-      try { applyBrand(user); } catch {}
-      try { window.selectMode && window.selectMode('welcome'); } catch {}
+        if (hasSupabaseConfig()){
+          user = await loginWithSupabase(email, pass);
+        } else if (LEGACY_FALLBACK) {
+          user = loginWithLegacy(email, pass);
+        } else {
+          throw new Error('Configurazione Supabase mancante.');
+        }
+
+        if (!user){
+          setError('Credenziali non valide.');
+          return;
+        }
+
+        try { localStorage.removeItem(FORCE_KEY); } catch {}
+        storeUser(user, remember);
+        enterApp(user);
+      } catch (err) {
+        console.warn('[Auth] Login error', err);
+        setError('Credenziali non valide o connessione Supabase non disponibile.');
+      } finally {
+        setLoginBusy(false);
+      }
     };
 
     if (btn && !btn.__bound){
@@ -313,47 +404,43 @@
     document.body.classList.remove('auth-blur');
     initLogin();
 
-    setTimeout(() => {
+    const url = new URL(location.href);
+    const forcedByUrl = url.searchParams.get('logout') === '1';
+    let forcedByKey = false;
+    try { forcedByKey = localStorage.getItem(FORCE_KEY) === '1'; } catch {}
+
+    if (forcedByUrl || forcedByKey){
+      try { localStorage.removeItem(FORCE_KEY); } catch {}
+      clearUser();
+
+      if (forcedByUrl){
+        url.searchParams.delete('logout');
+        history.replaceState({}, '', url.toString());
+      }
+
       hidePreloader();
+      showOverlay();
+      try { document.getElementById('AuthEmail')?.focus(); } catch {}
+      return;
+    }
 
-      const url = new URL(location.href);
-      const forcedByUrl = url.searchParams.get('logout') === '1';
-      let forcedByKey = false;
-      try { forcedByKey = localStorage.getItem(FORCE_KEY) === '1'; } catch {}
+    const user = readStored();
+    hidePreloader();
 
-      if (forcedByUrl || forcedByKey){
-        try { localStorage.removeItem(FORCE_KEY); } catch {}
-        clearUser();
+    if (!user){
+      showOverlay();
+      try { document.getElementById('AuthEmail')?.focus(); } catch {}
+      return;
+    }
 
-        if (forcedByUrl){
-          url.searchParams.delete('logout');
-          history.replaceState({}, '', url.toString());
-        }
-
-        showOverlay();
-        try { document.getElementById('AuthEmail')?.focus(); } catch {}
-        return;
-      }
-
-      const user = readStored();
-      if (!user){
-        showOverlay();
-        try { document.getElementById('AuthEmail')?.focus(); } catch {}
-        return;
-      }
-
-      hideOverlay();
-      try { window.applyGuards && window.applyGuards(user); } catch {}
-      try { bindUserMenu(user); } catch {}
-      try { applyBrand(user); } catch {}
-      try { window.selectMode && window.selectMode('welcome'); } catch {}
-    }, 600);
+    enterApp(user);
   }
 
   window.Auth = {
     current: readStored,
-    logout: () => {
+    logout: async () => {
       try { localStorage.setItem(FORCE_KEY, '1'); } catch {}
+      try { await getSupabase()?.auth.signOut(); } catch {}
       clearUser();
       location.href = new URL(location.href).toString();
     }

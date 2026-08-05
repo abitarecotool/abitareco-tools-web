@@ -150,6 +150,30 @@
     return appLoadPromise;
   }
 
+
+  function setWelcomeOnly(isWelcome){
+    try {
+      document.body.classList.toggle('welcome-only', !!isWelcome);
+    } catch {}
+  }
+
+  function installWelcomeShellPatch(){
+    if (window.__abitareWelcomeShellPatch) return;
+    window.__abitareWelcomeShellPatch = true;
+    const originalSelectMode = window.selectMode;
+    if (typeof originalSelectMode === 'function'){
+      window.selectMode = function(mode){
+        const result = originalSelectMode.apply(this, arguments);
+        setWelcomeOnly(mode === 'welcome');
+        return result;
+      };
+    }
+    document.addEventListener('click', (e) => {
+      const item = e.target && e.target.closest ? e.target.closest('[data-mode]') : null;
+      if (item && item.dataset && item.dataset.mode) setWelcomeOnly(item.dataset.mode === 'welcome');
+    }, true);
+  }
+
   function bindUserMenu(user){
     const menu = document.getElementById('UserMenu');
     const dd = document.getElementById('UserDropdown');
@@ -193,12 +217,15 @@
     hideOverlay();
     showPreloader();
     await loadDeferredApp();
+    installWelcomeShellPatch();
     document.body.classList.remove('auth-locked','auth-blur');
     document.body.classList.add('auth-ready');
+    setWelcomeOnly(true);
     try { window.applyGuards && window.applyGuards(user); } catch {}
     try { bindUserMenu(user); } catch {}
     try { applyBrand(user); } catch {}
     try { window.selectMode && window.selectMode('welcome'); } catch {}
+    setWelcomeOnly(true);
     hidePreloader();
   }
 

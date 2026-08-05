@@ -7,8 +7,8 @@
 #AuthOverlay.show{display:flex;background:#f6f7f9;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 body.auth-blur #AppRoot{filter:none!important;transform:none!important}
 body.auth-locked #AppRoot{display:none!important}
-.auth-modal{position:relative;width:min(94vw,430px);background:#fff;border:1px solid var(--gray-200,#e5e7eb);border-radius:12px;padding:58px 28px 28px;box-shadow:0 22px 55px rgba(15,23,42,.16);overflow:visible}
-.auth-icon{position:absolute;top:-22px;left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:999px;background:#fff;box-shadow:0 8px 18px rgba(15,23,42,.16);display:flex;align-items:center;justify-content:center;z-index:2}
+.auth-modal{position:relative!important;width:min(94vw,430px);background:#fff;border:1px solid var(--gray-200,#e5e7eb);border-radius:12px;padding:58px 28px 28px;box-shadow:0 22px 55px rgba(15,23,42,.16);overflow:visible!important}
+.auth-icon{position:absolute!important;top:-22px!important;left:50%!important;transform:translateX(-50%)!important;width:44px;height:44px;border-radius:999px;background:#fff;box-shadow:0 8px 18px rgba(15,23,42,.16);display:flex;align-items:center;justify-content:center;z-index:5!important;margin:0!important}
 .auth-icon img{width:30px;height:30px;object-fit:contain;border-radius:50%}
 .auth-title{font-size:14px;font-weight:900;text-align:center;color:var(--navy,#0f1f3a);margin-bottom:8px}
 .auth-sub{text-align:center;color:var(--gray-500,#667085);font-size:12px;margin:0 0 18px}
@@ -35,3 +35,10 @@ body.auth-locked #AppRoot{display:none!important}
 .user-dropdown{margin-top:8px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);overflow:hidden}
 .user-logout{width:100%;padding:10px 12px;background:transparent;border:none;text-align:left;cursor:pointer;color:var(--red);font-weight:700;font-family:var(--font)}
 .user-logout:hover{background:var(--pink-bg)}
+
+/* Welcome pulito dopo login: nasconde la sidebar solo nella schermata welcome. */
+body.welcome-only #AppRoot .sidebar{display:none!important;}
+body.welcome-only #AppRoot{display:block!important;}
+body.welcome-only #AppRoot main{width:100%!important;margin-left:0!important;}
+body.welcome-only #AppRoot .content{max-width:none!important;width:100%!important;}
+body.welcome-only #WelcomeCard{max-width:none;}

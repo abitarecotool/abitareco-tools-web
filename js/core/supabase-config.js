@@ -7,5 +7,5 @@ window.ABITARE_SUPABASE = {
 
   // true = se Supabase non risponde, per ora resta disponibile il vecchio login locale.
   // Dopo i test puoi mettere false.
-  legacyFallback: true
+  legacyFallback: false
 };

@@ -7,8 +7,8 @@
 #AuthOverlay.show{display:flex;background:#f6f7f9;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 body.auth-blur #AppRoot{filter:none!important;transform:none!important}
 body.auth-locked #AppRoot{display:none!important}
-.auth-modal{position:relative;width:min(94vw,430px);background:#fff;border:1px solid var(--gray-200,#e5e7eb);border-radius:12px;padding:58px 28px 28px;box-shadow:0 22px 55px rgba(15,23,42,.16)}
-.auth-icon{position:absolute;top:-20px;left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:999px;background:#fff;box-shadow:0 8px 18px rgba(15,23,42,.16);display:flex;align-items:center;justify-content:center}
+.auth-modal{position:relative;width:min(94vw,430px);background:#fff;border:1px solid var(--gray-200,#e5e7eb);border-radius:12px;padding:58px 28px 28px;box-shadow:0 22px 55px rgba(15,23,42,.16);overflow:visible}
+.auth-icon{position:absolute;top:-22px;left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:999px;background:#fff;box-shadow:0 8px 18px rgba(15,23,42,.16);display:flex;align-items:center;justify-content:center;z-index:2}
 .auth-icon img{width:30px;height:30px;object-fit:contain;border-radius:50%}
 .auth-title{font-size:14px;font-weight:900;text-align:center;color:var(--navy,#0f1f3a);margin-bottom:8px}
 .auth-sub{text-align:center;color:var(--gray-500,#667085);font-size:12px;margin:0 0 18px}

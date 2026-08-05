@@ -23,7 +23,7 @@
  <link rel="stylesheet" href="./css/modules/cropzoom.css" />
  <link rel="stylesheet" href="./css/modules/bv.css" />
  <link rel="stylesheet" href="./css/modules/bv_3d.css" />
- <link rel="stylesheet" href="./css/modules/auth.css?v=20260805_noscatti1" />
+ <link rel="stylesheet" href="./css/modules/auth.css?v=20260805_lavorazionistyle1" />
  <link rel="stylesheet" href="./css/modules/welcome.css?v=20260506v4" />
  <link rel="stylesheet" href="./css/modules/fattura.css?v=20260622_pf4" />
  <link rel="stylesheet" href="./css/modules/slidebuilder.css?v=20260604_sbfix13" />
@@ -66,6 +66,9 @@
  </style>
 
  <style id="AuthFastBootStyles">
+  html,body{min-height:100%;}
+  body.auth-locked{background:#f6f7f9;}
+  body.auth-locked #AppRoot{display:none !important;}
   #AuthPreloader{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#f6f7f9;z-index:1001;transition:opacity .14s ease}
   #AuthPreloader.fade-out{opacity:0;pointer-events:none}
   #AuthPreloader img{width:48px;height:48px;object-fit:contain;border-radius:50%}
@@ -74,7 +77,7 @@
   #AuthConfirm:disabled{opacity:.72;cursor:wait}
  </style>
 </head>
- <body>
+ <body class="auth-locked">
  <!-- AUTH PRELOADER (2s) -->
  <div id="AuthPreloader" aria-hidden="true">
  <div class="auth-bounce" aria-label="Loading">
@@ -1048,45 +1051,46 @@
  </div>
  </main>
  </div>
- <!-- ═════════ LIBRARIES ═════════ -->
- <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js"></script>
- <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
- <script src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
- <!-- App scripts (split) -->
- <script src="./js/core/permissions.js?v=20260612_pdfcompress5"></script>
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
- <script src="./js/core/supabase-config.js?v=20260805_noscatti1"></script>
- <script src="./js/core/auth.js?v=20260805_noscatti1"></script>
- <script src="./js/core/guard.js?v=20260518_fixprod2"></script>
- <script src="./js/core/helpers.js"></script>
- <script src="./js/core/shell.js?v=20260612_pdfcompress5"></script>
- <script src="./js/core/sessionfix.js?v=20260522_sfix1"></script>
- <script src="./js/modules/welcome.js?v=20260612_pdfcompress5"></script>
- <script src="./js/core/io.js?v=20260612_pdfcompress5"></script>
- <script src="./js/core/shared.js?v=20260612_pdfcompress5"></script>
- <script src="./js/modules/images.js?v=20260612_pdfcompress5"></script>
- <script src="./js/modules/digitaltool.js"></script>
- <script src="./js/modules/pdf2jpg.js?v=20260707_pdf2jpg_speed2"></script>
-  <script src="./js/modules/pdfcompress.js?v=20260612_pdfcompress6"></script>
- <script src="./js/modules/platform.js?v=20260627_platform8fix"></script>
- <script src="./js/modules/rename.js"></script>
- <script src="./js/modules/video.js?v=20260623_slideshowpro3"></script>
- <script src="./js/modules/watermark.js?v=20260615_comingsoonopts2"></script>
- <script src="./js/modules/bv.js"></script>
- <script src="./js/modules/bv_preview.js"></script>
- <script src="./js/modules/bv_3d.js"></script>
- <script src="./js/modules/qr.js?v=20260513qr1"></script>
- <script src="./js/modules/iubenda.js"></script>
- <script src="./js/modules/ppt.js"></script>
- <script src="./js/modules/fattura.js?v=20260622_pf4"></script>
- <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
- <script src="./js/modules/slidebuilder.js?v=20260604_sbfix13"></script>
- <script src="./js/core/actionbar.js?v=20260612_pdfcompress6"></script>
-<script src="./js/app.js?v=20260612_pdfcompress6"></script>
+ <!-- ═════════ AUTH FIRST / APP AFTER LOGIN ═════════ -->
+<script src="./js/core/permissions.js?v=20260612_pdfcompress5"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./js/core/supabase-config.js?v=20260805_lavorazionistyle1"></script>
+<script src="./js/core/auth.js?v=20260805_lavorazionistyle1"></script>
+
+<!-- Librerie e moduli caricati SOLO dopo login, per non rallentare la digitazione -->
+<script data-app-src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script data-app-src="https://cdn.jsdelivr.net/npm/mp4box@0.5.6/dist/mp4box.all.min.js"></script>
+<script data-app-src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js"></script>
+<script data-app-src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script data-app-src="https://unpkg.com/@pdf-lib/fontkit@1.0.0/dist/fontkit.umd.min.js"></script>
+<script data-app-src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script data-app-src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script data-app-src="./js/core/guard.js?v=20260518_fixprod2"></script>
+<script data-app-src="./js/core/helpers.js"></script>
+<script data-app-src="./js/core/shell.js?v=20260612_pdfcompress5"></script>
+<script data-app-src="./js/core/sessionfix.js?v=20260522_sfix1"></script>
+<script data-app-src="./js/modules/welcome.js?v=20260612_pdfcompress5"></script>
+<script data-app-src="./js/core/io.js?v=20260612_pdfcompress5"></script>
+<script data-app-src="./js/core/shared.js?v=20260612_pdfcompress5"></script>
+<script data-app-src="./js/modules/images.js?v=20260612_pdfcompress5"></script>
+<script data-app-src="./js/modules/digitaltool.js"></script>
+<script data-app-src="./js/modules/pdf2jpg.js?v=20260707_pdf2jpg_speed2"></script>
+<script data-app-src="./js/modules/pdfcompress.js?v=20260612_pdfcompress6"></script>
+<script data-app-src="./js/modules/platform.js?v=20260627_platform8fix"></script>
+<script data-app-src="./js/modules/rename.js"></script>
+<script data-app-src="./js/modules/video.js?v=20260623_slideshowpro3"></script>
+<script data-app-src="./js/modules/watermark.js?v=20260615_comingsoonopts2"></script>
+<script data-app-src="./js/modules/bv.js"></script>
+<script data-app-src="./js/modules/bv_preview.js"></script>
+<script data-app-src="./js/modules/bv_3d.js"></script>
+<script data-app-src="./js/modules/qr.js?v=20260513qr1"></script>
+<script data-app-src="./js/modules/iubenda.js"></script>
+<script data-app-src="./js/modules/ppt.js"></script>
+<script data-app-src="./js/modules/fattura.js?v=20260622_pf4"></script>
+<script data-app-src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script data-app-src="./js/modules/slidebuilder.js?v=20260604_sbfix13"></script>
+<script data-app-src="./js/core/actionbar.js?v=20260612_pdfcompress6"></script>
+<script data-app-src="./js/app.js?v=20260612_pdfcompress6"></script>
 <!-- WELCOME · HELP DRAWER (solo UI, no AI) -->
 <div id="WelcomeHelpOverlay" class="welcome-help-overlay hidden" aria-hidden="true"></div>
 <aside id="WelcomeHelpDrawer" class="welcome-help-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="WelcomeHelpTitle" aria-hidden="true">

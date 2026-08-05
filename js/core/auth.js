@@ -136,9 +136,26 @@
       document.body.appendChild(s);
     });
   }
+
+  function installDeferredDomReadyPatch(){
+    if (window.__abitareDeferredDomReadyPatch) return;
+    window.__abitareDeferredDomReadyPatch = true;
+    const originalAddEventListener = document.addEventListener.bind(document);
+    document.addEventListener = function(type, listener, options){
+      if (type === 'DOMContentLoaded' && typeof listener === 'function' && document.readyState !== 'loading'){
+        setTimeout(() => {
+          try { listener.call(document, new Event('DOMContentLoaded')); } catch (err) { console.warn('[Auth] DOMContentLoaded deferred listener error', err); }
+        }, 0);
+        return;
+      }
+      return originalAddEventListener(type, listener, options);
+    };
+  }
+
   function loadDeferredApp(){
     if (appLoadPromise) return appLoadPromise;
     appLoadPromise = (async () => {
+      installDeferredDomReadyPatch();
       const nodes = Array.from(document.querySelectorAll('script[data-app-src]'));
       for (const node of nodes){
         const src = node.getAttribute('data-app-src');

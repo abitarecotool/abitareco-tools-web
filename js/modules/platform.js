@@ -129,24 +129,49 @@
 
 
 
-  function normalizeRenameCodeFromProduct(name){
-    const normalized = String(name || '')
+  function canonicalRenameCode(letter, floor, unit){
+    if (!letter || floor === undefined || unit === undefined) return null;
+    const cleanLetter = String(letter).toUpperCase().replace(/[^A-Z]/g, '');
+    const cleanFloor = parseInt(String(floor).replace(/\D/g, ''), 10);
+    const cleanUnit = parseInt(String(unit).replace(/\D/g, ''), 10);
+    if (!cleanLetter || !Number.isFinite(cleanFloor) || !Number.isFinite(cleanUnit)) return null;
+    return `${cleanLetter}_${cleanFloor}_${cleanUnit}`;
+  }
+  function findRenameCode(value){
+    const text = String(value || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .toUpperCase()
-      .replace(/[^A-Z0-9]+/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_+|_+$/g, '');
-    const m = normalized.match(/(?:^|_)[A-Z]+_([A-Z])_(\d+)_(\d+)(?:_|$)/) || normalized.match(/(?:^|_)([A-Z])_(\d+)_(\d+)(?:_|$)/);
-    if (!m) return null;
-    return `${m[1]}_${parseInt(m[2], 10)}_${parseInt(m[3], 10)}`;
-  }
+      .replace(/\.[A-Z0-9]{2,5}$/i, '')
+      .replace(/[_\.\-\/\\]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!text) return null;
 
+    // Formati supportati, anche dentro nomi piu lunghi:
+    // A.1.2, A_01_02, A-1-2, A 1 2 e prefissi tipo RES_A_1_2.
+    const tokens = text.split(' ').filter(Boolean);
+    for (let i = tokens.length - 3; i >= 0; i--){
+      if (/^[A-Z]{1,4}$/.test(tokens[i]) && /^\d{1,4}$/.test(tokens[i + 1]) && /^\d{1,4}$/.test(tokens[i + 2])){
+        return canonicalRenameCode(tokens[i], tokens[i + 1], tokens[i + 2]);
+      }
+    }
+
+    // Variante compatta occasionale: A01 02 oppure A01_02.
+    for (let i = tokens.length - 2; i >= 0; i--){
+      const compact = tokens[i].match(/^([A-Z]{1,4})(\d{1,4})$/);
+      if (compact && /^\d{1,4}$/.test(tokens[i + 1])){
+        return canonicalRenameCode(compact[1], compact[2], tokens[i + 1]);
+      }
+    }
+    return null;
+  }
+  function normalizeRenameCodeFromProduct(name){
+    return findRenameCode(name);
+  }
   function extractRenameCodeFromFilename(name){
-    const base = String(name || '').replace(/\.[^.]+$/, '').toUpperCase();
-    const m = base.match(/(?:^|[^A-Z])([A-Z])\.(\d+)\.(\d+)(?:[^0-9]|$)/) || base.match(/(?:^|[^A-Z])([A-Z])_(\d+)_(\d+)(?:[^0-9]|$)/);
-    if (!m) return null;
-    return `${m[1]}_${parseInt(m[2], 10)}_${parseInt(m[3], 10)}`;
+    const base = String(name || '').replace(/\.[^.]+$/, '');
+    return findRenameCode(base);
   }
-
   function safeOutputFilename(name, ext='.jpg'){
     const cleaned = String(name || 'non-trovato')
       .replace(/[\\/:*?"<>|]/g, '-')
@@ -173,7 +198,13 @@
   function buildNomeProdottoMap(rows){
     const map = new Map();
     for (const row of rows || []){
-      const nomeProdotto = String(row['Nome prodotto'] || row['nome prodotto'] || '').trim();
+      const key = Object.keys(row || {}).find(k =>
+        String(k || '')
+          .replace(/^\uFEFF/, '')
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .trim().toLowerCase().replace(/[_\s-]+/g, ' ') === 'nome prodotto'
+      );
+      const nomeProdotto = String(key ? row[key] : '').trim();
       if (!nomeProdotto) continue;
       const code = normalizeRenameCodeFromProduct(nomeProdotto);
       if (!code || map.has(code)) continue;

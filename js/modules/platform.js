@@ -168,9 +168,26 @@
   function normalizeRenameCodeFromProduct(name){
     return findRenameCode(name);
   }
-  function extractRenameCodeFromFilename(name){
+  function extractRenameCodeFromFilename(name, productMap=null){
     const base = String(name || '').replace(/\.[^.]+$/, '');
-    return findRenameCode(base);
+    const directCode = findRenameCode(base);
+    if (directCode && (!productMap || productMap.has(directCode))) return directCode;
+
+    // Le planimetrie possono non contenere la lettera: 3115-0.01-4LOC-01 -> A_0_1.
+    // La lettera viene ricavata unicamente dai codici presenti nell'Excel.
+    const upper = base.toUpperCase();
+    const matches = Array.from(upper.matchAll(/(?:^|[-_\s])(\d{1,3})[._](\d{1,3})(?=$|[-_\s])/g));
+    for (const match of matches){
+      const floor = parseInt(match[1], 10);
+      const unit = parseInt(match[2], 10);
+      if (!Number.isFinite(floor) || !Number.isFinite(unit) || !productMap) continue;
+      const compatible = Array.from(productMap.keys()).filter(code => {
+        const parts = String(code).match(/^([A-Z]+)_(\d+)_(\d+)$/);
+        return parts && Number(parts[2]) === floor && Number(parts[3]) === unit;
+      });
+      if (compatible.length === 1) return compatible[0];
+    }
+    return null;
   }
   function safeOutputFilename(name, ext='.jpg'){
     const cleaned = String(name || 'non-trovato')
@@ -849,7 +866,7 @@
       const seen = new Set();
       for (let i = 0; i < files.length; i++){
         const file = files[i];
-        const code = extractRenameCodeFromFilename(file.name || '');
+        const code = extractRenameCodeFromFilename(file.name || '', map);
         if (!code){
           summary[bucket].notFound += 1;
           summary.missing.push({ bucket, original: file.name, code: '' });

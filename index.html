@@ -136,6 +136,9 @@
  <aside class="sidebar">
  <img id="SidebarLogo" class="logo" src="./assets/logo.png" alt="Abitare Co." />
  <ul id="SideMenu" class="menu">
+ <li data-mode="promptbuilder" data-icon="./assets/icons/icon-prompt.png" data-icon-active="./assets/icons/icon-prompt-selected.png">
+ <span class="mi"><img alt="" /></span><span class="txt">Prompt Builder</span>
+ </li>
  <li data-mode="images" data-icon="./assets/icons/icon-sito.png" data-icon-active="./assets/icons/icon-sito-selected.png">
  <span class="mi"><img alt="" /></span><span class="txt">Immagini</span>
  </li>    
@@ -212,6 +215,14 @@
  <div id="WelcomeCards" class="welcome-grid" aria-label="Scorciatoie modalità"></div>
 </section>
  <!-- IMMAGINI: Slug -->
+ <section id="PromptBuilderCard" class="card hidden prompt-builder-card">
+ <h2>Genera prompt per la scheda</h2>
+ <p class="muted">Inserisci gli appunti disponibili sull’immobile. Verrà scaricato un file TXT con il prompt completo, pronto da utilizzare con Copilot, ChatGPT, Claude o altri strumenti di intelligenza artificiale.</p>
+ <label for="PromptBuilderInput">Descrizione / brief *</label>
+ <textarea id="PromptBuilderInput" class="prompt-builder-input" rows="10" placeholder="Scrivi qui tutte le informazioni disponibili: tipologia di immobile, posizione, caratteristiche, servizi, punti di forza, target e qualsiasi altra indicazione utile…" aria-describedby="PromptBuilderStatus"></textarea>
+ <div id="PromptBuilderStatus" class="prompt-builder-status" role="status" aria-live="polite"></div>
+ </section>
+
  <section id="SlugCard" class="card hidden">
  <h3>Ottimizzazioni immagini</h3>
  <div id="ImagesToolSwitch" class="platform-switch image-tool-switch" role="tablist" aria-label="Mini sezione immagini">
@@ -1085,6 +1096,7 @@
 <script data-app-src="./js/modules/bv_3d.js"></script>
 <script data-app-src="./js/modules/qr.js?v=20260513qr1"></script>
 <script data-app-src="./js/modules/iubenda.js"></script>
+<script data-app-src="./js/modules/promptbuilder.js?v=20261104_prompt1"></script>
 <script data-app-src="./js/modules/ppt.js"></script>
 <script data-app-src="./js/modules/fattura.js?v=20260622_pf4"></script>
 <script data-app-src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>

@@ -14,6 +14,7 @@
 
   const MODE_CARDS = {
     welcome: ['WelcomeCard'],
+      promptbuilder: ['PromptBuilderCard'],
     images: ['SlugCard','FormatCard','UploadCard'],
     platform: ['PlatformCard'],
     digitaltool: ['DTCard','UploadCard'],
@@ -64,7 +65,8 @@
       return;
     }
 
-    if (mode === 'qr') setPrimaryActionLabel('Genera QR');
+    if (mode === 'promptbuilder') setPrimaryActionLabel('Genera prompt');
+      if (mode === 'qr') setPrimaryActionLabel('Genera QR');
     if (mode === 'iubenda') setPrimaryActionLabel('Genera snippet');
     if (mode === 'platform') setPrimaryActionLabel('Esporta sezione');
     if (mode === 'pdfcompress') setPrimaryActionLabel('Comprimi PDF');

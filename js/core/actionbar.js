@@ -35,7 +35,7 @@ BtnProcedi?.addEventListener('click', async () => {
   } finally {
     BtnProcedi.disabled = false;
     // Reset post-export per TUTTE le modalità tranne Iubenda / Platform / SlideBuilder
-    if (ok && !['iubenda','platform','slidebuilder'].includes(mode)) {
+    if (ok && !['iubenda','platform','slidebuilder','promptbuilder'].includes(mode)) {
       try { resetAllUIAndState(); } catch {}
     }
   }

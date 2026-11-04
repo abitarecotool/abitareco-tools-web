@@ -1906,3 +1906,11 @@ input#VidOverlayPngOpacity.input{
     grid-template-columns:1fr;
   }
 }
+
+/* ================= PROMPT BUILDER ================= */
+.prompt-builder-card label{display:block;margin:18px 0 8px;font-weight:600;}
+.prompt-builder-input{width:100%;min-height:250px;resize:vertical;box-sizing:border-box;font:inherit;line-height:1.5;}
+.prompt-builder-status{min-height:20px;margin-top:8px;font-size:13px;color:#667085;}
+.prompt-builder-status.is-error{color:#d11a2a;}
+.prompt-builder-status.is-success{color:#17803d;}
+@media (max-width:680px){.prompt-builder-input{min-height:220px;}}

@@ -12,6 +12,7 @@
   const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 
   const DESC = {
+    promptbuilder: 'Genera il prompt completo per creare la scheda immobiliare.',
     images: 'Ottimizza per sito e share, naming e export.',
     digitaltool: 'Immagini pronte per utilizzo digitale.',
     pdf2jpg: 'Converti PDF in immagini in pochi click.',

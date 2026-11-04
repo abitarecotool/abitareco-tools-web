@@ -6,6 +6,12 @@ BtnProcedi?.addEventListener('click', async () => {
   let ok = false;
   try {
     BtnProcedi.disabled = true;
+    if (mode === 'promptbuilder') {
+      if (typeof window.generatePromptBuilder !== 'function') {
+        throw new Error('Prompt Builder non pronto: ricarica la pagina e riprova.');
+      }
+      await window.generatePromptBuilder(); ok = true; return;
+    }
     if (mode === 'images')       { await exportImages(); ok = true; return; }
     if (mode === 'digitaltool')  { await exportDigitalTool(); ok = true; return; }
     if (mode === 'platform')     { await exportPlatform(); ok = true; return; }

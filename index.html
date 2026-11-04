@@ -216,8 +216,13 @@
 </section>
  <!-- IMMAGINI: Slug -->
  <section id="PromptBuilderCard" class="card hidden prompt-builder-card">
- <h2>Genera prompt per la scheda</h2>
- <p class="muted">Inserisci gli appunti disponibili sull’immobile. Verrà scaricato un file TXT con il prompt completo, pronto da utilizzare con Copilot, ChatGPT, Claude o altri strumenti di intelligenza artificiale.</p>
+ <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+  <div style="flex:1 1 620px;min-width:0;">
+   <h2>Genera prompt per la scheda</h2>
+   <p class="muted">Inserisci gli appunti disponibili sull’immobile. Verrà scaricato un file TXT con il prompt completo, pronto da utilizzare con Copilot, ChatGPT, Claude o altri strumenti di intelligenza artificiale.</p>
+  </div>
+  <a class="btn-outline" href="./assets/guides/guida-schede-sito-abitareco-con-prompt-ai.pdf" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;text-decoration:none;white-space:nowrap;" aria-label="Apri la guida PDF in una nuova scheda">Apri guida PDF</a>
+ </div>
  <label for="PromptBuilderInput">Descrizione / brief *</label>
  <textarea id="PromptBuilderInput" class="prompt-builder-input" rows="10" placeholder="Scrivi qui tutte le informazioni disponibili: tipologia di immobile, posizione, caratteristiche, servizi, punti di forza, target e qualsiasi altra indicazione utile…" aria-describedby="PromptBuilderStatus"></textarea>
  <div id="PromptBuilderStatus" class="prompt-builder-status" role="status" aria-live="polite"></div>
